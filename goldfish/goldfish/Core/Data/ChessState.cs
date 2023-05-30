@@ -12,6 +12,11 @@ public unsafe struct ChessState
     public fixed byte Pieces[8 * 4];
 
     /// <summary>
+    /// Additional chess state to store information such as En Passant and Castling
+    /// </summary>
+    public AdditionalChessState Additional;
+
+    /// <summary>
     /// Gets the 4-bit piece from the compressed data
     /// </summary>
     /// <param name="r">row, 0 based index</param>

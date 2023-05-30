@@ -4,10 +4,10 @@ namespace goldfish.Core.Game;
 
 public class ChessGame
 {
-    private ChessState currentState;
+    private ChessState _currentState;
 
     public ChessGame()
     {
-        currentState = ChessState.DefaultState();
+        _currentState = ChessState.DefaultState();
     }
 }
