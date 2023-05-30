@@ -43,7 +43,7 @@ public static class Piece
     /// <param name="type"></param>
     /// <param name="white"></param>
     /// <returns></returns>
-    public static byte GetPiece(PieceType type, bool white)
+    public static byte GetPiece(this PieceType type, bool white)
     {
         if (type == PieceType.Space) return (byte)PieceType.Space;
         return (byte)((int)type + (white ? 6 : 0));

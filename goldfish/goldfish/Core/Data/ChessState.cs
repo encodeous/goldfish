@@ -1,7 +1,7 @@
 ﻿namespace goldfish.Core.Data;
 
 /// <summary>
-/// The current chess state, with black at the top and white at the bottom
+/// The current chess state, with white at the top and black at the bottom
 /// </summary>
 public unsafe struct ChessState
 {
@@ -19,7 +19,7 @@ public unsafe struct ChessState
     /// <returns></returns>
     public byte GetPiece(int r, int c)
     {
-        return (byte)(Pieces[r * 4 + c / 2] >> (c % 2 * 4));
+        return (byte)((Pieces[r * 4 + c / 2] >> ((c + 1) % 2 * 4)) & 0b1111);
     }
 
     /// <summary>
@@ -31,6 +31,53 @@ public unsafe struct ChessState
     /// <returns></returns>
     public void SetPiece(int r, int c, byte piece)
     {
-        Pieces[r * 4 + c / 2] = (byte)(piece << (c % 2 * 4));
+        if (c % 2 == 0)
+        {
+            // upper bits
+            Pieces[r * 4 + c / 2] = (byte)(Pieces[r * 4 + c / 2] & (0b1111) | (piece << 4));
+        }
+        else
+        {
+            // lower bits
+            Pieces[r * 4 + c / 2] = (byte)(Pieces[r * 4 + c / 2] & (0b11110000) | piece);
+        }
+    }
+
+    private static readonly PieceType[] DefaultPieces = {
+        PieceType.Rook,
+        PieceType.Knight,
+        PieceType.Bishop,
+        PieceType.Queen,
+        PieceType.King,
+        PieceType.Bishop,
+        PieceType.Knight,
+        PieceType.Rook,
+    };
+
+    private static ChessState _state;
+    
+    /// <summary>
+    /// Initializes a regular chess board.
+    /// </summary>
+    /// <returns></returns>
+    public static ChessState DefaultState()
+    {
+        if (_state.Pieces[0] != 0) return _state;
+        var cur = new ChessState();
+        for (int i = 0; i < 32; i++)
+        {
+            cur.Pieces[i] = (byte)PieceType.Space | (byte)PieceType.Space << 4;
+        }
+
+        for (int i = 0; i < 8; i++)
+        {
+            cur.SetPiece(0, i, DefaultPieces[i].GetPiece(true));
+            cur.SetPiece(7, i, DefaultPieces[i].GetPiece(false));
+            cur.SetPiece(1, i, PieceType.Pawn.GetPiece(true));
+            cur.SetPiece(6, i, PieceType.Pawn.GetPiece(false));
+        }
+
+        _state = cur;
+        return cur;
     }
 }
