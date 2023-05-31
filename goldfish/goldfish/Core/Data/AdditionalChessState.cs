@@ -51,6 +51,6 @@ public struct AdditionalChessState
     /// <returns>true if blocked</returns>
     public bool CheckCastle(CastleType type)
     {
-        return (CastleState & (int)type) == 1;
+        return (CastleState & (int)type) == (int)type;
     }
 }

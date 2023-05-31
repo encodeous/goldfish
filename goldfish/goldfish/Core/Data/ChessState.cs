@@ -1,4 +1,6 @@
-﻿namespace goldfish.Core.Data;
+﻿using goldfish.Core.Game;
+
+namespace goldfish.Core.Data;
 
 /// <summary>
 /// The current chess state, with white at the top and black at the bottom
@@ -76,10 +78,10 @@ public unsafe struct ChessState
 
         for (int i = 0; i < 8; i++)
         {
-            cur.SetPiece(0, i, DefaultPieces[i].GetPiece(true));
-            cur.SetPiece(7, i, DefaultPieces[i].GetPiece(false));
-            cur.SetPiece(1, i, PieceType.Pawn.GetPiece(true));
-            cur.SetPiece(6, i, PieceType.Pawn.GetPiece(false));
+            cur.SetPiece(0, i, DefaultPieces[i].GetPiece(Side.White));
+            cur.SetPiece(7, i, DefaultPieces[i].GetPiece(Side.Black));
+            cur.SetPiece(1, i, PieceType.Pawn.GetPiece(Side.White));
+            cur.SetPiece(6, i, PieceType.Pawn.GetPiece(Side.Black));
         }
 
         _state = cur;
