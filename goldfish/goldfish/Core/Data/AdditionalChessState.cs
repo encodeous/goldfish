@@ -9,10 +9,10 @@ public struct AdditionalChessState
     /// Marks a pawn as possible to capture via En Passant
     /// </summary>
     /// <param name="col"></param>
-    /// <param name="white"></param>
-    public void MarkEnPassant(int col, bool white)
+    /// <param name="side"></param>
+    public void MarkEnPassant(int col, Side side)
     {
-        if (white)
+        if (side == Side.White)
         {
             EnPassantPawns = (ushort)(EnPassantPawns | (1 << (col + 8)));
         }
@@ -26,9 +26,9 @@ public struct AdditionalChessState
     /// Checks if a pawn in the column is able to be captured En Passant
     /// </summary>
     /// <returns>true if possible</returns>
-    public bool CheckEnPassant(int col, bool white)
+    public bool CheckEnPassant(int col, Side side)
     {
-        if (white)
+        if (side == Side.White)
         {
             return ((EnPassantPawns >> (col + 8)) & 1) == 1;
         }

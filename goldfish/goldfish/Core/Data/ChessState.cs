@@ -24,7 +24,7 @@ public unsafe struct ChessState
     /// <param name="r">row, 0 based index</param>
     /// <param name="c">col, 0 based index</param>
     /// <returns></returns>
-    public byte GetPiece(int r, int c)
+    public readonly byte GetPiece(int r, int c)
     {
         return (byte)((Pieces[r * 4 + c / 2] >> ((c + 1) % 2 * 4)) & 0b1111);
     }
@@ -71,12 +71,12 @@ public unsafe struct ChessState
     {
         if (_state.Pieces[0] != 0) return _state;
         var cur = new ChessState();
-        for (int i = 0; i < 32; i++)
+        for (var i = 0; i < 32; i++)
         {
             cur.Pieces[i] = (byte)PieceType.Space | (byte)PieceType.Space << 4;
         }
 
-        for (int i = 0; i < 8; i++)
+        for (var i = 0; i < 8; i++)
         {
             cur.SetPiece(0, i, DefaultPieces[i].GetPiece(Side.White));
             cur.SetPiece(7, i, DefaultPieces[i].GetPiece(Side.Black));
@@ -86,5 +86,23 @@ public unsafe struct ChessState
 
         _state = cur;
         return cur;
+    }
+
+    /// <summary>
+    /// Locates the coordinates of the specified king
+    /// </summary>
+    /// <param name="side"></param>
+    /// <returns>(-1, -1) if not found</returns>
+    public readonly (int, int) GetKing(Side side)
+    {
+        for (var i = 0; i < 8; i++)
+        for (var j = 0; j < 8; j++)
+        {
+            var p = GetPiece(i, j);
+            if (p.GetPieceType() == PieceType.King && p.GetSide() == side)
+                return (i, j);
+        }
+
+        return (-1, -1);
     }
 }
