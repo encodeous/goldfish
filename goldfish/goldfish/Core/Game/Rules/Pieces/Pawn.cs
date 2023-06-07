@@ -70,12 +70,14 @@ public struct Pawn : IPieceLogic
                     };
                     return true;
                 }
-                if(state.Additional.CheckEnPassant(nc, side.GetOpposing())) // check en passant
+                if(state.Additional.CheckEnPassant(nc, side.GetOpposing())
+                   && ((side == Side.White && nr == 5) || (side == Side.Black && nr == 2))
+                   ) // check en passant
                 {
                     // take with en passant
                     state.FinalizeTurn();
                     nState.Move((r, c), (nr, nc));
-                    nState.SetPiece(nr - dir, nc, PieceType.Space.GetPiece(Side.None));
+                    nState.SetPiece(nr - dir, nc, PieceType.Space.ToPiece(Side.None));
                     move = new ChessMove()
                     {
                         Taken = (nr - dir, nc),

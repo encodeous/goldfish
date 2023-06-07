@@ -1,49 +1,70 @@
 ﻿using goldfish.Core.Data;
 using goldfish.Core.Game;
-using Spectre.Console;
+using Terminal.Gui;
 
 namespace goldfish_test.Console;
 
 public static class ChessPrinter
 {
-    public static Grid PrintBoard(this in ChessState state, ChessMove? prevMove)
+    public static void PrintBoard(ChessState state, ChessMove? prevMove, Label[,] grid)
     {
-        var grid = new Grid();
-        for (int i = 0; i < 9; i++)
-        {
-            grid.AddColumn(new GridColumn()
-            {
-                Padding = new Padding(0)
-            });
-        }
-        var dark = new Color(119, 149, 86);
-        var light = new Color(178, 188, 160);
-        var white = new Color(248, 248, 248);
-        var black = new Color(86, 83, 82);
-        grid.AddRow("-", "a", "b", "c", "d", "e", "f", "g", "h");
+        var dark = Color.DarkGray;
+        var light = Color.Gray;
+        var white = Color.White;
+        var black = Color.Black;
         for (var i = 7; i >= 0; i--)
         {
-            var row = new Text[9];
-            row[0] = new Text($"{i + 1}");
             for (var j = 0; j < 8; j++)
             {
                 var bg = (i + j) % 2 == 0 ? dark : light;
                 var fg = state.GetPiece(i, j).GetSide() == Side.Black ? black : white;
-                if (state.GetPiece(i, j).GetPieceType() == PieceType.King) fg = Color.Gold1;
+                if (state.GetPiece(i, j).GetPieceType() == PieceType.King) fg = Color.Cyan;
                 if (prevMove.HasValue)
                 {
                     if (prevMove.Value.NewPos == (i, j) || prevMove.Value.OldPos == (i, j))
                     {
-                        bg = Color.Salmon1;
+                        bg = Color.Green;
                     }
                 }
-                row[j + 1] = new Text(state.GetPiece(i, j).GetPieceType() == PieceType.Space ? " " : state.GetPiece(i, j).GetPieceType().ToString()[0].ToString(),
-                    new Style(fg, bg, Decoration.Bold));
+
+                var nColor = Application.Driver.MakeColor(fg, bg);
+                var lab = grid[i + 1, j + 1];
+                if (lab.ColorScheme is null)
+                    lab.ColorScheme = new ColorScheme();
+                lab.ColorScheme.Normal = nColor;
+                lab.Text = state.GetPiece(i, j).GetPieceType() == PieceType.Space
+                    ? " "
+                    : state.GetPiece(i, j).GetPieceType().ToString()[0].ToString();
             }
-
-            grid.AddRow(row);
         }
+    }
+    public static void PrintSelected(ChessState state, Label[,] grid, ChessMove[] moves)
+    {
+        var dark = Color.DarkGray;
+        var light = Color.Gray;
+        var white = Color.White;
+        var black = Color.Black;
+        for (var i = 7; i >= 0; i--)
+        {
+            for (var j = 0; j < 8; j++)
+            {
+                var bg = (i + j) % 2 == 0 ? dark : light;
+                var fg = state.GetPiece(i, j).GetSide() == Side.Black ? black : white;
+                if (state.GetPiece(i, j).GetPieceType() == PieceType.King) fg = Color.Cyan;
+                if (moves.Any(x=>x.NewPos==(i, j)))
+                {
+                    bg = Color.Green;
+                }
 
-        return grid;
+                var nColor = Application.Driver.MakeColor(fg, bg);
+                var lab = grid[i + 1, j + 1];
+                if (lab.ColorScheme is null)
+                    lab.ColorScheme = new ColorScheme();
+                lab.ColorScheme.Normal = nColor;
+                lab.Text = state.GetPiece(i, j).GetPieceType() == PieceType.Space
+                    ? " "
+                    : state.GetPiece(i, j).GetPieceType().ToString()[0].ToString();
+            }
+        }
     }
 }

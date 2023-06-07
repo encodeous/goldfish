@@ -55,6 +55,7 @@ public static class StateManipulator
     {
         var piece = state.GetPiece(r, c);
         var type = piece.GetPieceType();
+        if(type == PieceType.Space) yield break;
         var isChecked = state.IsChecked(piece.GetSide());
         var logic = piece.GetLogic();
         var moves = logic.GetMoves(state, r, c);
@@ -70,7 +71,8 @@ public static class StateManipulator
             }
             else
             {
-                yield return move;
+                if(!newCheckStatus) 
+                    yield return move;
             }
         }
     }
@@ -89,7 +91,12 @@ public static class StateManipulator
     public static void Move(ref this ChessState state, (int, int) oldP, (int, int) newP)
     {
         var piece = state.GetPiece(oldP.Item1, oldP.Item2);
-        state.SetPiece(oldP.Item1, oldP.Item2, PieceType.Space.GetPiece(Side.None));
+        state.SetPiece(oldP.Item1, oldP.Item2, PieceType.Space.ToPiece(Side.None));
         state.SetPiece(newP.Item1, newP.Item2, piece);
+    }
+
+    public static void Promote(this ref ChessState state, (int, int) pawnPos, PromotionType choice)
+    {
+        state.SetPiece(pawnPos.Item1, pawnPos.Item2, ((PieceType)choice).ToPiece(state.GetPiece(pawnPos.Item1, pawnPos.Item2).GetSide()));
     }
 }

@@ -78,10 +78,10 @@ public unsafe struct ChessState
 
         for (var i = 0; i < 8; i++)
         {
-            cur.SetPiece(0, i, DefaultPieces[i].GetPiece(Side.White));
-            cur.SetPiece(7, i, DefaultPieces[i].GetPiece(Side.Black));
-            cur.SetPiece(1, i, PieceType.Pawn.GetPiece(Side.White));
-            cur.SetPiece(6, i, PieceType.Pawn.GetPiece(Side.Black));
+            cur.SetPiece(0, i, DefaultPieces[i].ToPiece(Side.White));
+            cur.SetPiece(7, i, DefaultPieces[i].ToPiece(Side.Black));
+            cur.SetPiece(1, i, PieceType.Pawn.ToPiece(Side.White));
+            cur.SetPiece(6, i, PieceType.Pawn.ToPiece(Side.Black));
         }
 
         _state = cur;

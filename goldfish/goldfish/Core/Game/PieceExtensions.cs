@@ -36,6 +36,7 @@ public static class PieceExtensions
     /// <returns></returns>
     public static Side GetSide(this byte piece)
     {
+        if (piece.GetPieceType() == PieceType.Space) return Side.None;
         return IsWhite(piece) ? Side.White : Side.Black;
     }
 
@@ -56,7 +57,7 @@ public static class PieceExtensions
     /// <param name="type"></param>
     /// <param name="side"></param>
     /// <returns></returns>
-    public static byte GetPiece(this PieceType type, Side side)
+    public static byte ToPiece(this PieceType type, Side side)
     {
         if (type == PieceType.Space) return (byte)PieceType.Space;
         return (byte)((int)type + (side == Side.White ? 6 : 0));
@@ -131,10 +132,10 @@ public static class PieceExtensions
         {
             PieceType.Pawn => new Pawn(),
             PieceType.Rook => new Rook(),
-            PieceType.Knight => default,
-            PieceType.Bishop => default,
-            PieceType.Queen => default,
-            PieceType.King => default,
+            PieceType.Knight => new Knight(),
+            PieceType.Bishop => new Bishop(),
+            PieceType.Queen => new Queen(),
+            PieceType.King => new King(),
             PieceType.Space => default,
             _ => throw new ArgumentOutOfRangeException()
         });
