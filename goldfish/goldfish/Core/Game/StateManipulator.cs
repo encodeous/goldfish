@@ -119,12 +119,12 @@ public static class StateManipulator
 
     public static void FinalizeTurn(ref this ChessState state)
     {
-        state.Additional.EnPassantPawns = 0; // reset en passant
+        state.Additional.EnPassant = 0; // reset en passant
     }
     
     public static void FinalizeTurnWithEnPassant(ref this ChessState state, int col, Side side)
     {
-        state.Additional.EnPassantPawns = 0; // reset en passant
+        state.Additional.EnPassant = 0; // reset en passant
         state.Additional.MarkEnPassant(col, side);
     }
 

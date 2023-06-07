@@ -18,7 +18,6 @@ public static class ChessPrinter
             {
                 var bg = (i + j) % 2 == 0 ? dark : light;
                 var fg = state.GetPiece(i, j).GetSide() == Side.Black ? black : white;
-                if (state.GetPiece(i, j).GetPieceType() == PieceType.King) fg = Color.Cyan;
                 if (prevMove.HasValue)
                 {
                     if (prevMove.Value.NewPos == (i, j) || prevMove.Value.OldPos == (i, j))
@@ -32,9 +31,13 @@ public static class ChessPrinter
                 if (lab.ColorScheme is null)
                     lab.ColorScheme = new ColorScheme();
                 lab.ColorScheme.Normal = nColor;
-                lab.Text = state.GetPiece(i, j).GetPieceType() == PieceType.Space
-                    ? " "
-                    : state.GetPiece(i, j).GetPieceType().ToString()[0].ToString();
+                var p = state.GetPiece(i, j).GetPieceType();
+                lab.Text = p switch
+                {
+                    PieceType.Space => " ",
+                    PieceType.Knight => "N",
+                    _ => p.ToString()[0].ToString()
+                };
             }
         }
     }
@@ -50,7 +53,6 @@ public static class ChessPrinter
             {
                 var bg = (i + j) % 2 == 0 ? dark : light;
                 var fg = state.GetPiece(i, j).GetSide() == Side.Black ? black : white;
-                if (state.GetPiece(i, j).GetPieceType() == PieceType.King) fg = Color.Cyan;
                 if (moves.Any(x=>x.NewPos==(i, j)))
                 {
                     bg = Color.Green;
@@ -61,9 +63,13 @@ public static class ChessPrinter
                 if (lab.ColorScheme is null)
                     lab.ColorScheme = new ColorScheme();
                 lab.ColorScheme.Normal = nColor;
-                lab.Text = state.GetPiece(i, j).GetPieceType() == PieceType.Space
-                    ? " "
-                    : state.GetPiece(i, j).GetPieceType().ToString()[0].ToString();
+                var p = state.GetPiece(i, j).GetPieceType();
+                lab.Text = p switch
+                {
+                    PieceType.Space => " ",
+                    PieceType.Knight => "N",
+                    _ => p.ToString()[0].ToString()
+                };
             }
         }
     }

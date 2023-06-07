@@ -2,7 +2,7 @@
 
 public struct AdditionalChessState
 {
-    public ushort EnPassantPawns;
+    public byte EnPassant;
     public byte CastleState;
 
     /// <summary>
@@ -12,14 +12,7 @@ public struct AdditionalChessState
     /// <param name="side"></param>
     public void MarkEnPassant(int col, Side side)
     {
-        if (side == Side.White)
-        {
-            EnPassantPawns = (ushort)(EnPassantPawns | (1 << (col + 8)));
-        }
-        else
-        {
-            EnPassantPawns = (ushort)(EnPassantPawns | (1 << col));
-        }
+        EnPassant = (byte)(col << 2 | (int)side << 1 | 1);
     }
 
     /// <summary>
@@ -28,11 +21,10 @@ public struct AdditionalChessState
     /// <returns>true if possible</returns>
     public bool CheckEnPassant(int col, Side side)
     {
-        if (side == Side.White)
-        {
-            return ((EnPassantPawns >> (col + 8)) & 1) == 1;
-        }
-        return ((EnPassantPawns >> col) & 1) == 1;
+        if ((EnPassant & 1) != 1) return false;
+        var cSide = (Side)(EnPassant >> 1 & 1);
+        if (cSide != side) return false;
+        return EnPassant >> 2 == col;
     }
 
     /// <summary>
