@@ -102,7 +102,6 @@ public unsafe struct ChessState
             if (p.GetPieceType() == PieceType.King && p.GetSide() == side)
                 return (i, j);
         }
-
         return (-1, -1);
     }
 }

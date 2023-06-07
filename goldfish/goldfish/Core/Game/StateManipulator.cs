@@ -32,6 +32,46 @@ public static class StateManipulator
     }
 
     /// <summary>
+    /// Determines whether a side has won, returns None if neither side has won
+    /// </summary>
+    /// <returns></returns>
+    public static Side GetWinner(this in ChessState state)
+    {
+        if (state.IsChecked(Side.Black))
+        {
+            for (var i = 0; i < 8; i++)
+            for (var j = 0; j < 8; j++)
+            {
+                var piece = state.GetPiece(i, j);
+                if (piece.GetSide() != Side.Black || piece.GetLogic() is null) continue;
+                if (state.GetValidMovesForSquare(i, j).Any())
+                {
+                    return Side.None;
+                }
+            }
+
+            return Side.White;
+        }
+        if (state.IsChecked(Side.White))
+        {
+            for (var i = 0; i < 8; i++)
+            for (var j = 0; j < 8; j++)
+            {
+                var piece = state.GetPiece(i, j);
+                if (piece.GetSide() != Side.White || piece.GetLogic() is null) continue;
+                if (state.GetValidMovesForSquare(i, j).Any())
+                {
+                    return Side.None;
+                }
+            }
+
+            return Side.Black;
+        }
+
+        return Side.None;
+    }
+
+    /// <summary>
     /// Determines whether the specified king is being checked
     /// </summary>
     /// <param name="state"></param>

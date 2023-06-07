@@ -90,7 +90,13 @@ internal class Program
                             game.CurrentState.Promote(move.NewPos, promType.Value);
                             break;
                         }
-                        ChessPrinter.PrintBoard(game.CurrentState, move, grid);
+                        var win = game.CurrentState.GetWinner();
+                        if (win != Side.None)
+                        {
+                            MessageBox.Query("Checkmate", $"{win} has won by checkmate", "Restart Game");
+                            game.Reset();
+                        }
+                        ChessPrinter.PrintBoard(game.CurrentState, game.LastMove, grid);
                         _selMoves = null;
                     }
                 };
