@@ -5,12 +5,16 @@ namespace goldfish.Engine.Analysis.Analyzers;
 
 public class WinAnalyzer : IGameAnalyzer
 {
-    public double Weighting => double.PositiveInfinity;
+    public double Weighting => 1;
     public double GetScore(in ChessState state)
     {
-        var win = state.GetWinner();
-        if (win == Side.White) return 1;
-        else if (win == Side.Black) return -1;
+        var win = state.GetGameState();
+        if (win.HasValue)
+        {
+            if (win == Side.White) return double.PositiveInfinity;
+            if (win == Side.Black) return double.NegativeInfinity;
+            if (win == Side.None) return double.NaN;
+        }
         return 0;
     }
 }

@@ -91,10 +91,17 @@ internal class Program
                             game.CurrentState.Promote(move.NewPos, promType.Value);
                             break;
                         }
-                        var win = game.CurrentState.GetWinner();
-                        if (win != Side.None)
+                        var gState = game.CurrentState.GetGameState();
+                        if (gState is not null)
                         {
-                            MessageBox.Query("Checkmate", $"{win} has won by checkmate", "Restart Game");
+                            if (gState.Value == Side.None)
+                            {
+                                MessageBox.Query("Stalemate", $"The game has ended in a draw.", "Restart Game");
+                            }
+                            else
+                            {
+                                MessageBox.Query("Checkmate", $"{gState.Value} has won by checkmate", "Restart Game");
+                            }
                             game.Reset();
                         }
                         ChessPrinter.PrintBoard(game.CurrentState, game.LastMove, grid);

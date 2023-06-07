@@ -32,12 +32,12 @@ public static class StateManipulator
     }
 
     /// <summary>
-    /// Determines whether a side has won, returns None if neither side has won
+    /// Determines whether a side has won
     /// </summary>
-    /// <returns></returns>
-    public static Side GetWinner(this in ChessState state)
+    /// <returns>returns None if it is a draw and null if there is no Checkmate or Stalemate</returns>
+    public static Side? GetGameState(this in ChessState state)
     {
-        if (state.IsChecked(Side.Black))
+        if (state.ToMove == Side.Black)
         {
             for (var i = 0; i < 8; i++)
             for (var j = 0; j < 8; j++)
@@ -46,13 +46,12 @@ public static class StateManipulator
                 if (piece.GetSide() != Side.Black || piece.GetLogic() is null) continue;
                 if (state.GetValidMovesForSquare(i, j).Any())
                 {
-                    return Side.None;
+                    return null;
                 }
             }
-
-            return Side.White;
+            return state.IsChecked(Side.Black) ? Side.White : Side.None;
         }
-        if (state.IsChecked(Side.White))
+        if (state.ToMove == Side.White)
         {
             for (var i = 0; i < 8; i++)
             for (var j = 0; j < 8; j++)
@@ -61,11 +60,10 @@ public static class StateManipulator
                 if (piece.GetSide() != Side.White || piece.GetLogic() is null) continue;
                 if (state.GetValidMovesForSquare(i, j).Any())
                 {
-                    return Side.None;
+                    return null;
                 }
             }
-
-            return Side.Black;
+            return state.IsChecked(Side.White) ? Side.Black : Side.None;
         }
 
         return Side.None;

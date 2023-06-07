@@ -25,11 +25,18 @@ public class GameStateAnalyzer
     public double Evaluate()
     {
         double score = 0;
+        double weighting = 0;
         foreach (var analyzer in _analyzers)
         {
-            score += analyzer.GetScore(_state) * analyzer.Weighting;
+            var cScore = analyzer.GetScore(_state);
+            if (double.IsNaN(cScore))
+            {
+                return 0;
+            }
+            score += cScore * analyzer.Weighting;
+            weighting += analyzer.Weighting;
         }
 
-        return score;
+        return score / weighting;
     }
 }
