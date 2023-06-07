@@ -2,6 +2,7 @@
 using goldfish_test.Console;
 using goldfish.Core.Data;
 using goldfish.Core.Game;
+using goldfish.Core.Game.FEN;
 using Terminal.Gui;
 using Attribute = Terminal.Gui.Attribute;
 
@@ -59,7 +60,7 @@ internal class Program
                 lab.Clicked += () =>
                 {
                     var p = game.CurrentState.GetPiece(x - 1, y - 1);
-                    if (p.GetPieceType() != PieceType.Space && p.GetSide() == game.CurrentTurn)
+                    if (p.GetPieceType() != PieceType.Space && p.GetSide() == game.CurrentState.ToMove)
                     {
                         var moves = game.CurrentState.GetValidMovesForSquare(x - 1, y - 1).ToArray();
                         _selMoves = moves;
@@ -72,7 +73,7 @@ internal class Program
                         game.Commit();
                         game.CurrentState = move.NewState;
                         game.LastMove = move;
-                        stateLabel.Text = $"{game.CurrentTurn}'s Turn";
+                        stateLabel.Text = $"{game.CurrentState.ToMove}'s Turn";
                         while (move.IsPromotion)
                         {
                             var sel = MessageBox.Query("Promotion", "Choose one of the following to promote to: ",
@@ -134,11 +135,49 @@ internal class Program
                         Application.RequestStop();
                     }),
                 }),
+                new ("_Load FEN", "", () =>
+                {
+                    var load = new Button("Load");
+                    var fenField = new TextField()
+                    {
+                        X = 0,
+                        Y = 1,
+                        Width = 50
+                    };
+                    var dialog = new Dialog ("Load game from FEN", load)
+                    {
+                        Height = 6,
+                        Width = 52
+                    };
+                    dialog.Add(fenField);
+                    var k = () =>
+                    {
+                        try
+                        {
+                            var state = FenParser.Parse(fenField.Text.ToString());
+                            game.Reset();
+                            game.CurrentState = state;
+                            ChessPrinter.PrintBoard(game.CurrentState, game.LastMove, grid);
+                            Application.RequestStop();
+                        }
+                        catch
+                        {
+                            MessageBox.Query("Invalid FEN", "The specified FEN was not valid, try again!", "Ok");
+                        }
+                    };
+                    ;
+                    load.Clicked += k;
+                    fenField.KeyDown += eventArgs =>
+                    {
+                        if (eventArgs.KeyEvent.Key == Key.Enter) k();
+                    };
+                    Application.Run(dialog);
+                }),
                 new("_Undo", "", () =>
                 {
                     game.Rollback();
                     ChessPrinter.PrintBoard(game.CurrentState, game.LastMove, grid);
-                    stateLabel.Text = $"{game.CurrentTurn}'s Turn";
+                    stateLabel.Text = $"{game.CurrentState.ToMove}'s Turn";
                 }),
             });
         menu.Text = "GoldFish Engine ALPHA";

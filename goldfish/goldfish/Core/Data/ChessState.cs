@@ -18,6 +18,8 @@ public unsafe struct ChessState
     /// </summary>
     public AdditionalChessState Additional;
 
+    public Side ToMove;
+    
     /// <summary>
     /// Gets the 4-bit piece from the compressed data
     /// </summary>
@@ -84,6 +86,7 @@ public unsafe struct ChessState
             cur.SetPiece(6, i, PieceType.Pawn.ToPiece(Side.Black));
         }
 
+        cur.ToMove = Side.White;
         _state = cur;
         return cur;
     }
