@@ -1,9 +1,10 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Text;
+using System.Text.RegularExpressions;
 using goldfish.Core.Data;
 
 namespace goldfish.Core.Game.FEN;
 
-public static partial class FenParser
+public static class FenConvert
 {
     public static ChessState Parse(string fenString)
     {
@@ -69,6 +70,78 @@ public static partial class FenParser
         return state;
     }
 
+    public static string ToFen(ChessState state)
+    {
+        var sb = new StringBuilder();
+        for (var i = 7; i >= 0; i--)
+        {
+            var cnt = 0;
+            for (var j = 0; j < 8; j++)
+            {
+                var p = state.GetPiece(8 - i - 1, j);
+                if (p.GetPieceType() == PieceType.Space)
+                {
+                    cnt++;
+                }
+                else
+                {
+                    if (cnt != 0)
+                    {
+                        sb.Append(cnt);
+                        cnt = 0;
+                    }
+
+                    sb.Append(ConvertPiece(p));
+                }
+            }
+            if (cnt != 0)
+            {
+                sb.Append(cnt);
+            }
+
+            if(i != 0) sb.Append('/');
+        }
+        
+        sb.Append(' ');
+
+        sb.Append(state.ToMove == Side.White ? 'w' : 'b');
+
+        sb.Append(' ');
+        if (state.Additional.CastleState == 0b1111)
+        {
+            sb.Append('-');
+        }
+        else
+        {
+            if (state.Additional.CheckCastle(CastleType.WhiteKs))
+                sb.Append('K');
+            if (state.Additional.CheckCastle(CastleType.WhiteQs))
+                sb.Append('W');
+            if (state.Additional.CheckCastle(CastleType.BlackKs))
+                sb.Append('k');
+            if (state.Additional.CheckCastle(CastleType.BlackQs))
+                sb.Append('q');
+        }
+
+        sb.Append(' ');
+        var epCol = state.Additional.EnPassant >> 2;
+        var cSide = (Side)(state.Additional.EnPassant >> 1 & 1);
+        if (state.Additional.CheckEnPassant(epCol, cSide))
+        {
+            var rCol = (char)(epCol + 'a');
+            var rRow = cSide == Side.Black ? 6 : 3;
+            sb.Append(rCol);
+            sb.Append(rRow);
+        }
+        else
+        {
+            sb.Append('-');
+        }
+
+        sb.Append(" 0 0");
+        return sb.ToString();
+    }
+
     private static byte ParsePiece(char c)
     {
         var side = Side.Black;
@@ -89,5 +162,23 @@ public static partial class FenParser
             _ => throw new ArgumentOutOfRangeException(nameof(c), c, null)
         };
         return type.ToPiece(side);
+    }
+    
+    private static char ConvertPiece(byte c)
+    {
+        var side = c.GetSide();
+
+        var t = c.GetPieceType();
+        var type = t switch
+        {
+            PieceType.Pawn => 'p',
+            PieceType.Knight => 'n',
+            PieceType.Bishop => 'b',
+            PieceType.Rook => 'r',
+            PieceType.Queen => 'q',
+            PieceType.King => 'k',
+            _ => throw new ArgumentOutOfRangeException(nameof(c), c, null)
+        };
+        return side == Side.Black ? type : char.ToUpper(type);
     }
 }

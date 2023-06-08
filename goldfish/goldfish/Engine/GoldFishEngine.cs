@@ -7,8 +7,9 @@ namespace goldfish.Engine;
 
 public static class GoldFishEngine
 {
-    public static (double, ChessMove?) NextOptimalMove(ChessState state, int depth, ChessMove? curMove = default)
+    public static (double, ChessMove?) NextOptimalMove(ChessState state, int depth, double alpha, double beta, ChessMove? curMove = default)
     {
+        // alpha is white, beta is black
         var eval = new GameStateAnalyzer(state);
         var evalV = eval.Evaluate();
         ChessMove? topEvalMove = null;
@@ -26,9 +27,9 @@ public static class GoldFishEngine
         {
             var piece = state.GetPiece(i, j);
             if (piece.GetSide() != toPlay || piece.GetLogic() is null) continue;
-            foreach (var move in state.GetValidMovesForSquare(i, j))
+            foreach (var move in state.GetValidMovesForSquare(i, j, eval.Cache))
             {
-                var curEval = NextOptimalMove(move.NewState, depth - 1, move);
+                var curEval = NextOptimalMove(move.NewState, depth - 1, alpha, beta, move);
                 if (curEval.Item1 * flipEval >= optimize)
                 {
                     optimize = curEval.Item1 * flipEval;
@@ -38,6 +39,22 @@ public static class GoldFishEngine
                     }
                     topEvalMove = move;
                 }
+                // if (state.ToMove == Side.White)
+                // {
+                //     alpha = Math.Max(alpha, optimize);
+                //     if (beta <= alpha)
+                //     {
+                //         return (flipEval * curEval.Item1, move);
+                //     }
+                // }
+                // else
+                // {
+                //     beta = Math.Min(beta, -optimize);
+                //     if (beta <= alpha)
+                //     {
+                //         return (flipEval * curEval.Item1, move);
+                //     }
+                // }
             }
         }
         

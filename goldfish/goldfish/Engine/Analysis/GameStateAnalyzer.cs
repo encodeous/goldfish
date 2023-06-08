@@ -1,4 +1,5 @@
 ﻿using goldfish.Core.Data;
+using goldfish.Core.Data.Optimization;
 using goldfish.Engine.Analysis.Analyzers;
 
 namespace goldfish.Engine.Analysis;
@@ -7,6 +8,7 @@ public class GameStateAnalyzer
 {
     private ChessState _state;
     private readonly IGameAnalyzer[] _analyzers;
+    private StateEvaluationCache _cache = new();
 
     public GameStateAnalyzer(ChessState state)
     {
@@ -16,6 +18,11 @@ public class GameStateAnalyzer
             new MaterialAnalyzer(),
             new WinAnalyzer()
         };
+    }
+
+    public StateEvaluationCache Cache
+    {
+        get => _cache;
     }
 
     /// <summary>
@@ -28,7 +35,7 @@ public class GameStateAnalyzer
         double weighting = 0;
         foreach (var analyzer in _analyzers)
         {
-            var cScore = analyzer.GetScore(_state);
+            var cScore = analyzer.GetScore(_state, this);
             if (double.IsNaN(cScore))
             {
                 return 0;

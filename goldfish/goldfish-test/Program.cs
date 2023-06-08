@@ -112,7 +112,8 @@ internal class Program
                             if (game.IsEngineActive)
                             {
                                 game.Commit();
-                                var nextMove = GoldFishEngine.NextOptimalMove(game.CurrentState, 4);
+                                double alpha = double.NegativeInfinity, beta = double.PositiveInfinity;
+                                var nextMove = GoldFishEngine.NextOptimalMove(game.CurrentState, 4, alpha, beta);
                                 Debug.WriteLine($"Move calc w/ eval of {nextMove.Item1}");
                                 game.LastMove = nextMove.Item2;
                                 game.CurrentState = nextMove.Item2.Value.NewState;
@@ -191,7 +192,7 @@ internal class Program
                     {
                         try
                         {
-                            var state = FenParser.Parse(fenField.Text.ToString());
+                            var state = FenConvert.Parse(fenField.Text.ToString());
                             game.Reset();
                             game.CurrentState = state;
                             ChessPrinter.PrintBoard(game.CurrentState, game.LastMove, grid);

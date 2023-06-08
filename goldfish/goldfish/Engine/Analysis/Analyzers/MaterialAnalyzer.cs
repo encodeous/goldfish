@@ -21,7 +21,7 @@ public class MaterialAnalyzer : IGameAnalyzer
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }
-    public double GetScore(in ChessState state)
+    public double GetScore(in ChessState state, GameStateAnalyzer analyzer)
     {
         int score = 0;
         for (var i = 0; i < 8; i++)

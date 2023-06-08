@@ -6,9 +6,9 @@ namespace goldfish.Engine.Analysis.Analyzers;
 public class WinAnalyzer : IGameAnalyzer
 {
     public double Weighting => 1;
-    public double GetScore(in ChessState state)
+    public double GetScore(in ChessState state, GameStateAnalyzer analyzer)
     {
-        var win = state.GetGameState();
+        var win = state.GetGameState(analyzer.Cache);
         if (win.HasValue)
         {
             if (win == Side.White) return double.PositiveInfinity;

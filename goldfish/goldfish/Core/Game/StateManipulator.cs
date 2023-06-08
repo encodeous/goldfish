@@ -1,4 +1,5 @@
 ﻿using goldfish.Core.Data;
+using goldfish.Core.Data.Optimization;
 using goldfish.Core.Game.Rules.Pieces;
 
 namespace goldfish.Core.Game;
@@ -13,9 +14,11 @@ public static class StateManipulator
     /// </summary>
     /// <param name="state"></param>
     /// <param name="side"></param>
+    /// <param name="cache"></param>
     /// <returns></returns>
-    public static bool[,] GetAttackMatrix(this in ChessState state, Side side)
+    public static bool[,] GetAttackMatrix(this in ChessState state, Side side, StateEvaluationCache? cache = null)
     {
+        if (cache is not null && cache.AttackCache[(int)side] is not null) return cache.AttackCache[(int)side];
         var atk = new bool[8, 8];
         for (var i = 0; i < 8; i++)
         for (var j = 0; j < 8; j++)
@@ -28,6 +31,7 @@ public static class StateManipulator
             }
         }
 
+        if (cache is not null) cache.AttackCache[(int)side] = atk;
         return atk;
     }
 
@@ -35,7 +39,7 @@ public static class StateManipulator
     /// Determines whether a side has won
     /// </summary>
     /// <returns>returns None if it is a draw and null if there is no Checkmate or Stalemate</returns>
-    public static Side? GetGameState(this in ChessState state)
+    public static Side? GetGameState(this in ChessState state, StateEvaluationCache? cache = null)
     {
         if (state.ToMove == Side.Black)
         {
@@ -44,12 +48,12 @@ public static class StateManipulator
             {
                 var piece = state.GetPiece(i, j);
                 if (piece.GetSide() != Side.Black || piece.GetLogic() is null) continue;
-                if (state.GetValidMovesForSquare(i, j).Any())
+                if (state.GetValidMovesForSquare(i, j, cache).Any())
                 {
                     return null;
                 }
             }
-            return state.IsChecked(Side.Black) ? Side.White : Side.None;
+            return state.IsChecked(Side.Black, cache) ? Side.White : Side.None;
         }
         if (state.ToMove == Side.White)
         {
@@ -58,12 +62,12 @@ public static class StateManipulator
             {
                 var piece = state.GetPiece(i, j);
                 if (piece.GetSide() != Side.White || piece.GetLogic() is null) continue;
-                if (state.GetValidMovesForSquare(i, j).Any())
+                if (state.GetValidMovesForSquare(i, j, cache).Any())
                 {
                     return null;
                 }
             }
-            return state.IsChecked(Side.White) ? Side.Black : Side.None;
+            return state.IsChecked(Side.White, cache) ? Side.Black : Side.None;
         }
 
         return Side.None;
@@ -74,45 +78,65 @@ public static class StateManipulator
     /// </summary>
     /// <param name="state"></param>
     /// <param name="side"></param>
+    /// <param name="cache"></param>
     /// <returns></returns>
-    public static bool IsChecked(this in ChessState state, Side side)
+    public static bool IsChecked(this in ChessState state, Side side, StateEvaluationCache? cache = null)
     {
+        if (cache is not null && cache.Checked != Side.None) return side == cache.Checked;
         var king = state.GetKing(side);
-        var mtx = GetAttackMatrix(state, side.GetOpposing());
-        return mtx[king.Item1, king.Item2];
+        var mtx = GetAttackMatrix(state, side.GetOpposing(), cache);
+        var res = mtx[king.Item1, king.Item2];
+        if (cache is not null && res) cache.Checked = side;
+        return res;
     }
+
     /// <summary>
     /// Gets all of the valid moves of a piece
     /// </summary>
     /// <param name="state"></param>
     /// <param name="r"></param>
     /// <param name="c"></param>
+    /// <param name="cache"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public static IEnumerable<ChessMove> GetValidMovesForSquare(this ChessState state, int r, int c)
+    public static IEnumerable<ChessMove> GetValidMovesForSquare(this ChessState state, int r, int c, StateEvaluationCache? cache = null)
     {
         var piece = state.GetPiece(r, c);
         var type = piece.GetPieceType();
-        if(type == PieceType.Space) yield break;
-        var isChecked = state.IsChecked(piece.GetSide());
+        if(type == PieceType.Space) return Enumerable.Empty<ChessMove>();
+        var isChecked = state.IsChecked(piece.GetSide(), cache);
         var logic = piece.GetLogic();
         var moves = logic.GetMoves(state, r, c);
-        // check the moves
-        foreach (var move in moves)
+
+        IEnumerable<ChessMove> ValidMoves()
         {
-            var newCheckStatus = move.NewState.IsChecked(piece.GetSide());
-            if (isChecked)
+            // check the moves
+            foreach (var move in moves)
             {
-                // only permit blocking moves and do not allow castle out of check
-                if (!newCheckStatus && !move.IsCastle)
-                    yield return move;
-            }
-            else
-            {
-                if(!newCheckStatus) 
-                    yield return move;
+                var newCheckStatus = move.NewState.IsChecked(piece.GetSide());
+                if (isChecked)
+                {
+                    // only permit blocking moves and do not allow castle out of check
+                    if (!newCheckStatus && !move.IsCastle)
+                        yield return move;
+                }
+                else
+                {
+                    if(!newCheckStatus) 
+                        yield return move;
+                }
             }
         }
+        if (cache != null)
+        {
+            if (cache.CachedMoves[r, c] is not null)
+            {
+                return cache.CachedMoves[r, c];
+            }
+            return cache.CachedMoves[r, c] = ValidMoves();
+        }
+
+        return ValidMoves();
     }
 
     public static void FinalizeTurn(ref this ChessState state)
