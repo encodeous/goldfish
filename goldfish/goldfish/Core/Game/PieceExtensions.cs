@@ -1,4 +1,5 @@
-﻿using goldfish.Core.Data;
+﻿using System.Runtime.CompilerServices;
+using goldfish.Core.Data;
 using goldfish.Core.Game.Rules.Pieces;
 
 namespace goldfish.Core.Game;
@@ -45,6 +46,7 @@ public static class PieceExtensions
     /// </summary>
     /// <param name="piece"></param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PieceType GetPieceType(this byte piece)
     {
         if (piece == (int)PieceType.Space) return PieceType.Space;

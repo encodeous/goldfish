@@ -1,4 +1,5 @@
-﻿using goldfish.Core.Game;
+﻿using System.Runtime.CompilerServices;
+using goldfish.Core.Game;
 
 namespace goldfish.Core.Data;
 
@@ -26,6 +27,7 @@ public unsafe struct ChessState
     /// <param name="r">row, 0 based index</param>
     /// <param name="c">col, 0 based index</param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly byte GetPiece(int r, int c)
     {
         return (byte)((Pieces[r * 4 + c / 2] >> ((c + 1) % 2 * 4)) & 0b1111);

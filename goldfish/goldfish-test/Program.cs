@@ -3,6 +3,7 @@ using goldfish_test.Console;
 using goldfish.Core.Data;
 using goldfish.Core.Game;
 using goldfish.Core.Game.FEN;
+using goldfish.Engine;
 using Terminal.Gui;
 using Attribute = Terminal.Gui.Attribute;
 
@@ -10,6 +11,7 @@ internal class Program
 {
     private static ChessGame game = new ChessGame();
     private static ChessMove[]? _selMoves;
+    private static MenuBarItem goldFishToggle;
     public static void Main(string[] args)
     {
         Application.Init();
@@ -104,6 +106,31 @@ internal class Program
                             }
                             game.Reset();
                         }
+                        else
+                        {
+                            // let engine play
+                            if (game.IsEngineActive)
+                            {
+                                game.Commit();
+                                var nextMove = GoldFishEngine.NextOptimalMove(game.CurrentState, 4);
+                                Debug.WriteLine($"Move calc w/ eval of {nextMove.Item1}");
+                                game.LastMove = nextMove.Item2;
+                                game.CurrentState = nextMove.Item2.Value.NewState;
+                                var gState2 = game.CurrentState.GetGameState();
+                                if (gState2 is not null)
+                                {
+                                    if (gState2.Value == Side.None)
+                                    {
+                                        MessageBox.Query("Stalemate", $"The game has ended in a draw.", "Restart Game");
+                                    }
+                                    else
+                                    {
+                                        MessageBox.Query("Checkmate", $"{gState2.Value} has won by checkmate", "Restart Game");
+                                    }
+                                    game.Reset();
+                                }
+                            }
+                        }
                         ChessPrinter.PrintBoard(game.CurrentState, game.LastMove, grid);
                         _selMoves = null;
                     }
@@ -122,14 +149,17 @@ internal class Program
         ChessPrinter.PrintBoard(game.CurrentState, game.LastMove, grid);
 
         wnd.Add(chessBoardView);
-
+            
+        goldFishToggle = new MenuBarItem("_GoldFish Active", "", () =>
+        {
+            game.IsEngineActive = !game.IsEngineActive;
+            goldFishToggle.Title = game.IsEngineActive ? "_GoldFish Active" : "_GoldFish Inactive";
+        });
+        
         var menu = new MenuBar(
             new MenuBarItem[]
             {
-                new()
-                {
-                    Title = "GoldFish Engine ALPHA"
-                },
+                goldFishToggle,
                 new("_Game", new[]
                 {
                     new MenuItem("_Restart", "", () =>

@@ -7,6 +7,7 @@ public class ChessGame
     public ChessState CurrentState;
     public ChessMove? LastMove;
     public Stack<ChessState> States;
+    public bool IsEngineActive = true;
 
     public ChessGame()
     {
