@@ -75,7 +75,7 @@ public struct Pawn : IPieceLogic
                    ) // check en passant
                 {
                     // take with en passant
-                    state.FinalizeTurn();
+                    nState.FinalizeTurn();
                     nState.Move((r, c), (nr, nc));
                     nState.SetPiece(nr - dir, nc, PieceType.Space.ToPiece(Side.None));
                     move = new ChessMove()
