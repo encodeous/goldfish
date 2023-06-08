@@ -78,7 +78,7 @@ public static class FenConvert
             var cnt = 0;
             for (var j = 0; j < 8; j++)
             {
-                var p = state.GetPiece(8 - i - 1, j);
+                var p = state.GetPiece(i, j);
                 if (p.GetPieceType() == PieceType.Space)
                 {
                     cnt++;
@@ -113,13 +113,13 @@ public static class FenConvert
         }
         else
         {
-            if (state.Additional.CheckCastle(CastleType.WhiteKs))
+            if (!state.Additional.CheckCastle(CastleType.WhiteKs))
                 sb.Append('K');
-            if (state.Additional.CheckCastle(CastleType.WhiteQs))
-                sb.Append('W');
-            if (state.Additional.CheckCastle(CastleType.BlackKs))
+            if (!state.Additional.CheckCastle(CastleType.WhiteQs))
+                sb.Append('Q');
+            if (!state.Additional.CheckCastle(CastleType.BlackKs))
                 sb.Append('k');
-            if (state.Additional.CheckCastle(CastleType.BlackQs))
+            if (!state.Additional.CheckCastle(CastleType.BlackQs))
                 sb.Append('q');
         }
 

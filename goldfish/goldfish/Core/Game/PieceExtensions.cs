@@ -107,7 +107,7 @@ public static class PieceExtensions
         if (r == 7 && c == 0)
             return CastleType.BlackQs;
 
-        return CastleType.BlackQs;
+        return CastleType.BlackKs;
 
     }
 

@@ -2,12 +2,13 @@
 using goldfish.Core.Data;
 using goldfish.Core.Game;
 using goldfish.Engine.Analysis;
+using goldfish.Core.Game.FEN;
 
 namespace goldfish.Engine;
 
 public static class GoldFishEngine
 {
-    public static (double, ChessMove?) NextOptimalMove(ChessState state, int depth, double alpha, double beta, ChessMove? curMove = default)
+    public static (double, ChessMove?) NextOptimalMove(ChessState state, int depth, double alpha, double beta, int dbgHash = 0, ChessMove? curMove = default)
     {
         // alpha is white, beta is black
         var eval = new GameStateAnalyzer(state);
@@ -19,9 +20,23 @@ public static class GoldFishEngine
         }
 
         var toPlay = state.ToMove;
+
+        Func<double, double, double> optimizer;
+        double optimalVal;
         
-        var flipEval = toPlay == Side.Black ? -1 : 1;
-        var optimize = double.NegativeInfinity;
+        if (toPlay == Side.White)
+        {
+            // maximize
+            optimalVal = double.NegativeInfinity;
+            optimizer = Math.Max;
+        }
+        else
+        {
+            // minimize
+            optimalVal = double.PositiveInfinity;
+            optimizer = Math.Min;
+        }
+        
         for (var i = 0; i < 8; i++)
         for (var j = 0; j < 8; j++)
         {
@@ -29,35 +44,27 @@ public static class GoldFishEngine
             if (piece.GetSide() != toPlay || piece.GetLogic() is null) continue;
             foreach (var move in state.GetValidMovesForSquare(i, j, eval.Cache))
             {
-                var curEval = NextOptimalMove(move.NewState, depth - 1, alpha, beta, move);
-                if (curEval.Item1 * flipEval >= optimize)
+                var (nEval, nMove) = NextOptimalMove(move.NewState, depth - 1, alpha, beta, dbgHash, move);
+                Debug.WriteLine($"{nEval} - {FenConvert.ToFen(move.NewState)}");
+                optimalVal = optimizer(nEval, optimalVal);
+                if (optimalVal == nEval)
                 {
-                    optimize = curEval.Item1 * flipEval;
                     if (curMove == null)
                     {
-                        Debug.WriteLine($"{piece.GetPieceType()}>{(i, j)} to {(move.NewPos)} @ {optimize}");
+                        Debug.WriteLine($"{piece.GetPieceType()}>{(i, j)} to {(move.NewPos)} @ {optimalVal}");
                     }
-                    topEvalMove = move;
+                    topEvalMove = nMove;
                 }
-                // if (state.ToMove == Side.White)
-                // {
-                //     alpha = Math.Max(alpha, optimize);
-                //     if (beta <= alpha)
-                //     {
-                //         return (flipEval * curEval.Item1, move);
-                //     }
-                // }
-                // else
-                // {
-                //     beta = Math.Min(beta, -optimize);
-                //     if (beta <= alpha)
-                //     {
-                //         return (flipEval * curEval.Item1, move);
-                //     }
-                // }
+
+                if (state.ToMove == Side.White)
+                    alpha = Math.Max(alpha, nEval);
+                else
+                    beta = Math.Min(beta, nEval);
+                if (beta <= alpha)
+                    return (optimalVal, topEvalMove);
             }
         }
-        
-        return (flipEval * optimize, topEvalMove);
+
+        return (optimalVal, topEvalMove);
     }
 }

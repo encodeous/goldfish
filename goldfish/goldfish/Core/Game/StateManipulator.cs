@@ -133,7 +133,7 @@ public static class StateManipulator
             {
                 return cache.CachedMoves[r, c];
             }
-            return cache.CachedMoves[r, c] = ValidMoves();
+            return cache.CachedMoves[r, c] = ValidMoves().ToArray();
         }
 
         return ValidMoves();
