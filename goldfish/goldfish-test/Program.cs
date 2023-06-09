@@ -123,20 +123,20 @@ internal class Program
                                     game.LastMove = bMove;
                                     game.CurrentState = bMove.NewState;
                                     var gState2 = game.CurrentState.GetGameState();
-                                    if (gState2 is not null)
-                                    {
-                                        if (gState2.Value == Side.None)
-                                        {
-                                            MessageBox.Query("Stalemate", $"The game has ended in a draw.", "Restart Game");
-                                        }
-                                        else
-                                        {
-                                            MessageBox.Query("Checkmate", $"{gState2.Value} has won by checkmate", "Restart Game");
-                                        }
-                                        game.Reset();
-                                    }
                                     Application.MainLoop.Invoke(() =>
                                     {
+                                        if (gState2 is not null)
+                                        {
+                                            if (gState2.Value == Side.None)
+                                            {
+                                                MessageBox.Query("Stalemate", $"The game has ended in a draw.", "Restart Game");
+                                            }
+                                            else
+                                            {
+                                                MessageBox.Query("Checkmate", $"{gState2.Value} has won by checkmate", "Restart Game");
+                                            }
+                                            game.Reset();
+                                        }
                                         stateLabel.Text = $"{game.CurrentState.ToMove}'s Turn";
                                         ChessPrinter.PrintBoard(game.CurrentState, game.LastMove, grid);
                                     });

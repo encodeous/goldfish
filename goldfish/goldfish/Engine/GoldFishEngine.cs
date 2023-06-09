@@ -61,10 +61,6 @@ public static class GoldFishEngine
         }
         foreach (var (move, mEval, mCache) in evalMoves)
         {
-            if(move.Type == PieceType.Pawn && move.Taken == (7, 3))
-            {
-                Console.WriteLine();
-            }
             var nEval = NextOptimalMove(move.NewState, depth - 1, out _, alpha, beta, mEval, mCache);
             // Debug.WriteLine($"{nEval} - {FenConvert.ToFen(move.NewState)}");
             optimalVal = optimizer(nEval, optimalVal);
@@ -79,85 +75,6 @@ public static class GoldFishEngine
                 {
                     bestMove = topEvalMove.Value;
                 }
-            }
-
-            if (state.ToMove == Side.White)
-                alpha = Math.Max(alpha, nEval);
-            else
-                beta = Math.Min(beta, nEval);
-            if (beta <= alpha)
-                return optimalVal;
-        }
-        return optimalVal;
-    }
-    
-    public static double NextMoveSeq(ChessState state, int depth, out List<ChessMove> bestMove, double alpha = double.NegativeInfinity, double beta = double.PositiveInfinity, double eval = double.NaN, StateEvaluationCache cache = null)
-    {
-        bestMove = new List<ChessMove>();
-        // alpha is white, beta is black
-        ChessMove? topEvalMove = null;
-        if (depth == 0 || double.IsPositiveInfinity(Math.Abs(eval)))
-        {
-            return eval;
-        }
-
-        var toPlay = state.ToMove;
-
-        Func<double, double, double> optimizer;
-        double optimalVal;
-        
-        if (toPlay == Side.White)
-        {
-            // maximize
-            optimalVal = double.NegativeInfinity;
-            optimizer = Math.Max;
-        }
-        else
-        {
-            // minimize
-            optimalVal = double.PositiveInfinity;
-            optimizer = Math.Min;
-        }
-
-        var evalMoves = new List<(ChessMove, double, StateEvaluationCache)>();
-        for (var i = 0; i < 8; i++)
-        for (var j = 0; j < 8; j++)
-        {
-            var piece = state.GetPiece(i, j);
-            if (piece.GetSide() != toPlay || piece.GetLogic() is null) continue;
-            foreach (var move in state.GetValidMovesForSquare(i, j, cache))
-            {
-                var analyzer = new GameStateAnalyzer(move.NewState);
-                evalMoves.Add((move, analyzer.Evaluate(), analyzer.Cache));
-            }
-        }
-
-        if (state.ToMove == Side.Black)
-        {
-            evalMoves.Sort((tuple, valueTuple) => tuple.Item2.CompareTo(valueTuple.Item2));
-        }
-        else
-        {
-            evalMoves.Sort((tuple, valueTuple) => valueTuple.Item2.CompareTo(tuple.Item2));
-        }
-        foreach (var (move, mEval, mCache) in evalMoves)
-        {
-            if(move.Type == PieceType.Pawn && move.Taken == (7, 3))
-            {
-                Console.WriteLine();
-            }
-            var nEval = NextMoveSeq(move.NewState, depth - 1, out var bl, alpha, beta, mEval, mCache);
-            // Debug.WriteLine($"{nEval} - {FenConvert.ToFen(move.NewState)}");
-            optimalVal = optimizer(nEval, optimalVal);
-            if (optimalVal == nEval)
-            {
-                // if (curMove == null)
-                // {
-                //     Debug.WriteLine($"{piece.GetPieceType()}>{(i, j)} to {(move.NewPos)} @ {optimalVal}");
-                // }
-                topEvalMove = move;
-                bl.Add(move);
-                bestMove = bl;
             }
 
             if (state.ToMove == Side.White)
