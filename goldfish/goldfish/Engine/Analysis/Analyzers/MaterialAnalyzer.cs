@@ -7,7 +7,7 @@ public class MaterialAnalyzer : IGameAnalyzer
 {
     public double Weighting => 100;
 
-    private static int ScorePiece(PieceType type)
+    internal static int ScorePiece(PieceType type)
     {
         return type switch
         {

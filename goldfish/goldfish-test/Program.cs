@@ -93,6 +93,8 @@ internal class Program
                             game.CurrentState.Promote(move.NewPos, promType.Value);
                             break;
                         }
+                        ChessPrinter.PrintBoard(game.CurrentState, game.LastMove, grid);
+                        _selMoves = null;
                         var gState = game.CurrentState.GetGameState();
                         if (gState is not null)
                         {
@@ -111,29 +113,36 @@ internal class Program
                             // let engine play
                             if (game.IsEngineActive)
                             {
-                                game.Commit();
-                                double alpha = double.NegativeInfinity, beta = double.PositiveInfinity;
-                                var nextMove = GoldFishEngine.NextOptimalMove(game.CurrentState, 4, alpha, beta);
-                                Debug.WriteLine($"Move calc w/ eval of {nextMove.Item1}");
-                                game.LastMove = nextMove.Item2;
-                                game.CurrentState = nextMove.Item2.Value.NewState;
-                                var gState2 = game.CurrentState.GetGameState();
-                                if (gState2 is not null)
+                                stateLabel.Text = $"Thinking...";
+                                Task.Run(() =>
                                 {
-                                    if (gState2.Value == Side.None)
+                                    game.Commit();
+                                    double alpha = double.NegativeInfinity, beta = double.PositiveInfinity;
+                                    var eval = GoldFishEngine.NextOptimalMove(game.CurrentState, 4, out var bMove);
+                                    Debug.WriteLine($"Move calc w/ eval of {eval}");
+                                    game.LastMove = bMove;
+                                    game.CurrentState = bMove.NewState;
+                                    var gState2 = game.CurrentState.GetGameState();
+                                    if (gState2 is not null)
                                     {
-                                        MessageBox.Query("Stalemate", $"The game has ended in a draw.", "Restart Game");
+                                        if (gState2.Value == Side.None)
+                                        {
+                                            MessageBox.Query("Stalemate", $"The game has ended in a draw.", "Restart Game");
+                                        }
+                                        else
+                                        {
+                                            MessageBox.Query("Checkmate", $"{gState2.Value} has won by checkmate", "Restart Game");
+                                        }
+                                        game.Reset();
                                     }
-                                    else
+                                    Application.MainLoop.Invoke(() =>
                                     {
-                                        MessageBox.Query("Checkmate", $"{gState2.Value} has won by checkmate", "Restart Game");
-                                    }
-                                    game.Reset();
-                                }
+                                        stateLabel.Text = $"{game.CurrentState.ToMove}'s Turn";
+                                        ChessPrinter.PrintBoard(game.CurrentState, game.LastMove, grid);
+                                    });
+                                });
                             }
                         }
-                        ChessPrinter.PrintBoard(game.CurrentState, game.LastMove, grid);
-                        _selMoves = null;
                     }
                 };
             }

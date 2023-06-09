@@ -110,6 +110,7 @@ public static class StateManipulator
 
         IEnumerable<ChessMove> ValidMoves()
         {
+            var oState = state;
             // check the moves
             foreach (var move in moves)
             {
@@ -122,6 +123,11 @@ public static class StateManipulator
                 }
                 else
                 {
+                    if (state.ToMove == move.NewState.ToMove)
+                    {
+                        // BAD
+                        Console.WriteLine();
+                    }
                     if(!newCheckStatus) 
                         yield return move;
                 }

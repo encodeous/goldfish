@@ -16,7 +16,8 @@ public class GameStateAnalyzer
         _analyzers = new IGameAnalyzer[]
         {
             new MaterialAnalyzer(),
-            new WinAnalyzer()
+            new WinAnalyzer(),
+            new ControlAnalyzer()
         };
     }
 
@@ -44,6 +45,6 @@ public class GameStateAnalyzer
             weighting += analyzer.Weighting;
         }
 
-        return score / weighting;
+        return score;
     }
 }
