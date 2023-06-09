@@ -52,17 +52,17 @@ public struct Bishop : IPieceLogic
         }
     }
 
-    public IEnumerable<(int, int)> GetAttacks(ChessState state, int r, int c)
+    public void GetAttacks(ChessState state, int r, int c, List<(int, int)> attacks)
     {
         for (int i = 1; i < 8; i++)
         {
             if (!PieceUtils.IsEmptySquare(state, r - i, c - i))
             {
                 if ((r - i, c - i).IsWithinBoard())
-                    yield return (r - i, c - i);
+                    attacks.Add((r - i, c - i));
                 break;
             }
-            yield return (r - i, c - i);
+            attacks.Add((r - i, c - i));
         }
 
         for (int i = 1; i < 8; i++)
@@ -70,11 +70,11 @@ public struct Bishop : IPieceLogic
             if (!PieceUtils.IsEmptySquare(state, r - i, c + i))
             {
                 if ((r - i, c + i).IsWithinBoard())
-                    yield return (r - i, c + i);
+                    attacks.Add((r - i, c + i));
                 break;
             }
 
-            yield return (r - i, c + i);
+            attacks.Add((r - i, c + i));
         }
 
         for (int i = 1; i < 8; i++)
@@ -82,11 +82,11 @@ public struct Bishop : IPieceLogic
             if (!PieceUtils.IsEmptySquare(state, r + i, c - i))
             {
                 if ((r + i, c - i).IsWithinBoard())
-                    yield return (r + i, c - i);
+                    attacks.Add((r + i, c - i));
                 break;
             }
 
-            yield return (r + i, c - i);
+            attacks.Add((r + i, c - i));
         }
 
         for (int i = 1; i < 8; i++)
@@ -94,11 +94,11 @@ public struct Bishop : IPieceLogic
             if (!PieceUtils.IsEmptySquare(state, r + i, c + i))
             {
                 if ((r + i, c + i).IsWithinBoard())
-                    yield return (r + i, c + i);
+                    attacks.Add((r + i, c + i));
                 break;
             }
 
-            yield return (r + i, c + i);
+            attacks.Add((r + i, c + i));
         }
     }
 }

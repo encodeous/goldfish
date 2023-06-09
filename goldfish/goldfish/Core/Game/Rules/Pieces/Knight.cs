@@ -34,7 +34,7 @@ public struct Knight : IPieceLogic
         }
     }
 
-    public IEnumerable<(int, int)> GetAttacks(ChessState state, int r, int c)
+    public void GetAttacks(ChessState state, int r, int c, List<(int, int)> attacks)
     {
         foreach (var move in _moves)
         {
@@ -42,7 +42,7 @@ public struct Knight : IPieceLogic
             var nr = r + ox;
             var nc = c + oy;
             if (!(nr, nc).IsWithinBoard()) continue;
-            yield return (nr, nc);
+            attacks.Add((nr, nc));
         }
     }
 }

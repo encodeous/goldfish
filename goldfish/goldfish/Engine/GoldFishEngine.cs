@@ -44,7 +44,7 @@ public static class GoldFishEngine
         {
             var piece = state.GetPiece(i, j);
             if (piece.GetSide() != toPlay || piece.GetLogic() is null) continue;
-            foreach (var move in state.GetValidMovesForSquare(i, j, cache))
+            foreach (var move in state.GetValidMovesForSquare(i, j, true, cache))
             {
                 var analyzer = new GameStateAnalyzer(move.NewState);
                 evalMoves.Add((move, analyzer.Evaluate(), analyzer.Cache));

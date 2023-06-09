@@ -25,7 +25,23 @@ public static class StateManipulator
         {
             var piece = state.GetPiece(i, j);
             if (piece.GetSide() != side || piece.GetLogic() is null) continue;
-            foreach (var pos in piece.GetLogic().GetAttacks(state, i, j))
+            List<(int, int)> thing;
+            if (cache is not null)
+            {
+                if (cache.CachedAttacks[i, j] is null)
+                {
+                    cache.CachedAttacks[i, j] = new List<(int, int)>();
+                    piece.GetLogic().GetAttacks(state, i, j, cache.CachedAttacks[i, j]);
+                }
+
+                thing = cache.CachedAttacks[i, j];
+            }
+            else
+            {
+                thing = new List<(int, int)>();
+                piece.GetLogic().GetAttacks(state, i, j, thing);
+            }
+            foreach (var pos in thing)
             {
                 atk[pos.Item1, pos.Item2] = true;
             }
@@ -48,7 +64,7 @@ public static class StateManipulator
             {
                 var piece = state.GetPiece(i, j);
                 if (piece.GetSide() != Side.Black || piece.GetLogic() is null) continue;
-                if (state.GetValidMovesForSquare(i, j, cache).Any())
+                if (state.GetValidMovesForSquare(i, j, true, cache).Any())
                 {
                     return null;
                 }
@@ -62,7 +78,7 @@ public static class StateManipulator
             {
                 var piece = state.GetPiece(i, j);
                 if (piece.GetSide() != Side.White || piece.GetLogic() is null) continue;
-                if (state.GetValidMovesForSquare(i, j, cache).Any())
+                if (state.GetValidMovesForSquare(i, j, true, cache).Any())
                 {
                     return null;
                 }
@@ -96,10 +112,11 @@ public static class StateManipulator
     /// <param name="state"></param>
     /// <param name="r"></param>
     /// <param name="c"></param>
+    /// <param name="autoPromotion">determines whether the promotion options are returned as moves</param>
     /// <param name="cache"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public static IEnumerable<ChessMove> GetValidMovesForSquare(this ChessState state, int r, int c, StateEvaluationCache? cache = null)
+    public static IEnumerable<ChessMove> GetValidMovesForSquare(this ChessState state, int r, int c, bool autoPromotion = true, StateEvaluationCache? cache = null)
     {
         var piece = state.GetPiece(r, c);
         var type = piece.GetPieceType();
@@ -119,17 +136,34 @@ public static class StateManipulator
                 {
                     // only permit blocking moves and do not allow castle out of check
                     if (!newCheckStatus && !move.IsCastle)
-                        yield return move;
+                    {
+                        if (move.IsPromotion && autoPromotion)
+                        {
+                            yield return move.PromotionVariant(PromotionType.Bishop);
+                            yield return move.PromotionVariant(PromotionType.Knight);
+                            yield return move.PromotionVariant(PromotionType.Queen);
+                            yield return move.PromotionVariant(PromotionType.Rook);
+                        }
+                        else
+                        {
+                            yield return move;
+                        }
+                    }
                 }
                 else
                 {
-                    if (state.ToMove == move.NewState.ToMove)
+                    if (newCheckStatus) continue;
+                    if (move.IsPromotion && autoPromotion)
                     {
-                        // BAD
-                        Console.WriteLine();
+                        yield return move.PromotionVariant(PromotionType.Bishop);
+                        yield return move.PromotionVariant(PromotionType.Knight);
+                        yield return move.PromotionVariant(PromotionType.Queen);
+                        yield return move.PromotionVariant(PromotionType.Rook);
                     }
-                    if(!newCheckStatus) 
+                    else
+                    {
                         yield return move;
+                    }
                 }
             }
         }
@@ -143,6 +177,13 @@ public static class StateManipulator
         }
 
         return ValidMoves();
+    }
+
+    private static ChessMove PromotionVariant(this ChessMove move, PromotionType type)
+    {
+        var ns = move.NewState;
+        ns.Promote(move.NewPos, type);
+        return move with { NewState = ns };
     }
 
     public static void FinalizeTurn(ref this ChessState state)

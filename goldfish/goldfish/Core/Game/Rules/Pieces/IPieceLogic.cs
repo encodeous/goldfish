@@ -12,12 +12,14 @@ public interface IPieceLogic
     /// <param name="c"></param>
     /// <returns></returns>
     public IEnumerable<ChessMove> GetMoves(ChessState state, int r, int c);
+
     /// <summary>
     /// Gets all the squares that the piece threatens
     /// </summary>
     /// <param name="state"></param>
     /// <param name="r"></param>
     /// <param name="c"></param>
+    /// <param name="attacks"></param>
     /// <returns></returns>
-    public IEnumerable<(int, int)> GetAttacks(ChessState state, int r, int c);
+    public void GetAttacks(ChessState state, int r, int c, List<(int, int)> attacks);
 }

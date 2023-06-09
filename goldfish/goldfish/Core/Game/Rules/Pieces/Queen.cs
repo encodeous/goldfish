@@ -16,15 +16,9 @@ public struct Queen : IPieceLogic
         }
     }
 
-    public IEnumerable<(int, int)> GetAttacks(ChessState state, int r, int c)
+    public void GetAttacks(ChessState state, int r, int c, List<(int, int)> attacks)
     {
-        foreach (var attacks in new Rook().GetAttacks(state, r, c))
-        {
-            yield return attacks;
-        }
-        foreach (var attacks in new Bishop().GetAttacks(state, r, c))
-        {
-            yield return attacks;
-        }
+        new Rook().GetAttacks(state, r, c, attacks);
+        new Bishop().GetAttacks(state, r, c, attacks);
     }
 }

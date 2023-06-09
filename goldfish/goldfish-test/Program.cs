@@ -64,7 +64,7 @@ internal class Program
                     var p = game.CurrentState.GetPiece(x - 1, y - 1);
                     if (p.GetPieceType() != PieceType.Space && p.GetSide() == game.CurrentState.ToMove)
                     {
-                        var moves = game.CurrentState.GetValidMovesForSquare(x - 1, y - 1).ToArray();
+                        var moves = game.CurrentState.GetValidMovesForSquare(x - 1, y - 1, false).ToArray();
                         _selMoves = moves;
                         ChessPrinter.PrintSelected(game.CurrentState, grid, _selMoves);
                     }
@@ -118,7 +118,7 @@ internal class Program
                                 {
                                     game.Commit();
                                     double alpha = double.NegativeInfinity, beta = double.PositiveInfinity;
-                                    var eval = GoldFishEngine.NextOptimalMove(game.CurrentState, 4, out var bMove);
+                                    var eval = GoldFishEngine.NextOptimalMove(game.CurrentState, 5, out var bMove);
                                     Debug.WriteLine($"Move calc w/ eval of {eval}");
                                     game.LastMove = bMove;
                                     game.CurrentState = bMove.NewState;

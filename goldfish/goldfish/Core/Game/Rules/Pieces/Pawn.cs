@@ -108,7 +108,7 @@ public struct Pawn : IPieceLogic
         }
     }
 
-    public IEnumerable<(int, int)> GetAttacks(ChessState state, int r, int c)
+    public void GetAttacks(ChessState state, int r, int c, List<(int, int)> attacks)
     {
         var piece = state.GetPiece(r, c);
         var side = piece.GetSide();
@@ -119,18 +119,18 @@ public struct Pawn : IPieceLogic
         var fwd = dir + r;
         if (fwd is < 0 or >= 8)
         {
-            yield break;
+            return;
         }
 
         if ((fwd, c - 1).IsWithinBoard())
         {
             // left
-            yield return (fwd, c - 1);
+            attacks.Add((fwd, c - 1));
         }
         if ((fwd, c + 1).IsWithinBoard())
         {
             // right
-            yield return (fwd, c + 1);
+            attacks.Add((fwd, c + 1));
         }
     }
 }

@@ -57,7 +57,7 @@ public struct Rook : IPieceLogic
         }
     }
 
-    public IEnumerable<(int, int)> GetAttacks(ChessState state, int r, int c)
+    public void GetAttacks(ChessState state, int r, int c, List<(int, int)> attacks)
     {
         // up
         for (int i = r - 1; i >= 0; i--)
@@ -65,10 +65,10 @@ public struct Rook : IPieceLogic
             if (!PieceUtils.IsEmptySquare(state, i, c))
             {
                 if((i, c).IsWithinBoard())
-                    yield return (i, c);
+                    attacks.Add((i, c));
                 break;
             }
-            yield return (i, c);
+            attacks.Add((i, c));
         }
         // down
         for (int i = r + 1; i < 8; i++)
@@ -76,10 +76,10 @@ public struct Rook : IPieceLogic
             if (!PieceUtils.IsEmptySquare(state, i, c))
             {
                 if((i, c).IsWithinBoard())
-                    yield return (i, c);
+                    attacks.Add((i, c));
                 break;
             }
-            yield return (i, c);
+            attacks.Add((i, c));
         }
         // left
         for (int i = c - 1; i >= 0; i--)
@@ -87,10 +87,10 @@ public struct Rook : IPieceLogic
             if (!PieceUtils.IsEmptySquare(state, r, i))
             {
                 if((r, i).IsWithinBoard())
-                    yield return (r, i);
+                    attacks.Add((r, i));
                 break;
             }
-            yield return (r, i);
+            attacks.Add((r, i));
         }
         // right
         for (int i = c + 1; i < 8; i++)
@@ -98,10 +98,10 @@ public struct Rook : IPieceLogic
             if (!PieceUtils.IsEmptySquare(state, r, i))
             {
                 if((r, i).IsWithinBoard())
-                    yield return (r, i);
+                    attacks.Add((r, i));
                 break;
             }
-            yield return (r, i);
+            attacks.Add((r, i));
         }
     }
 }

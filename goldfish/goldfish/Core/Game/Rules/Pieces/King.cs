@@ -28,7 +28,6 @@ public struct King : IPieceLogic
             if(!(nr, nc).IsWithinBoard()) continue;
             if(attackMtx[nr, nc] || state.GetPiece(nr, nc).GetSide() == side) continue;
             CastleType? castleType = default;
-            var newKingPos = (nr, nc);
             (int, int)? newCap = default;
             var ns = state;
             ns.FinalizeTurn();
@@ -58,6 +57,7 @@ public struct King : IPieceLogic
             ns.Move((r, c), (nr, nc));
             if (castleType is not null)
             {
+                ChessState castleState = ns;
                 // the king will castle
                 // check preconditions
                 var rPos = castleType.Value.GetCastleRookPos();
@@ -77,14 +77,20 @@ public struct King : IPieceLogic
                 if (valid)
                 {
                     // continue with castle
-                    newKingPos = (nr, nc + dir);
-                    ns.Move((nr, nc), newKingPos);
-                    ns.Move(rPos, (nr, nc));
+                    castleState.Move((nr, nc), (nr, nc + dir));
+                    castleState.Move(rPos, (nr, nc));
+                    yield return new ChessMove()
+                    {
+                        NewPos = (nr, nc + dir),
+                        NewState = castleState,
+                        Taken = newCap,
+                        OldPos = (r, c)
+                    };
                 }
             }
             yield return new ChessMove()
             {
-                NewPos = newKingPos,
+                NewPos = (nr, nc),
                 NewState = ns,
                 Taken = newCap,
                 OldPos = (r, c)
@@ -92,12 +98,12 @@ public struct King : IPieceLogic
         }
     }
 
-    public IEnumerable<(int, int)> GetAttacks(ChessState state, int r, int c)
+    public void GetAttacks(ChessState state, int r, int c, List<(int, int)> attacks)
     {
         foreach (var mv in _moves)
         {
             if((r + mv.Item1, c + mv.Item2).IsWithinBoard())
-                yield return (r + mv.Item1, c + mv.Item2);
+                attacks.Add((r + mv.Item1, c + mv.Item2));
         }
     }
 }
