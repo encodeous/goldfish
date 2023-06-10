@@ -14,9 +14,9 @@ public class GameStateAnalyzer
         {
             new MaterialAnalyzer(),
             new WinAnalyzer(),
-            // new ControlAnalyzer(),
-            // new AggressionAnalyzer(),
-            // new PawnAnalyzer()
+            new ControlAnalyzer(),
+            new AggressionAnalyzer(),
+            new PawnAnalyzer()
         };
     }
 

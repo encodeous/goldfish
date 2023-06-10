@@ -8,7 +8,7 @@ namespace goldfish.Core.Data.Optimization;
 /// </summary>
 public static class Tst
 {
-    public const int TableSize = 1 << 23;
+    public const int TableSize = 1 << 20;
     public static TranspositionEntry[] Table = new TranspositionEntry[TableSize];
     internal static readonly ulong[,] ZobristCache = new ulong[8 * 4, 256];
     internal static readonly ulong WhiteToMove;

@@ -46,7 +46,8 @@ public static class GoldFishEngine
             int moveCnt = state.GetValidMovesForSquare(i, j, tMoves);
             for(int m = 0; m < moveCnt; m++)
             {
-                evalMoves[cnt++] = (tMoves[m], GameStateAnalyzer.Evaluate(state));
+                var move = tMoves[m];
+                evalMoves[cnt++] = (move, GameStateAnalyzer.Evaluate(move.NewState));
             }
         }
 
