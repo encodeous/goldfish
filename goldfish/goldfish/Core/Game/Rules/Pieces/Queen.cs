@@ -16,9 +16,24 @@ public struct Queen : IPieceLogic
         }
     }
 
-    public void GetAttacks(ChessState state, int r, int c, List<(int, int)> attacks)
+    public int CountMoves(in ChessState state, int r, int c)
     {
-        new Rook().GetAttacks(state, r, c, attacks);
-        new Bishop().GetAttacks(state, r, c, attacks);
+        int cnt = new Rook().CountMoves(state, r, c);
+        cnt += new Bishop().CountMoves(state, r, c);
+        return cnt;
+    }
+
+    public int GetAttacks(ChessState state, int r, int c, Span<(int, int)> attacks)
+    {
+        int cnt = new Rook().GetAttacks(state, r, c, attacks);
+        cnt += new Bishop().GetAttacks(state, r, c, attacks[cnt..]);
+        return cnt;
+    }
+
+    public int CountAttacks(in ChessState state, int r, int c)
+    {
+        int cnt = new Rook().CountAttacks(state, r, c);
+        cnt += new Bishop().CountAttacks(state, r, c);
+        return cnt;
     }
 }

@@ -23,7 +23,7 @@ public struct Knight : IPieceLogic
             var (ox, oy) = move;
             var nr = r + ox;
             var nc = c + oy;
-            if (!PieceUtils.MovePiece(state, r, c, nr, nc, out var cMove))
+            if (!RuleUtils.MovePiece(state, r, c, nr, nc, out var cMove))
             {
                 if(cMove.HasValue) 
                     yield return cMove.Value;
@@ -34,15 +34,38 @@ public struct Knight : IPieceLogic
         }
     }
 
-    public void GetAttacks(ChessState state, int r, int c, List<(int, int)> attacks)
+    public int CountMoves(in ChessState state, int r, int c)
     {
+        return RuleUtils.CountMoves(state, r, c, _moves);
+    }
+
+    public int GetAttacks(ChessState state, int r, int c, Span<(int, int)> attacks)
+    {
+        int cnt = 0;
         foreach (var move in _moves)
         {
             var (ox, oy) = move;
             var nr = r + ox;
             var nc = c + oy;
             if (!(nr, nc).IsWithinBoard()) continue;
-            attacks.Add((nr, nc));
+            attacks[cnt++] = (nr, nc);
         }
+
+        return cnt;
+    }
+
+    public int CountAttacks(in ChessState state, int r, int c)
+    {
+        int cnt = 0;
+        foreach (var move in _moves)
+        {
+            var (ox, oy) = move;
+            var nr = r + ox;
+            var nc = c + oy;
+            if (!(nr, nc).IsWithinBoard()) continue;
+            cnt++;
+        }
+
+        return cnt;
     }
 }

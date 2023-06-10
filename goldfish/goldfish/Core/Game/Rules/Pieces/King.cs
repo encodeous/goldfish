@@ -98,12 +98,25 @@ public struct King : IPieceLogic
         }
     }
 
-    public void GetAttacks(ChessState state, int r, int c, List<(int, int)> attacks)
+    public int CountMoves(in ChessState state, int r, int c)
     {
+        return 0;
+    }
+
+    public int GetAttacks(ChessState state, int r, int c, Span<(int, int)> attacks)
+    {
+        int cnt = 0;
         foreach (var mv in _moves)
         {
             if((r + mv.Item1, c + mv.Item2).IsWithinBoard())
-                attacks.Add((r + mv.Item1, c + mv.Item2));
+                attacks[cnt++] = (r + mv.Item1, c + mv.Item2);
         }
+
+        return cnt;
+    }
+
+    public int CountAttacks(in ChessState state, int r, int c)
+    {
+        return RuleUtils.CountAttacks(r, c, _moves);
     }
 }

@@ -128,18 +128,26 @@ public static class PieceExtensions
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }
+
+    private static readonly Pawn _pawn = new ();
+    private static readonly Rook _rook = new ();
+    private static readonly Knight _knight = new ();
+    private static readonly Bishop _bishop = new ();
+    private static readonly Queen _queen = new ();
+    private static readonly King _king = new ();
+
     public static IPieceLogic? GetLogic(this byte piece)
     {
         return (piece.GetPieceType() switch
         {
-            PieceType.Pawn => new Pawn(),
-            PieceType.Rook => new Rook(),
-            PieceType.Knight => new Knight(),
-            PieceType.Bishop => new Bishop(),
-            PieceType.Queen => new Queen(),
-            PieceType.King => new King(),
+            PieceType.Pawn => _pawn,
+            PieceType.Rook => _rook,
+            PieceType.Knight => _knight,
+            PieceType.Bishop => _bishop,
+            PieceType.Queen => _queen,
+            PieceType.King => _king,
             PieceType.Space => default,
             _ => throw new ArgumentOutOfRangeException()
         });
-    }
+    } 
 }

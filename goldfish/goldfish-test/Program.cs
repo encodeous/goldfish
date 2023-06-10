@@ -132,7 +132,7 @@ internal class Program
                                             if (gState2.Value == Side.None)
                                             {
                                                 MessageBox.Query("Stalemate", $"The game has ended in a draw.", "Restart Game");
-                                            }
+                                            } 
                                             else
                                             {
                                                 MessageBox.Query("Checkmate", $"{gState2.Value} has won by checkmate", "Restart Game");

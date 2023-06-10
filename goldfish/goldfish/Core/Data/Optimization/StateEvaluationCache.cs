@@ -3,7 +3,7 @@
 public class StateEvaluationCache
 {
     public Side Checked = Side.None;
-    public bool[][,] AttackCache = new bool[2][,];
+    public Grid8x8?[] AttackCache = new Grid8x8?[2];
     public IEnumerable<ChessMove>[,] CachedMoves = new IEnumerable<ChessMove>[8,8];
-    public List<(int, int)>[,] CachedAttacks = new List<(int, int)>[8,8];
+    public (int, int)[,][] CachedAttacks = new (int, int)[8,8][];
 }

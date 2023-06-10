@@ -14,7 +14,7 @@ public struct Rook : IPieceLogic
         // up
         for (int i = r - 1; i >= 0; i--)
         {
-            if (!PieceUtils.MovePiece(state, r, c, i, c, out var move))
+            if (!RuleUtils.MovePiece(state, r, c, i, c, out var move))
             {
                 if(move.HasValue) 
                     yield return move.Value;
@@ -25,7 +25,7 @@ public struct Rook : IPieceLogic
         // down
         for (int i = r + 1; i < 8; i++)
         {
-            if (!PieceUtils.MovePiece(state, r, c, i, c, out var move))
+            if (!RuleUtils.MovePiece(state, r, c, i, c, out var move))
             {
                 if(move.HasValue) 
                     yield return move.Value;
@@ -36,7 +36,7 @@ public struct Rook : IPieceLogic
         // left
         for (int i = c - 1; i >= 0; i--)
         {
-            if (!PieceUtils.MovePiece(state, r, c, r, i, out var move))
+            if (!RuleUtils.MovePiece(state, r, c, r, i, out var move))
             {
                 if(move.HasValue) 
                     yield return move.Value;
@@ -47,7 +47,7 @@ public struct Rook : IPieceLogic
         // right
         for (int i = c + 1; i < 8; i++)
         {
-            if (!PieceUtils.MovePiece(state, r, c, r, i, out var move))
+            if (!RuleUtils.MovePiece(state, r, c, r, i, out var move))
             {
                 if(move.HasValue) 
                     yield return move.Value;
@@ -57,51 +57,32 @@ public struct Rook : IPieceLogic
         }
     }
 
-    public void GetAttacks(ChessState state, int r, int c, List<(int, int)> attacks)
+    public int CountMoves(in ChessState state, int r, int c)
     {
-        // up
-        for (int i = r - 1; i >= 0; i--)
-        {
-            if (!PieceUtils.IsEmptySquare(state, i, c))
-            {
-                if((i, c).IsWithinBoard())
-                    attacks.Add((i, c));
-                break;
-            }
-            attacks.Add((i, c));
-        }
-        // down
-        for (int i = r + 1; i < 8; i++)
-        {
-            if (!PieceUtils.IsEmptySquare(state, i, c))
-            {
-                if((i, c).IsWithinBoard())
-                    attacks.Add((i, c));
-                break;
-            }
-            attacks.Add((i, c));
-        }
-        // left
-        for (int i = c - 1; i >= 0; i--)
-        {
-            if (!PieceUtils.IsEmptySquare(state, r, i))
-            {
-                if((r, i).IsWithinBoard())
-                    attacks.Add((r, i));
-                break;
-            }
-            attacks.Add((r, i));
-        }
-        // right
-        for (int i = c + 1; i < 8; i++)
-        {
-            if (!PieceUtils.IsEmptySquare(state, r, i))
-            {
-                if((r, i).IsWithinBoard())
-                    attacks.Add((r, i));
-                break;
-            }
-            attacks.Add((r, i));
-        }
+        var cnt = 0;
+        cnt += RuleUtils.CountMoves(state, r, c, -1, 0, 7);
+        cnt += RuleUtils.CountMoves(state, r, c, 1, 0, 7);
+        cnt += RuleUtils.CountMoves(state, r, c, 0, -1, 7);
+        cnt += RuleUtils.CountMoves(state, r, c, 0, 1, 7);
+        return cnt;
+    }
+
+    public int GetAttacks(ChessState state, int r, int c, Span<(int, int)> attacks)
+    {
+        int cnt = RuleUtils.GetAttacks(state, r, c, -1, 0, attacks, 7);
+        cnt += RuleUtils.GetAttacks(state, r, c, 1, 0, attacks[cnt..], 7);
+        cnt += RuleUtils.GetAttacks(state, r, c, 0, -1, attacks[cnt..], 7);
+        cnt += RuleUtils.GetAttacks(state, r, c, 0, 1, attacks[cnt..], 7);
+        return cnt;
+    }
+
+    public int CountAttacks(in ChessState state, int r, int c)
+    {
+        var cnt = 0;
+        cnt += RuleUtils.CountAttacks(state, r, c, -1, 0, 7);
+        cnt += RuleUtils.CountAttacks(state, r, c, 1, 0, 7);
+        cnt += RuleUtils.CountAttacks(state, r, c, 0, -1, 7);
+        cnt += RuleUtils.CountAttacks(state, r, c, 0, 1, 7);
+        return cnt;
     }
 }

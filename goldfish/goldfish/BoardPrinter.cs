@@ -54,6 +54,7 @@ public class BoardPrinter
 
     public static void Print(Span<(ChessMove, double)> moves)
     {
+        
         AnsiConsole.Write("----------------------------------------------------------------------");
         foreach (var (move, eval) in moves)
         {
@@ -62,7 +63,7 @@ public class BoardPrinter
     
             Console.WriteLine($"{move.Type} to {move.NewPos}");
 
-            AnsiConsole.Write(BoardPrinter.PrintBoard(in move.NewState, move));
+            AnsiConsole.Write(PrintBoard(in move.NewState, move));
     
             Console.WriteLine($"{FenConvert.ToFen(move.NewState)}");
         }

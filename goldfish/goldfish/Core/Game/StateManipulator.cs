@@ -1,5 +1,6 @@
 ﻿using goldfish.Core.Data;
 using goldfish.Core.Data.Optimization;
+using goldfish.Core.Game.Rules;
 using goldfish.Core.Game.Rules.Pieces;
 
 namespace goldfish.Core.Game;
@@ -16,21 +17,21 @@ public static class StateManipulator
     /// <param name="side"></param>
     /// <param name="cache"></param>
     /// <returns></returns>
-    public static bool[,] GetAttackMatrix(this in ChessState state, Side side, StateEvaluationCache? cache = null)
+    public static Grid8x8 GetAttackMatrix(this in ChessState state, Side side, StateEvaluationCache? cache = null)
     {
-        if (cache is not null && cache.AttackCache[(int)side] is not null) return cache.AttackCache[(int)side];
-        var atk = new bool[8, 8];
+        if (cache is not null && cache.AttackCache[(int)side] is not null) return cache.AttackCache[(int)side].Value;
+        var atk = new Grid8x8();
         for (var i = 0; i < 8; i++)
         for (var j = 0; j < 8; j++)
         {
             var piece = state.GetPiece(i, j);
             if (piece.GetSide() != side || piece.GetLogic() is null) continue;
-            List<(int, int)> thing;
+            (int, int)[] thing;
             if (cache is not null)
             {
                 if (cache.CachedAttacks[i, j] is null)
                 {
-                    cache.CachedAttacks[i, j] = new List<(int, int)>();
+                    cache.CachedAttacks[i, j] = new (int, int)[piece.GetLogic().CountAttacks(state, i, j)];
                     piece.GetLogic().GetAttacks(state, i, j, cache.CachedAttacks[i, j]);
                 }
 
@@ -38,7 +39,7 @@ public static class StateManipulator
             }
             else
             {
-                thing = new List<(int, int)>();
+                thing = new (int, int)[piece.GetLogic().CountAttacks(state, i, j)];
                 piece.GetLogic().GetAttacks(state, i, j, thing);
             }
             foreach (var pos in thing)
@@ -121,38 +122,16 @@ public static class StateManipulator
         var piece = state.GetPiece(r, c);
         var type = piece.GetPieceType();
         if(type == PieceType.Space) return Enumerable.Empty<ChessMove>();
-        var isChecked = state.IsChecked(piece.GetSide(), cache);
         var logic = piece.GetLogic();
         var moves = logic.GetMoves(state, r, c);
 
         IEnumerable<ChessMove> ValidMoves()
         {
-            var oState = state;
             // check the moves
             foreach (var move in moves)
             {
-                var newCheckStatus = move.NewState.IsChecked(piece.GetSide());
-                if (isChecked)
+                if (RuleUtils.VerifyCheckPermits(state, move, cache))
                 {
-                    // only permit blocking moves and do not allow castle out of check
-                    if (!newCheckStatus && !move.IsCastle)
-                    {
-                        if (move.IsPromotion && autoPromotion)
-                        {
-                            yield return move.PromotionVariant(PromotionType.Bishop);
-                            yield return move.PromotionVariant(PromotionType.Knight);
-                            yield return move.PromotionVariant(PromotionType.Queen);
-                            yield return move.PromotionVariant(PromotionType.Rook);
-                        }
-                        else
-                        {
-                            yield return move;
-                        }
-                    }
-                }
-                else
-                {
-                    if (newCheckStatus) continue;
                     if (move.IsPromotion && autoPromotion)
                     {
                         yield return move.PromotionVariant(PromotionType.Bishop);

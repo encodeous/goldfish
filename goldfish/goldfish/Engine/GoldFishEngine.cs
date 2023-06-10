@@ -21,6 +21,7 @@ public static class GoldFishEngine
         }
 
         var toPlay = state.ToMove;
+        (ChessMove, double)? lastMove = null;
 
         double optimalVal;
 
@@ -57,6 +58,7 @@ public static class GoldFishEngine
         foreach (var (move, mEval, mCache) in evalMoves)
         {
             var nEval = NextOptimalMoves(move.NewState, depth - 1, ref optimalMoves, ref moves, alpha, beta, mEval, mCache);
+            lastMove = (move, mEval);
             moves++;
 
             bool isMoreOptimal = false;
@@ -85,8 +87,16 @@ public static class GoldFishEngine
                 beta = Math.Min(beta, nEval);
             if (beta <= alpha)
             {
+                if (double.IsInfinity(optimalVal))
+                {
+                    bestMoves[0] = lastMove.Value;
+                }
                 return optimalVal;
             }
+        }
+        if (double.IsInfinity(optimalVal) && lastMove.HasValue)
+        {
+            bestMoves[0] = lastMove.Value;
         }
         return optimalVal;
     }
