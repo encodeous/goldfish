@@ -5,7 +5,7 @@ namespace goldfish.Engine.Analysis.Analyzers;
 
 public class MaterialAnalyzer : IGameAnalyzer
 {
-    public double Weighting => 100;
+    public double Weighting => 1000;
 
     internal static int ScorePiece(PieceType type)
     {

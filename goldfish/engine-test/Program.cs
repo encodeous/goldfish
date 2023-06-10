@@ -1,15 +1,33 @@
 ﻿
+using engine_test;
+using goldfish.Core.Data;
 using goldfish.Core.Game.FEN;
 using goldfish.Engine;
+using Spectre.Console;
 
-// var game = FenConvert.Parse("rn1qkbr1/2pppppp/bp3n2/4P3/8/2N5/PPPPNPPP/R1BQK2R w KQq - 1 4");
-var game = FenConvert.Parse("N1bqkb2/pp1pp1Q1/1P4p1/2P1n1p1/8/4B3/PP3PPP/R3KB1R b KQ - 1 19");
+// var game = FenConvert.Parse("r4b1r/p2pkppp/b2Np3/3q4/4N3/1Qp1P3/PP3PPP/R2R2K1 b - - 1 1");
+var game = FenConvert.Parse(Console.ReadLine());
 
-// var eval = GoldFishEngine.NextMoveSeq(game, 5, out var move);
-//
-// foreach (var cMove in move)
-// {
-//     Console.WriteLine($"{cMove.NewPos}");
-//
-//     Console.WriteLine($"{eval} - {FenConvert.ToFen(cMove.NewState)}");
-// }
+Span<(ChessMove, double)> moves = new (ChessMove, double)[6];
+long cnt = 0;
+try
+{
+    var tEval = GoldFishEngine.NextOptimalMoves(game, 6, ref moves, ref cnt);
+
+    foreach (var (move, eval) in moves)
+    {
+        Console.WriteLine($"Step -- E: {eval} --");
+    
+        Console.WriteLine($"{move.Type} to {move.NewPos}");
+
+        AnsiConsole.Write(BoardPrinter.PrintBoard(in move.NewState, move));
+    
+        Console.WriteLine($"{FenConvert.ToFen(move.NewState)}");
+    }
+}
+catch (Exception e)
+{
+    Console.WriteLine(e.Message + e.StackTrace);
+}
+
+Console.Read();

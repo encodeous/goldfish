@@ -10,18 +10,14 @@ public class AggressionAnalyzer : IGameAnalyzer
     {
         double ScoreSide(in ChessState nState, Side side)
         {
-            var cSquares = nState.GetAttackMatrix(side, analyzer.Cache);
             double score = 0;
             for (var i = 0; i < 8; i++)
             for (var j = 0; j < 8; j++)
             {
-                if (cSquares[i, j])
+                var piece = nState.GetPiece(i, j);
+                if (piece.GetSide() == side)
                 {
-                    var piece = nState.GetPiece(i, j);
-                    if (piece.GetSide() == side)
-                    {
-                        score += 8 - Utils.DistFromPiece((i, j), nState.GetKing(side.GetOpposing()));
-                    }
+                    score += 8 - Utils.DistFromPiece((i, j), nState.GetKing(side.GetOpposing()));
                 }
             }
 

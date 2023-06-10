@@ -19,7 +19,7 @@ public class PawnAnalyzer : IGameAnalyzer
                 var piece = nState.GetPiece(i, j);
                 if (piece.GetSide() == side && piece.GetPieceType() == PieceType.Pawn)
                 {
-                    double worth = Math.Pow(8 - Utils.DistFromPromotion((i, j), side), 3) * 0.6 +
+                    double worth = (8 - Utils.DistFromPromotion((i, j), side)) * 0.6 +
                                    (8 - Utils.DistFromCenter((i, j))) * 0.4;
                     if (cSquares[i, j]) worth *= 2;
                     if (aSquares[i, j]) worth /= 2;
