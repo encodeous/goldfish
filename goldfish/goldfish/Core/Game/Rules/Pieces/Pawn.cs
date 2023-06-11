@@ -4,69 +4,7 @@ namespace goldfish.Core.Game.Rules.Pieces;
 
 public struct Pawn : IPieceLogic
 {
-    public IEnumerable<ChessMove> GetMoves(ChessState state, int r, int c)
-    {
-        var piece = state.GetPiece(r, c);
-        var side = piece.GetSide();
-        var dir = side == Side.White ? 1 : -1;
-        
-        // move forward
-        // check for obstruction
-        var fwd = dir + r;
-        if (fwd is < 0 or >= 8)
-        {
-            yield break;
-        }
-        
-        if (state.GetPiece(fwd, c).GetPieceType() == PieceType.Space)
-        {
-            // move 1x
-            var ns = state;
-            ns.FinalizeTurn();
-            ns.Move((r, c), (fwd, c));
-            yield return new ChessMove()
-            {
-                NewPos = (fwd, c),
-                NewState = ns,
-                OldPos = (r, c)
-            };
-            
-            // move 2x
-            fwd += dir;
-            if (fwd is >= 0 and < 8 && state.GetPiece(fwd, c).GetPieceType() == PieceType.Space
-                && r is 1 or 6 // only initial position, once the pawn reaches the other side this case is also not considered since there is only 1 square
-                )
-            {
-                ns = state;
-                ns.FinalizeTurnWithEnPassant(c, side);
-                ns.Move((r, c), (fwd, c));
-                yield return new ChessMove()
-                {
-                    NewPos = (fwd, c),
-                    NewState = ns,
-                    OldPos = (r, c)
-                };
-            }
-
-            fwd -= dir;
-        }
-
-        // captures
-        
-        // left capture
-        if (CanCapture(fwd, c - 1, out var resL, ref state, side, r, c, dir))
-        {
-            yield return resL.Value;
-        }
-        
-        // right capture
-        if (CanCapture(fwd, c + 1, out var resR, ref state, side, r, c, dir))
-        {
-            yield return resR.Value;
-        }
-    }
-
-    public int CountMoves(in ChessState state, int r, int c)
+    public int GetMoves(in ChessState state, int r, int c, Span<ChessMove> moves, bool autoPromotion)
     {
         var cnt = 0;
         var piece = state.GetPiece(r, c);
@@ -84,55 +22,95 @@ public struct Pawn : IPieceLogic
         if (state.GetPiece(fwd, c).GetPieceType() == PieceType.Space)
         {
             // move 1x
-            cnt++;
+            var ns = state;
+            ns.FinalizeTurn();
+            ns.Move((r, c), (fwd, c));
+            var mov = new ChessMove()
+            {
+                NewPos = (fwd, c),
+                NewState = ns,
+                OldPos = (r, c)
+            };
+            if (RuleUtils.VerifyCheckPermits(state, mov))
+            {
+                if (autoPromotion && mov.IsPromotion)
+                {
+                    AddPromotionVariants(ref cnt, mov, moves);
+                }
+                else
+                {
+                    moves[cnt++] = mov;
+                }
+            }
             
             // move 2x
             fwd += dir;
             if (fwd is >= 0 and < 8 && state.GetPiece(fwd, c).GetPieceType() == PieceType.Space
-                                    && r is 1 or 6 // only initial position, once the pawn reaches the other side this case is also not considered since there is only 1 square
-               )
+                && r is 1 or 6 // only initial position, once the pawn reaches the other side this case is also not considered since there is only 1 square
+                )
             {
-                cnt++;
+                ns = state;
+                ns.FinalizeTurnWithEnPassant(c, side);
+                ns.Move((r, c), (fwd, c));
+                mov = new ChessMove()
+                {
+                    NewPos = (fwd, c),
+                    NewState = ns,
+                    OldPos = (r, c)
+                };
+                if(RuleUtils.VerifyCheckPermits(state, mov)) moves[cnt++] = mov;
             }
+
             fwd -= dir;
         }
 
         // captures
         
         // left capture
-        if (CanCapture(fwd, c - 1, state, side))
+        if (CanCapture(fwd, c - 1, out var resL, state, side, r, c, dir))
         {
-            cnt++;
+            if (autoPromotion && resL.Value.IsPromotion)
+            {
+                AddPromotionVariants(ref cnt, resL.Value, moves);
+            }
+            else
+            {
+                moves[cnt++] = resL.Value;
+            }
         }
         
         // right capture
-        if (CanCapture(fwd, c + 1, state, side))
+        if (CanCapture(fwd, c + 1, out var resR, state, side, r, c, dir))
         {
-            cnt++;
+            if (autoPromotion && resR.Value.IsPromotion)
+            {
+                AddPromotionVariants(ref cnt, resR.Value, moves);
+            }
+            else
+            {
+                moves[cnt++] = resR.Value;
+            }
         }
 
         return cnt;
     }
 
-    private bool CanCapture(int nr, int nc, in ChessState state, Side side)
+    private void AddPromotionVariants(ref int cnt, in ChessMove move, Span<ChessMove> moves)
     {
-        var capturePiece = state.GetPiece(nr, nc);
-        if (nc is >= 0 and < 8 && capturePiece.GetSide() != side) // only valid if its an opposing piece
-        {
-            if (capturePiece.GetPieceType() != PieceType.Space)
-            {
-                return true;
-            }
-            if(state.Additional.CheckEnPassant(nc, side.GetOpposing())
-               && ((side == Side.White && nr == 5) || (side == Side.Black && nr == 2))
-              ) // check en passant
-            {
-                return true;
-            }
-        }
-        return false;
+        moves[cnt++] = PromotionVariant(move, PromotionType.Bishop);
+        moves[cnt++] = PromotionVariant(move, PromotionType.Knight);
+        moves[cnt++] = PromotionVariant(move, PromotionType.Queen);
+        moves[cnt++] = PromotionVariant(move, PromotionType.Rook);
     }
-    private bool CanCapture(int nr, int nc, out ChessMove? move, ref ChessState state, Side side, int r, int c, int dir)
+    
+    private static ChessMove PromotionVariant(ChessMove move, PromotionType type)
+    {
+        var ns = move.NewState;
+        ns.Promote(move.NewPos, type);
+        return move with { NewState = ns };
+    }
+    
+    private bool CanCapture(int nr, int nc, out ChessMove? move, in ChessState state, Side side, int r, int c, int dir)
     {
         var capturePiece = state.GetPiece(nr, nc);
         if (nc is >= 0 and < 8 && capturePiece.GetSide() != side) // only valid if its an opposing piece
@@ -149,6 +127,10 @@ public struct Pawn : IPieceLogic
                     NewState = nState,
                     OldPos = (r, c)
                 };
+                if (!RuleUtils.VerifyCheckPermits(state, move.Value))
+                {
+                    return false;
+                }
                 return true;
             }
             if(state.Additional.CheckEnPassant(nc, side.GetOpposing())
@@ -166,6 +148,10 @@ public struct Pawn : IPieceLogic
                     NewState = nState,
                     OldPos = (r, c)
                 };
+                if (!RuleUtils.VerifyCheckPermits(state, move.Value))
+                {
+                    return false;
+                }
                 return true;
             }
         }
@@ -174,7 +160,7 @@ public struct Pawn : IPieceLogic
         return false;
     }
 
-    public int GetAttacks(ChessState state, int r, int c, Span<(int, int)> attacks)
+    public int GetAttacks(in ChessState state, int r, int c, Span<(int, int)> attacks)
     {
         var piece = state.GetPiece(r, c);
         var side = piece.GetSide();

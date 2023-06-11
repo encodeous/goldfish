@@ -6,11 +6,11 @@ namespace goldfish.Engine.Analysis.Analyzers;
 public class ControlAnalyzer : IGameAnalyzer
 {
     public double Weighting => 5;
-    public double GetScore(in ChessState state, GameStateAnalyzer analyzer)
+    public double GetScore(in ChessState state)
     {
         double ScoreSide(in ChessState nState, Side side)
         {
-            var cSquares = nState.GetAttackMatrix(side, analyzer.Cache);
+            var cSquares = nState.GetAttackMatrix(side);
             double score = 0;
             for (var i = 0; i < 8; i++)
             for (var j = 0; j < 8; j++)

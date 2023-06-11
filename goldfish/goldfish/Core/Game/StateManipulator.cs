@@ -1,4 +1,5 @@
-﻿using goldfish.Core.Data;
+﻿using System.Buffers;
+using goldfish.Core.Data;
 using goldfish.Core.Data.Optimization;
 using goldfish.Core.Game.Rules;
 using goldfish.Core.Game.Rules.Pieces;
@@ -10,6 +11,7 @@ namespace goldfish.Core.Game;
 /// </summary>
 public static class StateManipulator
 {
+    private static readonly ChessMove[] _moveDump = new ChessMove[30];
     /// <summary>
     /// Gets a matrix of squares attacked by a side
     /// </summary>
@@ -17,9 +19,17 @@ public static class StateManipulator
     /// <param name="side"></param>
     /// <param name="cache"></param>
     /// <returns></returns>
-    public static Grid8x8 GetAttackMatrix(this in ChessState state, Side side, StateEvaluationCache? cache = null)
+    public static Grid8x8 GetAttackMatrix(this in ChessState state, Side side)
     {
-        if (cache is not null && cache.AttackCache[(int)side] is not null) return cache.AttackCache[(int)side].Value;
+        ref var cache = ref Tst.Get(state);
+        if (side == Side.White)
+        {
+            if (cache.WhiteCache is not null) return cache.WhiteCache.Value;
+        }
+        else
+        {
+            if (cache.BlackCache is not null) return cache.BlackCache.Value;
+        }
         var atk = new Grid8x8();
         Span<(int, int)> attackBuf = stackalloc (int, int)[30]; // assume any given piece will have less than 30 possible attacks, this is very generous
         for (var i = 0; i < 8; i++)
@@ -33,8 +43,15 @@ public static class StateManipulator
                 atk[pos.Item1, pos.Item2] = true;
             }
         }
-
-        if (cache is not null) cache.AttackCache[(int)side] = atk;
+        cache = ref Tst.Get(state);
+        if (side == Side.White)
+        {
+            cache.WhiteCache = atk;
+        }
+        else
+        {
+            cache.BlackCache = atk;
+        }
         return atk;
     }
 
@@ -42,38 +59,19 @@ public static class StateManipulator
     /// Determines whether a side has won
     /// </summary>
     /// <returns>returns None if it is a draw and null if there is no Checkmate or Stalemate</returns>
-    public static Side? GetGameState(this in ChessState state, StateEvaluationCache? cache = null)
+    public static Side? GetGameState(this in ChessState state)
     {
-        if (state.ToMove == Side.Black)
+        for (var i = 0; i < 8; i++)
+        for (var j = 0; j < 8; j++)
         {
-            for (var i = 0; i < 8; i++)
-            for (var j = 0; j < 8; j++)
+            var piece = state.GetPiece(i, j);
+            if (!piece.IsSide(state.ToMove)|| piece.GetLogic() is null) continue;
+            if (state.GetValidMovesForSquare(i, j, _moveDump) != 0)
             {
-                var piece = state.GetPiece(i, j);
-                if (piece.GetSide() != Side.Black || piece.GetLogic() is null) continue;
-                if (state.GetValidMovesForSquare(i, j, true, cache).Any())
-                {
-                    return null;
-                }
+                return null;
             }
-            return state.IsChecked(Side.Black, cache) ? Side.White : Side.None;
         }
-        if (state.ToMove == Side.White)
-        {
-            for (var i = 0; i < 8; i++)
-            for (var j = 0; j < 8; j++)
-            {
-                var piece = state.GetPiece(i, j);
-                if (piece.GetSide() != Side.White || piece.GetLogic() is null) continue;
-                if (state.GetValidMovesForSquare(i, j, true, cache).Any())
-                {
-                    return null;
-                }
-            }
-            return state.IsChecked(Side.White, cache) ? Side.Black : Side.None;
-        }
-
-        return Side.None;
+        return state.IsChecked(state.ToMove) ? state.ToMove.GetOpposing() : Side.None;
     }
 
     /// <summary>
@@ -81,15 +79,16 @@ public static class StateManipulator
     /// </summary>
     /// <param name="state"></param>
     /// <param name="side"></param>
-    /// <param name="cache"></param>
     /// <returns></returns>
-    public static bool IsChecked(this in ChessState state, Side side, StateEvaluationCache? cache = null)
+    public static bool IsChecked(this in ChessState state, Side side)
     {
-        if (cache is not null && cache.Checked != Side.None) return side == cache.Checked;
+        ref var cache = ref Tst.Get(state);
+        if (cache.Checked != Side.None) return side == cache.Checked;
         var king = state.GetKing(side);
-        var mtx = GetAttackMatrix(state, side.GetOpposing(), cache);
+        var mtx = GetAttackMatrix(state, side.GetOpposing());
         var res = mtx[king.Item1, king.Item2];
-        if (cache is not null && res) cache.Checked = side;
+        cache = ref Tst.Get(state);
+        if (res) cache.Checked = side;
         return res;
     }
 
@@ -99,56 +98,17 @@ public static class StateManipulator
     /// <param name="state"></param>
     /// <param name="r"></param>
     /// <param name="c"></param>
+    /// <param name="moves"></param>
     /// <param name="autoPromotion">determines whether the promotion options are returned as moves</param>
-    /// <param name="cache"></param>
-    /// <returns></returns>
+    /// <returns>the number of moves for the square</returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public static IEnumerable<ChessMove> GetValidMovesForSquare(this ChessState state, int r, int c, bool autoPromotion = true, StateEvaluationCache? cache = null)
+    public static int GetValidMovesForSquare(this ChessState state, int r, int c, Span<ChessMove> moves, bool autoPromotion = true)
     {
         var piece = state.GetPiece(r, c);
         var type = piece.GetPieceType();
-        if(type == PieceType.Space) return Enumerable.Empty<ChessMove>();
-        var logic = piece.GetLogic();
-        var moves = logic.GetMoves(state, r, c);
-
-        IEnumerable<ChessMove> ValidMoves()
-        {
-            // check the moves
-            foreach (var move in moves)
-            {
-                if (RuleUtils.VerifyCheckPermits(state, move, cache))
-                {
-                    if (move.IsPromotion && autoPromotion)
-                    {
-                        yield return move.PromotionVariant(PromotionType.Bishop);
-                        yield return move.PromotionVariant(PromotionType.Knight);
-                        yield return move.PromotionVariant(PromotionType.Queen);
-                        yield return move.PromotionVariant(PromotionType.Rook);
-                    }
-                    else
-                    {
-                        yield return move;
-                    }
-                }
-            }
-        }
-        if (cache != null)
-        {
-            if (cache.CachedMoves[r, c] is not null)
-            {
-                return cache.CachedMoves[r, c];
-            }
-            return cache.CachedMoves[r, c] = ValidMoves().ToArray();
-        }
-
-        return ValidMoves();
-    }
-
-    private static ChessMove PromotionVariant(this ChessMove move, PromotionType type)
-    {
-        var ns = move.NewState;
-        ns.Promote(move.NewPos, type);
-        return move with { NewState = ns };
+        if(type == PieceType.Space) return 0;
+        var moveCnt = piece.GetLogicMoves(state, r, c, moves, autoPromotion);
+        return moveCnt;
     }
 
     public static void FinalizeTurn(ref this ChessState state)

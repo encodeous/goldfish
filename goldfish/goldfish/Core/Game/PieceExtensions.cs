@@ -171,5 +171,21 @@ public static class PieceExtensions
         else if (piece.GetPieceType() == PieceType.King)
             _king.GetAttacks(state, r, c, attacks);
         else throw new ArgumentOutOfRangeException();
+    }
+    public static int GetLogicMoves(this byte piece, in ChessState state, int r, int c, Span<ChessMove> moves, bool autoPromotion)
+    {
+        if (piece.GetPieceType() == PieceType.Pawn)
+            return _pawn.GetMoves(state, r, c, moves, autoPromotion);
+        if (piece.GetPieceType() == PieceType.Rook)
+            return _rook.GetMoves(state, r, c, moves, autoPromotion);
+        if (piece.GetPieceType() == PieceType.Knight)
+            return _knight.GetMoves(state, r, c, moves, autoPromotion);
+        if (piece.GetPieceType() == PieceType.Bishop)
+            return _bishop.GetMoves(state, r, c, moves, autoPromotion);
+        if (piece.GetPieceType() == PieceType.Queen)
+            return _queen.GetMoves(state, r, c, moves, autoPromotion);
+        if (piece.GetPieceType() == PieceType.King)
+            return _king.GetMoves(state, r, c, moves, autoPromotion);
+        return 0;
     } 
 }

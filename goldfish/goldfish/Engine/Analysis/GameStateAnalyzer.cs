@@ -6,47 +6,41 @@ namespace goldfish.Engine.Analysis;
 
 public class GameStateAnalyzer
 {
-    private ChessState _state;
-    private readonly IGameAnalyzer[] _analyzers;
-    private StateEvaluationCache _cache = new();
+    private static readonly IGameAnalyzer[] _analyzers;
 
-    public GameStateAnalyzer(ChessState state)
+    static GameStateAnalyzer()
     {
-        _state = state;
         _analyzers = new IGameAnalyzer[]
         {
             new MaterialAnalyzer(),
             new WinAnalyzer(),
-            new ControlAnalyzer(),
+            // new ControlAnalyzer(),
             new AggressionAnalyzer(),
             new PawnAnalyzer()
         };
-    }
-
-    public StateEvaluationCache Cache
-    {
-        get => _cache;
     }
 
     /// <summary>
     /// Evaluate the current game state with + favouring white and - favouring black
     /// </summary>
     /// <returns></returns>
-    public double Evaluate()
+    public static double Evaluate(in ChessState state)
     {
+        ref var cache = ref Tst.Get(state);
+        if (!double.IsNaN(cache.StaticEval)) return cache.StaticEval;
         double score = 0;
         double weighting = 0;
         foreach (var analyzer in _analyzers)
         {
-            var cScore = analyzer.GetScore(_state, this);
+            var cScore = analyzer.GetScore(state);
             if (double.IsNaN(cScore))
             {
-                return 0;
+                return cache.StaticEval = 0;
             }
             score += cScore * analyzer.Weighting;
             weighting += analyzer.Weighting;
         }
 
-        return score;
+        return cache.StaticEval = score;
     }
 }

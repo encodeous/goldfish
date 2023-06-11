@@ -1,24 +1,27 @@
-﻿using System.Diagnostics;
-using System.Runtime.InteropServices.ComTypes;
-using goldfish.Core.Data;
+﻿using goldfish.Core.Data;
 using goldfish.Core.Data.Optimization;
 using goldfish.Core.Game;
 using goldfish.Engine.Analysis;
-using goldfish.Core.Game.FEN;
-using goldfish;
 
 namespace goldfish.Engine;
 
 public static class GoldFishEngine
 {
-    public static double NextOptimalMoves(ChessState state, int depth, ref Span<(ChessMove, double)> bestMoves, ref long moves, double alpha = double.NegativeInfinity, double beta = double.PositiveInfinity, double eval = double.NaN, StateEvaluationCache cache = null)
+    public static double NextOptimalMoves(ChessState state, int depth, ref Span<(ChessMove, double)> bestMoves, ref ulong positions, double alpha = double.NegativeInfinity, double beta = double.PositiveInfinity, double staticEval = double.NaN)
 
     {
         // alpha is white, beta is black
-        if (depth == 0 || double.IsPositiveInfinity(Math.Abs(eval)))
+        if (depth == 0 || double.IsPositiveInfinity(Math.Abs(staticEval)))
         {
-            return eval;
+            return staticEval;
         }
+
+        ref var cache = ref Tst.Get(state);
+        // if (!double.IsNaN(staticEval) && !double.IsNaN(cache.EngineEval) && cache.EvalDepth <= depth)
+        // {
+        //     positions += cache.Positions;
+        //     return cache.EngineEval;
+        // }
 
         var toPlay = state.ToMove;
         (ChessMove, double)? lastMove = null;
@@ -32,19 +35,23 @@ public static class GoldFishEngine
             // minimize
             double.PositiveInfinity;
 
-        var evalMoves = new List<(ChessMove, double, StateEvaluationCache)>();
+        Span<(ChessMove, double)> evalMoves = stackalloc (ChessMove, double)[32 * 30]; // should be plenty... i think
+        Span<ChessMove> tMoves = stackalloc ChessMove[30];
+        int cnt = 0;
         for (var i = 0; i < 8; i++)
         for (var j = 0; j < 8; j++)
         {
             var piece = state.GetPiece(i, j);
-            if (piece.GetSide() != toPlay || piece.GetLogic() is null) continue;
-            foreach (var move in state.GetValidMovesForSquare(i, j, true, cache))
+            if (!piece.IsSide(toPlay) || piece.GetLogic() is null) continue;
+            int moveCnt = state.GetValidMovesForSquare(i, j, tMoves);
+            for(int m = 0; m < moveCnt; m++)
             {
-                var analyzer = new GameStateAnalyzer(move.NewState);
-                evalMoves.Add((move, analyzer.Evaluate(), analyzer.Cache));
+                evalMoves[cnt++] = (tMoves[m], GameStateAnalyzer.Evaluate(state));
             }
         }
 
+        evalMoves = evalMoves[..cnt];
+        
         if (state.ToMove == Side.Black)
         {
             evalMoves.Sort((tuple, valueTuple) => tuple.Item2.CompareTo(valueTuple.Item2));
@@ -55,11 +62,13 @@ public static class GoldFishEngine
         }
         
         Span<(ChessMove, double)> optimalMoves = stackalloc (ChessMove, double)[depth - 1];
-        foreach (var (move, mEval, mCache) in evalMoves)
+        ulong curMoves = 0;
+        for (int i = 0; i < cnt; i++)
         {
-            var nEval = NextOptimalMoves(move.NewState, depth - 1, ref optimalMoves, ref moves, alpha, beta, mEval, mCache);
+            var (move, mEval) = evalMoves[i];
+            var nEval = NextOptimalMoves(move.NewState, depth - 1, ref optimalMoves, ref positions, alpha, beta, mEval);
             lastMove = (move, mEval);
-            moves++;
+            curMoves++;
 
             bool isMoreOptimal = false;
             
@@ -91,13 +100,21 @@ public static class GoldFishEngine
                 {
                     bestMoves[0] = lastMove.Value;
                 }
+                cache = ref Tst.Get(state);
+                cache.EngineEval = optimalVal;
+                cache.EvalDepth = depth;
+                positions += curMoves;
                 return optimalVal;
             }
         }
-        if (double.IsInfinity(optimalVal) && lastMove.HasValue)
+        if (double.IsInfinity(optimalVal) && lastMove is not null)
         {
             bestMoves[0] = lastMove.Value;
         }
+        cache = ref Tst.Get(state);
+        cache.EngineEval = optimalVal;
+        cache.EvalDepth = depth;
+        positions += curMoves;
         return optimalVal;
     }
 }

@@ -30,7 +30,7 @@ public class BoardPrinter
             {
                 var bg = (i + j) % 2 == 0 ? dark : light;
                 var fg = state.GetPiece(i, j).GetSide() == Side.Black ? black : white;
-                if (prevMove.HasValue)
+                if (prevMove is not null)
                 {
                     if (prevMove.Value.NewPos == (i, j) || prevMove.Value.OldPos == (i, j))
                     {
