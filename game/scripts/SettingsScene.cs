@@ -4,12 +4,14 @@ namespace chessium.scripts;
 
 public partial class SettingsScene : Control
 {
+	/// The board and piece Nodes.
 	private Node board, pieces;
 	
+	/// Paths to resources for sprites.
 	private readonly string pathToBoardTextures = "res://assets/textures/chessboard/";
 	private readonly string pathToPieceTextures = "res://assets/textures/chesspieces/";
 	
-	// Called when the node enters the scene tree for the first time.
+	/// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		board = GetNode("/root/Game/Board");
@@ -55,6 +57,7 @@ public partial class SettingsScene : Control
 		GetNode<CheckBox>("Popup/SoundCheckBox").ButtonPressed = Utils.soundEnabled;
 	}
 
+	/// Signal receiver for when the confirm button has been pressed.
 	private void OnConfirmButtonUp()
 	{
 		var boardTexture = GD.Load<Texture2D>(pathToBoardTextures + GetNode<OptionButton>("Popup/BoardsOptionButton").GetSelectedMetadata());
@@ -72,12 +75,13 @@ public partial class SettingsScene : Control
 		QueueFree();
 	}
 
+	/// Signal receiver for when the cancel button has been pressed.
 	private void OnCancelButtonUp()
 	{
 		QueueFree();
 	}
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
+	/// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
 		// to be implemented
