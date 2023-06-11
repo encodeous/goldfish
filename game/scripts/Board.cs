@@ -5,399 +5,524 @@ namespace chessium.scripts;
 
 public partial class Board : Node2D
 {
-	/// Positions of every piece on the chess board, null means no piece present.
-	public readonly Piece[,] boardMatrix =
-	{
-		{null, null, null, null, null, null, null, null},
-		{null, null, null, null, null, null, null, null},
-		{null, null, null, null, null, null, null, null},
-		{null, null, null, null, null, null, null, null},
-		{null, null, null, null, null, null, null, null},
-		{null, null, null, null, null, null, null, null},
-		{null, null, null, null, null, null, null, null},
-		{null, null, null, null, null, null, null, null}
-	};
-	
-	/// Holds the current piece affected by en passant, as well as the piece held by the user.
-	private Piece enPassantPiece, heldPiece;
-	private Array<Move> heldPieceMoves;
-	
-	/// Scenes for promotion, ending and the pieces are loaded to instantiate when needed.
-	[Export] public PackedScene promotionScene = GD.Load<PackedScene>("res://scenes/PromotionScene.tscn");
-	[Export] public PackedScene endScene = GD.Load<PackedScene>("res://scenes/EndScene.tscn");
-	[Export] public PackedScene pieceScene = GD.Load<PackedScene>("res://scenes/Piece.tscn");
-	
-	/// Signals to handle events such as moving a piece, pawn promotion, checkmate and stalemate.
-	[Signal] public delegate void PieceMovedEventHandler();
-	[Signal] public delegate void PawnPromotedEventHandler(Piece piece);
-	[Signal] public delegate void CheckmateEventHandler();
-	[Signal] public delegate void StalemateEventHandler();
-	
-	/// Used to show all the available moves for a piece.
-	private Texture2D whiteDotTexture = GD.Load<Texture2D>("res://assets/misc/white_dot.png");
+	private readonly Vector2 invalidTile = new (-1, -1);
+	private Vector2 mouseTile, previousMouseTile;
 
-	/// Called when the node enters the scene tree for the first time.
+	private Piece selectedPiece;
+	private Vector2 selectedPiecePosition;
+	private Array<Vector2> validMoves;
+	private Dictionary<int, Piece> pieces;
+	private Array<Vector2> kingPositions;
+
+	private Root root;
+	
+	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
-		Connect("PieceMoved", Callable.From(OnBoardPieceMoved));
-		Connect("Checkmate", Callable.From(OnBoardCheckmate));
-		Connect("Stalemate", Callable.From(OnBoardStalemate));
+		mouseTile = invalidTile;
+		previousMouseTile = invalidTile;
+		validMoves = new Array<Vector2>();
+		pieces = new Dictionary<int, Piece>();
+		kingPositions = new Array<Vector2>();
+		root = GetParent<Root>();
 	}
 
-	/// Called every frame. 'delta' is the elapsed time since the previous frame.
+	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
-		// to be implemented
+		var mouse = GetGlobalMousePosition();
+		if (mouse.X > Constants.boardSize)
+		{
+			mouseTile = invalidTile;
+		}
+		else
+		{
+			mouseTile = new Vector2(Mathf.Floor(mouse.X / Constants.tileSize), Mathf.Floor(mouse.Y / Constants.tileSize));
+		}
+
+		if (mouseTile != previousMouseTile)
+		{
+			previousMouseTile = mouseTile;
+			QueueRedraw();
+		}
 	}
 
-	/// Called every frame. '@event' is the event received by this Node.
 	public override void _Input(InputEvent @event)
 	{
-		if (Input.IsActionJustPressed("click"))
+		if (root.gameState == Constants.awaiting)
 		{
-			var mousePosition = GetLocalMousePosition();
-			var clickedBoardCoordinates = GetBoardCoordinates(mousePosition);
+			return;
+		}
+		
+		if(@event is not InputEventMouseButton)
+		{
+			return;
+		}
 
-			if (Utils.IsInsideBoard(clickedBoardCoordinates))
-			{
-				heldPiece = boardMatrix[clickedBoardCoordinates.X, clickedBoardCoordinates.Y];
-				if (heldPiece != null)
+		if (@event.IsPressed())
+		{
+			return;
+		}
+
+		if (root.gameState == Constants.piece)
+		{
+			InputPieceState((InputEventMouseButton) @event);
+		}
+
+		if (root.gameState == Constants.move)
+		{
+			InputMoveState((InputEventMouseButton) @event);
+		}
+	}
+
+	public override void _Draw()
+	{
+		switch (root.gameState)
+		{
+			case 0: // grabbing a piece
+				if (mouseTile == invalidTile)
 				{
-					if (Utils.playerTurn != heldPiece.color)
+					return;
+				}
+
+				var piece = GetPieceFromVector2(mouseTile);
+				if (piece != null)
+				{
+					if (piece.player == root.player)
 					{
-						heldPiece = null;
+						DrawTileBorder(mouseTile, new Color(1, 1, 0));
+					}
+				}
+				break;
+			
+			case 1: // making a move
+				if (selectedPiecePosition != invalidTile)
+				{
+					DrawTileBorder(selectedPiecePosition, new Color(0, 1, 0));
+				}
+
+				foreach (var move in validMoves)
+				{
+					if (mouseTile == move)
+					{
+						DrawTileBorder(move, new Color(1, 1, 0));
+					}
+					else if (GetPieceFromVector2(move) != null)
+					{
+						if (GetPieceFromVector2(move).player == root.player)
+						{
+							DrawTileBorder(move, new Color(0, 1, 0));
+						}
+						else
+						{
+							DrawTileBorder(move, new Color(1, 0, 0));
+						}
 					}
 					else
 					{
-						heldPieceMoves = heldPiece.GetLegalMoves(this, enPassantPiece);
-						HighlightMoves(heldPieceMoves);
+						DrawTileBorder(move, new Color(0, 0, 1));
 					}
 				}
-			}
-
-			return;
+				break;
 		}
+	}
 
-		if (heldPiece != null)
+	public Piece GetPieceFromVector2(Vector2 position)
+	{
+		return GetPiece((int) position.X, (int) position.Y);
+	}
+
+	private Piece GetPiece(int x, int y)
+	{
+		return GetGrid(x, y, pieces);
+	}
+
+	private Piece GetGrid(int x, int y, Dictionary<int, Piece> dictionary)
+	{
+		if (x < 8 && x >= 0 && y < 8 && y >= 0)
 		{
-			var mousePosition = GetLocalMousePosition();
-			var clickedBoardCoordinates = GetBoardCoordinates(mousePosition);
-
-			if (Input.IsActionPressed("click"))
+			if (dictionary.ContainsKey(CoordinatesToKey(x, y)))
 			{
-				heldPiece.DragTo(mousePosition);
-			}
-
-			if (Input.IsActionJustReleased("click"))
-			{
-				ClearHighlightedMoves();
-
-				foreach (var move in heldPieceMoves)
+				var piece = dictionary[CoordinatesToKey(x, y)];
+				if (piece != null)
 				{
-					if (move.destination == clickedBoardCoordinates)
-					{
-						MakePlay(move);
-					}
+					return piece;
 				}
-				
-				SnapPiecesToPosition(new Array<Piece> {heldPiece});
-
-				heldPiece = null;
-				heldPieceMoves = null;
 			}
 		}
+
+		return null;
 	}
 
-	/// Puts the piece instance in the center of the nearest grid tile.
-	public void SnapPiecesToPosition(Array<Piece> pieces)
+	private void DrawTileBorder(Vector2 position, Color color)
 	{
-		foreach (var piece in pieces)
+		DrawRect(new Rect2(new Vector2(position.X * Constants.tileSize, position.Y * Constants.tileSize), new Vector2(Constants.tileSize, Constants.tileSize)), color, false, 5);
+	}
+
+	public void ClearJumps()
+	{
+		foreach (var key in pieces.Keys)
 		{
-			piece.Position = GetWorldCoordinates(piece.boardCoordinates);
-		}
-	}
-
-	/// Gets the coordinates of a vector relative to the board Node.
-	private Vector2I GetBoardCoordinates(Vector2 worldCoordinates)
-	{
-		return GetNode<TileMap>("TileMap").LocalToMap(worldCoordinates) * new Vector2I(1, -1) * new Vector2I(4, 3);
-	}
-
-	/// Gets the coordinates of a vector relative to the TileMap Node.
-	private Vector2 GetTileMapCoordinates(Vector2 boardCoordinates)
-	{
-		return boardCoordinates * new Vector2(1, -1) + new Vector2(4, 3);
-	}
-
-	/// Gets the coordinates of a vector relative to the main window.
-	private Vector2 GetWorldCoordinates(Vector2 boardCoordinates)
-	{
-		return GetNode<TileMap>("TileMap").MapToLocal(new Vector2I((int) boardCoordinates.X, (int) boardCoordinates.Y) + new Vector2I(-4, 3)) + GetNode<Sprite2D>("Sprite").Texture.GetSize() / 16;
-	}
-
-	/// Highlights all valid moves for a selected piece with a Sprite2D.
-	private void HighlightMoves(Array<Move> possibleMoves)
-	{
-		foreach (var move in possibleMoves)
-		{
-			var highlight = new Sprite2D();
-			highlight.Position = GetWorldCoordinates(move.destination);
-			highlight.Texture = whiteDotTexture;
-			highlight.Modulate = new Color(0, 0, 0, 0.25f);
-
-			if (Utils.IsInsideBoard(move.destination) && (boardMatrix[(int) move.destination.X, (int) move.destination.Y] != null || move.moveType == Constants.MoveType.EN_PASSANT))
+			if (pieces[key].player == root.player && pieces[key].type == Constants.pawn)
 			{
-				highlight.Scale *= 3;
+				pieces[key].jumped = false;
 			}
-			
-			GetNode("Highlights").AddChild(highlight);
 		}
 	}
 
-	/// Removes all highlighted moves for a selected piece.
-	private void ClearHighlightedMoves()
+	private void InputPieceState(InputEventMouseButton @event)
 	{
-		foreach (var highlight in GetNode("Highlights").GetChildren())
-		{
-			highlight.QueueFree();
-		}
-	}
-
-	/// Adds the piece as a child Node of the Board Node with a specific state and position.
-	public Piece AddPieceToBoard(Constants.Player color, Constants.PieceType type, Vector2 piecePosition)
-	{
-		var piece = pieceScene.Instantiate<Piece>();
-		piece.pieceType = type;
-		piece.color = color;
-		piece.boardCoordinates = piecePosition;
-		piece.Position = piecePosition;
-		
-		boardMatrix[(int) piecePosition.X, (int) piecePosition.Y] = piece;
-		GetNode("Pieces").AddChild(piece);
-
-		return piece;
-	}
-
-	/// Handles the logic to make a play on the board.
-	private void MakePlay(Move move)
-	{
-		var victim = boardMatrix[(int) move.destination.X, (int) move.destination.Y];
-		if (victim != null)
-		{
-			victim.QueueFree();
-			victim.Free();
-		}
-
-		MoveCastlingRook(move);
-		HandleEnPassant(move);
-		HandlePromotion(move);
-		MovePiece(move);
-
-		EmitSignal("PieceMoved");
-	}
-
-	/// Moves a piece from one position to another.
-	private void MovePiece(Move move)
-	{
-		move.piece.IncreaseMoveCount();
-		boardMatrix[(int) move.piece.boardCoordinates.X, (int) move.piece.boardCoordinates.Y] = null;
-		boardMatrix[(int) move.destination.X, (int) move.destination.Y] = move.piece;
-		move.piece.boardCoordinates = move.destination;
-		
-		Utils.PlaySound(GetNode<AudioStreamPlayer>("MoveSoundPlayer"));
-	}
-
-	/// Moves the rook to its position when the king is castling.
-	private void MoveCastlingRook(Move move)
-	{
-		if (move.moveType != Constants.MoveType.CASTLING)
+		if (mouseTile == invalidTile || @event.ButtonIndex != MouseButton.Left)
 		{
 			return;
 		}
 
-		var kingDestination = move.destination;
-		var kingMove = move.piece.boardCoordinates - kingDestination;
-		var kingMoveDirection = kingMove.Normalized() * -1;
-
-		var castlingRook = move.affectedPiece;
-		var rookMove = new Move(castlingRook, Constants.MoveType.CASTLING, new Vector2(kingDestination.X + kingMoveDirection.X * -1, kingDestination.Y));
-		
-		MovePiece(rookMove);
-		Utils.PlaySound(GetNode<AudioStreamPlayer>("CastlingSoundPlayer"));
-		SnapPiecesToPosition(new Array<Piece> {castlingRook});
-	}
-
-	/// Handles the piece captured via en passant.
-	private void HandleEnPassant(Move move)
-	{
-		if (move.moveType == Constants.MoveType.EN_PASSANT)
+		var piece = GetPieceFromVector2(mouseTile);
+		if (piece == null)
 		{
-			boardMatrix[(int) enPassantPiece.boardCoordinates.X, (int) enPassantPiece.boardCoordinates.Y] = null;
-			enPassantPiece.QueueFree();
-			enPassantPiece.Free();
+			return;
 		}
 
-		enPassantPiece = move.moveType == Constants.MoveType.DOUBLE ? move.piece : null;
-	}
-
-	/// Handles cases where pawns reach the opposite side of the board (promotion).
-	private void HandlePromotion(Move move)
-	{
-		if (move.piece.pieceType == Constants.PieceType.PAWN && ((int) move.destination.Y == 0 || (int) move.destination.Y == 7))
+		if (piece.player == root.player)
 		{
-			EmitSignal("PawnPromoted", move.piece);
-		}
-	}
-
-	/// Checks if the game is over by checkmate or stalemate.
-	private bool GameOver()
-	{
-		var moves = GetAllLegalMoves(Utils.playerTurn);
-		var check = IsInCheck();
-
-		if (moves.Count == 0)
-		{
-			if (check)
+			if (piece.GetValidMovesFromVector2(mouseTile).Count > 0)
 			{
-				EmitSignal("Checkmate");
+				selectedPiece = piece;
+				selectedPiecePosition = mouseTile;
+				validMoves = piece.GetValidMovesFromVector2(mouseTile);
+
+				root.gameState = Constants.move;
+				QueueRedraw();
+			}
+		}
+	}
+
+	private void Deselect()
+	{
+		selectedPiece = null;
+		selectedPiecePosition = invalidTile;
+		validMoves = new Array<Vector2>();
+		root.gameState = Constants.piece;
+		
+		QueueRedraw();
+	}
+
+	private void InputMoveState(InputEventMouseButton @event)
+	{
+		if ((@event.ButtonIndex == MouseButton.Right || mouseTile == invalidTile) && selectedPiece != null)
+		{
+			Deselect();
+			return;
+		}
+
+		if (mouseTile == invalidTile)
+		{
+			return;
+		}
+
+		if (validMoves.IndexOf(mouseTile) != -1)
+		{
+			var mouseKey = CoordinatesToKey((int) mouseTile.X, (int) mouseTile.Y);
+			var captured = false;
+
+			if (pieces.ContainsKey(mouseKey) && pieces[mouseKey].player != root.player)
+			{
+				root.Capture(pieces[mouseKey]);
+				RemoveChild(pieces[mouseKey]);
+				
+				pieces[mouseKey].QueueFree();
+				pieces.Remove(mouseKey);
+				captured = true;
+			}
+
+			if (selectedPiece != null && selectedPiece.type == Constants.king)
+			{
+				kingPositions[root.player] = mouseTile;
+			}
+
+			if (selectedPiece != null && selectedPiece.type == Constants.king && pieces.ContainsKey(mouseKey))
+			{
+				if (pieces[mouseKey].type == Constants.rook)
+				{
+					var direction = -Mathf.Sign(selectedPiecePosition.X - mouseTile.X);
+					
+					var king = selectedPiece;
+					var rook = pieces[mouseKey];
+
+					var kingPosition = new Vector2(selectedPiecePosition.X + direction * 2, selectedPiecePosition.Y);
+					var kingPositionKey = CoordinatesToKey((int) kingPosition.X, (int) kingPosition.Y);
+
+					var rookPosition = new Vector2(kingPosition.X - direction, kingPosition.Y);
+					var rookPositionKey = CoordinatesToKey((int) rookPosition.X, (int) rookPosition.Y);
+
+					pieces.Remove(mouseKey);
+					pieces.Remove(CoordinatesToKey((int) selectedPiecePosition.X, (int) selectedPiecePosition.Y));
+
+					pieces[kingPositionKey] = king;
+					pieces[rookPositionKey] = rook;
+
+					rook.moved = true;
+					rook.Position = new Vector2(rookPosition.X * Constants.tileSize, rookPosition.Y * Constants.tileSize);
+					
+					king.Position = new Vector2(kingPosition.X * Constants.tileSize, kingPosition.Y * Constants.tileSize);
+					kingPositions[root.player] = kingPosition;
+				}
 			}
 			else
 			{
-				EmitSignal("Stalemate");
+				pieces.Remove(CoordinatesToKey((int) selectedPiecePosition.X, (int) selectedPiecePosition.Y));
+				pieces[mouseKey] = selectedPiece;
+
+				selectedPiece!.Position = new Vector2(mouseTile.X * Constants.tileSize, mouseTile.Y * Constants.tileSize);
 			}
 
-			return true;
+			if (selectedPiece.type == Constants.pawn && Mathf.Abs( (int) (selectedPiecePosition.X - mouseTile.X)) == 1 && !captured)
+			{
+				var xOffset = -(selectedPiecePosition.X - mouseTile.X);
+				var enPassantOffset = new Vector2(selectedPiecePosition.X + xOffset, selectedPiecePosition.Y);
+				var enPassantKey = CoordinatesToKey((int) enPassantOffset.X, (int) enPassantOffset.Y);
+
+				root.Capture(pieces[enPassantKey]);
+				RemoveChild(pieces[enPassantKey]);
+				
+				pieces[enPassantKey].QueueFree();
+				pieces.Remove(enPassantKey);
+			}
+
+			selectedPiece.moved = true;
+
+			if (selectedPiece.type == Constants.pawn)
+			{
+				var y = (int) mouseTile.Y;
+				var canPromote = y == 7 || y == 0;
+
+				if (canPromote)
+				{
+					PromotePawn(mouseTile);
+				}
+
+				if (Mathf.Abs((int) (mouseTile.Y - selectedPiecePosition.Y)) == 2)
+				{
+					selectedPiece.jumped = true;
+				}
+			}
+
+			selectedPiece = null;
+			selectedPiecePosition = invalidTile;
+			validMoves = new Array<Vector2>();
+
+			root.SwitchPlayer();
+
+			if (!CheckCheckmate(root.player))
+			{
+				root.gameState = Constants.piece;
+			}
+			else
+			{
+				root.winner = Mathf.Abs(root.player - 1);
+
+				var dialog = new WinnerDialog(root.winner);
+				dialog.Position = new Vector2(Constants.boardSize / 2.0f - (WinnerDialog.winnerWidth - Dialog.size) / 2.0f, Constants.boardSize / 2.0f - (WinnerDialog.winnerHeight - Dialog.size) / 2.0f);
+				
+				root.AddChild(dialog);
+				root.gameState = Constants.checkmate;
+			}
+			
+			QueueRedraw();
+		}
+		else
+		{
+			Deselect();
+		}
+	}
+
+	private void PromotePawn(Vector2 position)
+	{
+		root.gameState = Constants.awaiting;
+
+		var dialog = new PromotionDialog(root.player);
+		dialog.Position = new Vector2(Constants.boardSize / 2.0f - (PromotionDialog.promotionWidth - Dialog.size) / 2.0f, Constants.boardSize / 2.0f - (PromotionDialog.promotionHeight - Dialog.size) / 2.0f);
+		root.AddChild(dialog);
+
+		var newPiece = -1;
+		dialog.OnSelected += (type) => { newPiece = type; };
+		root.RemoveChild(dialog);
+		
+		var key = CoordinatesToKey((int) position.X, (int) position.Y);
+		pieces[key].type = newPiece;
+		pieces[key].UpdateSprite();
+	}
+
+	public void NewGame()
+	{
+		pieces = new Dictionary<int, Piece>();
+		kingPositions = new Array<Vector2>();
+
+		foreach (var child in GetChildren())
+		{
+			if (child is not Sprite2D)
+			{
+				RemoveChild(child);
+				child.QueueFree();
+			}
 		}
 
+		for (var i = 0; i < 2; i++)
+		{
+			for (var x = 0; x < 8; x++)
+			{
+				var y = 6 - 5 * i;
+				var piece = new Piece(i, Constants.pawn);
+				piece.Position = new Vector2(x * Constants.tileSize, y * Constants.tileSize);
+				pieces[CoordinatesToKey(x, y)] = piece;
+			}
+
+			var types = new Array<int>
+			{
+				Constants.rook, Constants.knight, Constants.bishop, Constants.king, Constants.queen, Constants.bishop, Constants.knight, Constants.rook
+			};
+			for (var x = 0; x < 8; x++)
+			{
+				var y = 7 - 7 * i;
+				var piece = new Piece(i, types[x]);
+				piece.Position = new Vector2(x * Constants.tileSize, y * Constants.tileSize);
+
+				if (piece.type == Constants.king)
+				{
+					kingPositions.Add(new Vector2(x, y));
+				}
+
+				pieces[CoordinatesToKey(x, y)] = piece;
+			}
+		}
+
+		foreach (var pair in pieces)
+		{
+			AddChild(pair.Value);
+		}
+	}
+
+	public bool WouldBeInCheck(int x, int y, Piece piece, Vector2 position)
+	{
+		var player = piece.player;
+		var kingPosition = kingPositions[player];
+
+		if (piece.type == Constants.king)
+		{
+			kingPosition = position;
+		}
+
+		var boardState = pieces.Duplicate();
+		boardState.Remove(CoordinatesToKey(x, y));
+		boardState[CoordinatesToKey((int) position.X, (int) position.Y)] = piece;
+
+		return IsKingInCheck(player, boardState, kingPosition);
+	}
+
+	public bool WouldBeInCheckFromCastling(Vector2 currentPosition, Vector2 castlePosition, Vector2 newPosition, Vector2 newCastlePosition)
+	{
+		var king = GetPieceFromVector2(currentPosition);
+		var rook = GetPieceFromVector2(castlePosition);
+
+		var boardState = pieces.Duplicate();
+		boardState.Remove(CoordinatesToKey((int) currentPosition.X, (int) currentPosition.Y));
+		boardState.Remove(CoordinatesToKey((int) castlePosition.X, (int) castlePosition.Y));
+
+		boardState[CoordinatesToKey((int) newPosition.X, (int) newPosition.Y)] = king;
+		boardState[CoordinatesToKey((int) newCastlePosition.X, (int) newCastlePosition.Y)] = rook;
+
+		return IsKingInCheck(king.player, boardState, newPosition);
+	}
+
+	private bool IsKingInCheck(int player, Dictionary<int, Piece> boardState, Vector2 kingPosition)
+	{
+		// Check if pawns can capture the king
+		var y = -1 + (player * 2);
+		for (var i = 0; i < 2; i++)
+		{
+			var x = -1 + (i * 2);
+			var piece = GetGrid((int) (kingPosition.X + x), (int) (kingPosition.Y + y), boardState);
+			if (piece != null && piece.type == Constants.pawn && piece.player != player)
+			{
+				return true;
+			}
+		}
+		
+		// Check if knights can capture the king
+		foreach (var direction in Constants.knightDirections)
+		{
+			var piece = GetGrid((int) (kingPosition.X + direction.X), (int) (kingPosition.Y + direction.Y), boardState);
+			if (piece != null && piece.type == Constants.knight && piece.player != player)
+			{
+				return true;
+			}
+		}
+		
+		// Check to prevent a king from moving too close to another king
+		foreach (var direction in Constants.allDirections)
+		{
+			var piece = GetGrid((int) (kingPosition.X + direction.X), (int) (kingPosition.Y + direction.Y), boardState);
+			if (piece != null && piece.type == Constants.king && piece.player != player)
+			{
+				return true;
+			}
+		}
+		
+		// Check if a queen, bishop or rook can capture the king
+		var directionList = new Array<Array<Vector2>> { Constants.allDirections, Constants.rookDirections, Constants.bishopDirections };
+		var pieceList = new Array<int> { Constants.queen, Constants.rook, Constants.bishop };
+
+		for (var i = 0; i < directionList.Count; i++)
+		{
+			var directions = directionList[i];
+			var piece = pieceList[i];
+
+			foreach (var direction in directions)
+			{
+				var multi = 1;
+				while (multi < 8)
+				{
+					var king = GetGrid((int) (kingPosition.X + direction.X * multi), (int) (kingPosition.Y + direction.Y * multi), boardState);
+					if (king != null)
+					{
+						if (king.type == piece && king.player != player)
+						{
+							return true;
+						}
+
+						if (king.type != piece || king.player == player)
+						{
+							break;
+						}
+					}
+
+					multi++;
+				}
+			}
+		}
+		
 		return false;
 	}
 
-	/// Checks if the king is currently in check.
-	private bool IsInCheck()
+	private bool CheckCheckmate(int player)
 	{
-		var moves = GetAllLegalMoves(Utils.otherPlayerTurn);
-		var kingPosition = GetKing(Utils.playerTurn).boardCoordinates;
-		var check = false;
-
-		foreach (var move in moves)
+		foreach (var pair in pieces)
 		{
-			if (move.destination == kingPosition)
+			var piece = pair.Value;
+			if (piece.player == player)
 			{
-				check = true;
+				if (piece.GetValidMoves((int) piece.Position.X / Constants.tileSize, (int) piece.Position.Y / Constants.tileSize).Count > 0)
+				{
+					return false;
+				}
 			}
 		}
 
-		return check;
+		return true;
 	}
 
-	/// Gets all legal moves for all pieces for a player.
-	private Array<Move> GetAllLegalMoves(Constants.Player player)
+	private int CoordinatesToKey(int x, int y)
 	{
-		var allMoves = new Array<Move>();
-		foreach (var piece in boardMatrix)
-		{
-			if (piece != null && piece.color == player)
-			{
-				allMoves += piece.GetLegalMoves(this, enPassantPiece);
-			}
-		}
-
-		return allMoves;
-	}
-
-	/// Gets the instance of the king piece for a player.
-	private Piece GetKing(Constants.Player player)
-	{
-		var king = new Piece();
-		foreach (var piece in boardMatrix)
-		{
-			if (piece != null && piece.color == player && piece.pieceType == Constants.PieceType.KING)
-			{
-				king = piece;
-			}
-		}
-
-		return king;
-	}
-	
-	/// Gets all pieces present on the board.
-	public Array<Piece> GetBoardPieces()
-	{
-		var children = GetNode("Pieces").GetChildren();
-		var pieces = new Array<Piece>();
-
-		foreach (var child in children)
-		{
-			if (child is Piece)
-			{
-				pieces.Add(child as Piece);
-			}
-		}
-
-		return pieces;
-	}
-	
-	/// Flips the board depending on which player is currently playing.
-	public void RotateBoard()
-	{
-		if (Utils.gameMode == Constants.GameMode.LOCAL_MULTIPLAYER)
-		{
-			var camera = GetNode<Camera2D>("/root/Game/Camera");
-			var angleTo = 0;
-			
-			if (camera.RotationDegrees == 0)
-			{
-				angleTo = 180;
-			}
-
-			camera.RotationDegrees = angleTo;
-
-			var pieces = GetBoardPieces();
-			foreach (var piece in pieces)
-			{
-				piece.RotationDegrees = angleTo;
-			}
-		}
-	}
-	
-	/// Signal receiver when a piece has been moved.
-	private void OnBoardPieceMoved()
-	{
-		Utils.SwapPlayerTurn();
-		if (!GameOver())
-		{
-			RotateBoard();
-		}
-	}
-
-	/// Signal receiver when a pawn is promoting.
-	private void OnBoardPawnPromoted(Piece pawn)
-	{
-		var promotion = promotionScene.Instantiate<PromotionScene>();
-		promotion.piece = pawn;
-		
-		GetNode("/root/Game/HUD").AddChild(promotion);
-	}
-
-	/// Signal receiver when a checkmate has a occurred.
-	private void OnBoardCheckmate()
-	{
-		var end = endScene.Instantiate<EndScene>();
-		end.endgameReason = "checkmate";
-		end.player = Utils.PlayerToString(Utils.otherPlayerTurn);
-		end.otherPlayer = Utils.PlayerToString(Utils.playerTurn);
-		
-		GetNode("/root/Game/HUD").AddChild(end);
-	}
-
-	/// Signal receiver when a stalemate has occurred.
-	private void OnBoardStalemate()
-	{
-		var end = endScene.Instantiate<EndScene>();
-		end.endgameReason = "stalemate";
-		end.player = Utils.PlayerToString(Utils.otherPlayerTurn);
-		end.otherPlayer = Utils.PlayerToString(Utils.playerTurn);
-		
-		GetNode("/root/Game/HUD").AddChild(end);
+		return (x << 3) + y;
 	}
 }

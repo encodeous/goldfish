@@ -1,0 +1,52 @@
+[gd_scene load_steps=7 format=3 uid="uid://eo0u6ql37rvi"]
+
+[ext_resource type="Texture2D" uid="uid://b0qnhams6s2by" path="res://assets/board.png" id="1_iitqu"]
+[ext_resource type="Script" path="res://scripts/Root.cs" id="1_tt1tl"]
+[ext_resource type="Script" path="res://scripts/Board.cs" id="2_wifis"]
+[ext_resource type="Texture2D" uid="uid://csokiv4rj2cy4" path="res://assets/player.png" id="3_6jnnh"]
+[ext_resource type="Script" path="res://scripts/UI.cs" id="4_cjdut"]
+[ext_resource type="PackedScene" uid="uid://cp2l88r4j0isr" path="res://scenes/PieceSlot.tscn" id="6_nuxto"]
+
+[node name="Root" type="Node2D"]
+z_index = -1000
+texture_filter = 1
+script = ExtResource("1_tt1tl")
+
+[node name="Board" type="Node2D" parent="."]
+script = ExtResource("2_wifis")
+
+[node name="BoardSprite" type="Sprite2D" parent="Board"]
+z_index = -4
+texture = ExtResource("1_iitqu")
+centered = false
+
+[node name="UI" type="Node2D" parent="."]
+z_index = 5
+position = Vector2(480, 0)
+script = ExtResource("4_cjdut")
+
+[node name="PlayerIndicator" type="Node2D" parent="UI"]
+z_index = 100
+position = Vector2(26, 10)
+
+[node name="PlayerIndicatorSprite" type="Sprite2D" parent="UI/PlayerIndicator"]
+texture = ExtResource("3_6jnnh")
+centered = false
+vframes = 4
+
+[node name="PieceSlots" type="Node2D" parent="UI"]
+position = Vector2(0, 40)
+
+[node name="PieceSlotWP" parent="UI/PieceSlots" instance=ExtResource("6_nuxto")]
+position = Vector2(0, 10)
+
+[node name="PieceSlotWO" parent="UI/PieceSlots" instance=ExtResource("6_nuxto")]
+position = Vector2(0, 74)
+
+[node name="PieceSlotBP" parent="UI/PieceSlots" instance=ExtResource("6_nuxto")]
+position = Vector2(0, 138)
+black = true
+
+[node name="PieceSlotBO" parent="UI/PieceSlots" instance=ExtResource("6_nuxto")]
+position = Vector2(0, 206)
+black = true

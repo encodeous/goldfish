@@ -5,473 +5,239 @@ namespace chessium.scripts;
 
 public partial class Piece : Node2D
 {
-	/// The size of the piece sprite in pixels.
-	private const int SPRITE_SIZE = 256;
-	
-	/// The type of the piece.
-	public Constants.PieceType pieceType = Constants.PieceType.PAWN;
-	/// The color of the piece.
-	[Export] public Constants.Player color = Constants.Player.BLACK;
-	
-	/// The location of the piece on the board [8*8].
-	[Export] public Vector2 boardCoordinates;
-	/// How many times the piece has moved.
-	private int moveCount;
+	private Sprite2D sprite;
+	private Texture2D texture;
+	private Board board;
 
-	/// Called when the node enters the scene tree for the first time.
+	public int player, type;
+	public bool moved = false, jumped = false;
+	
+	public Piece(int player, int type)
+	{
+		this.player = player;
+		this.type = type;
+	}
+	
+	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
-		SetPieceSprite();
+		sprite = new Sprite2D();
+		texture = GD.Load<Texture2D>("res://assets/pieces.png");
+		board = GetParent<Board>();
+
+		sprite.Texture = texture;
+		sprite.Centered = false;
+		sprite.Hframes = 6;
+		sprite.Vframes = 2;
+
+		UpdateSprite();
+		AddChild(sprite);
 	}
 
-	/// Called every frame. 'delta' is the elapsed time since the previous frame.
+	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
 		// to be implemented
 	}
 
-	/// Sets the sprite of the piece based on which type it is.
-	private void SetPieceSprite()
+	public override void _ExitTree()
 	{
-		var colorMod = color == Constants.Player.WHITE ? SPRITE_SIZE : 0;
-		var regionRect = new Rect2();
+		sprite.QueueFree();
+	}
 
-		switch (pieceType)
+	private Array<Vector2> GetPieceDirections()
+	{
+		switch (type)
 		{
-			case Constants.PieceType.PAWN:
-				regionRect = new Rect2(SPRITE_SIZE * 0, colorMod, SPRITE_SIZE, SPRITE_SIZE);
-				break;
-				
-			case Constants.PieceType.KNIGHT:
-				regionRect = new Rect2(SPRITE_SIZE * 2, colorMod, SPRITE_SIZE, SPRITE_SIZE);
-				break;
-
-			case Constants.PieceType.KING:
-				regionRect = new Rect2(SPRITE_SIZE * 5, colorMod, SPRITE_SIZE, SPRITE_SIZE);
-				break;
-
-			case Constants.PieceType.ROOK:
-				regionRect = new Rect2(SPRITE_SIZE * 1, colorMod, SPRITE_SIZE, SPRITE_SIZE);
-				break;
-
-			case Constants.PieceType.BISHOP:
-				regionRect = new Rect2(SPRITE_SIZE * 3, colorMod, SPRITE_SIZE, SPRITE_SIZE);
-				break;
-
-			case Constants.PieceType.QUEEN:
-				regionRect = new Rect2(SPRITE_SIZE * 4, colorMod, SPRITE_SIZE, SPRITE_SIZE);
-				break;
-		}
-
-		GetNode<Sprite2D>("Sprite").RegionRect = regionRect;
-	}
-
-	/// Sets the piece's sprite and current type to a new type after promotion.
-	public void Promote(Constants.PieceType newType)
-	{
-		pieceType = newType;
-		SetPieceSprite();
-	}
-
-	/// Sets the piece's position to where it was dragged.
-	public void DragTo(Vector2 pos)
-	{
-		Position = pos;
-	}
-
-	/// Increases the piece's move count every time it has moved.
-	public void IncreaseMoveCount()
-	{
-		moveCount++;
-	}
-
-	/// Gets all legal moves by filtering all pseudo moves to account for the king being in check.
-	public Array<Move> GetLegalMoves(Board board, Piece enPassantPiece)
-	{
-		var legalMoves = FilterKingSafeMoves(GetPseudoMoves(board, enPassantPiece), board, enPassantPiece);
-		return legalMoves;
-	}
-
-	/// Gets the pseudo moves of a piece depending on its type.
-	private Array<Move> GetPseudoMoves(Board board, Piece enPassantPiece)
-	{
-		switch (pieceType)
-		{
-			case Constants.PieceType.PAWN:
-				return GetPawnMoves(board, enPassantPiece);
+			case 0: // pawn
+				return new Array<Vector2> { new (0, 1) };
 			
-			case Constants.PieceType.ROOK:
-				return GetRookMoves(board);
+			case 1: // rook
+				return Constants.rookDirections;
 			
-			case Constants.PieceType.KNIGHT:
-				return GetKnightMoves(board);
+			case 2: // knight
+				return Constants.knightDirections;
 			
-			case Constants.PieceType.BISHOP:
-				return GetBishopMoves(board);
+			case 3: // bishop
+				return Constants.bishopDirections;
 			
-			case Constants.PieceType.QUEEN:
-				return GetQueenMoves(board);
-			
-			case Constants.PieceType.KING:
-				return GetKingMoves(board);
+			case 4 or 5: // queen or king
+				return Constants.allDirections;
 			
 			default:
-				return null;
+				return new Array<Vector2>();
 		}
 	}
 
-	/// Gets all legal pawn moves, including the first double move and any possible en passant captures.
-	private Array<Move> GetPawnMoves(Board board, Piece enPassantPiece)
+	public Array<Vector2> GetValidMoves(int x, int y)
 	{
-		var moves = new Array<Move>();
-		var standardMove = color == Constants.Player.WHITE ? new Vector2(0, 1) : new Vector2(0, -1);
+		var positions = new Array<Vector2>();
+		var multi = -1 + player * 2;
 
-		if (IsValidPawn(standardMove, board))
+		// where can all regular pieces move (queen, bishop, knight, rook)?
+		foreach (var direction in GetPieceDirections())
 		{
-			moves.Add(new Move(this, Constants.MoveType.SINGLE, boardCoordinates + standardMove));
-		}
-
-		if (moveCount == 0)
-		{
-			var doubleMove = color == Constants.Player.WHITE ? new Vector2(0, 2) : new Vector2(0, -2);
-			if (IsValidPawn(standardMove, board) && IsValidPawn(standardMove, board))
+			for (var i = 0; i < DistanceTravelled(); i++)
 			{
-				moves.Add(new Move(this, Constants.MoveType.DOUBLE, boardCoordinates + doubleMove));
-			}
-		}
-
-		moves += GetPawnCaptures(board, enPassantPiece);
-		return moves;
-	}
-
-	/// Gets all possible captures a pawn can make, including en passant.
-	private Array<Move> GetPawnCaptures(Board board, Piece enPassantPiece)
-	{
-		var moves = new Array<Move>();
-		var captures = color == Constants.Player.WHITE ? new Array<Vector2>(new []{ new Vector2(1, 1), new Vector2(-1, 1) }) : new Array<Vector2>(new []{new Vector2(-1, -1), new Vector2(1, -1)});
-
-		foreach (var vec in captures)
-		{
-			var move = boardCoordinates + vec;
-			if (Utils.IsInsideBoard(move))
-			{
-				var piece = board.boardMatrix[(int) move.X, (int) move.Y];
-				if (piece != null && piece.color != this.color)
+				var position = new Vector2(x + direction.X * (i + 1), y + direction.Y * (i + 1) * multi);
+				if (IsValidMove(position))
 				{
-					moves.Add(new Move(this, Constants.MoveType.SINGLE, move));
-				}
-			}
-		}
-		
-		var enPassantMoves = color == Constants.Player.WHITE ? new Array<Vector2>(new []{ new Vector2(1, 1), new Vector2(-1, 1) }) : new Array<Vector2>(new []{new Vector2(-1, -1), new Vector2(1, -1)});
-
-		foreach (var vec in enPassantMoves)
-		{
-			var move = boardCoordinates + vec;
-			if (Utils.IsInsideBoard(move))
-			{
-				var victim = board.boardMatrix[(int)move.X, (int)move.Y];
-				if (victim != null && victim == enPassantPiece)
-				{
-					moves.Add(new Move(this, Constants.MoveType.EN_PASSANT, move, victim));
-				}
-			}
-		}
-		
-		return moves;
-	}
-
-	/// Gets all legal knight moves.
-	private Array<Move> GetKnightMoves(Board board)
-	{
-		var possibleMoves = new Array<Vector2>();
-		possibleMoves.Add(new Vector2(2, 1));
-		possibleMoves.Add(new Vector2(2, -1));
-		possibleMoves.Add(new Vector2(-2, 1));
-		possibleMoves.Add(new Vector2(-2, -1));
-		possibleMoves.Add(new Vector2(1, 2));
-		possibleMoves.Add(new Vector2(1, -2));
-		possibleMoves.Add(new Vector2(-1, 2));
-		possibleMoves.Add(new Vector2(-1, -2));
-
-		var moves = new Array<Move>();
-		foreach (var move in possibleMoves)
-		{
-			if (IsValidPlacing(move, board))
-			{
-				moves.Add(new Move(this, Constants.MoveType.SINGLE, boardCoordinates + move));
-			}
-		}
-
-		return moves;
-	}
-
-	/// Gets all legal king moves, including when it can castle.
-	private Array<Move> GetKingMoves(Board board)
-	{
-		var possibleMoves = new Array<Vector2>();
-		possibleMoves.Add(new Vector2(0, 1));
-		possibleMoves.Add(new Vector2(0, -1));
-		possibleMoves.Add(new Vector2(1, 0));
-		possibleMoves.Add(new Vector2(-1, 0));
-		possibleMoves.Add(new Vector2(1, 1));
-		possibleMoves.Add(new Vector2(1, -1));
-		possibleMoves.Add(new Vector2(-1, 1));
-		possibleMoves.Add(new Vector2(-1, -1));
-
-		var moves = new Array<Move>();
-		foreach (var move in possibleMoves)
-		{
-			if (IsValidPlacing(move, board))
-			{
-				moves.Add(new Move(this, Constants.MoveType.SINGLE, boardCoordinates + move));
-			}
-		}
-
-		moves += GetCastlingMoves(board);
-		return moves;
-	}
-
-	/// Gets all possible castling moves (queenside and kingside), assuming the king and either rook have not moved yet and there are no obstructions.
-	private Array<Move> GetCastlingMoves(Board board)
-	{
-		var moves = new Array<Move>();
-
-		if (moveCount != 0)
-		{
-			return moves;
-		}
-
-		var leftRook = board.boardMatrix[0, (int) boardCoordinates.Y];
-		var rightRook = board.boardMatrix[7, (int) boardCoordinates.Y];
-
-		if (leftRook != null && board.boardMatrix[1, (int) boardCoordinates.Y] == null && board.boardMatrix[2, (int) boardCoordinates.Y] == null && board.boardMatrix[3, (int) boardCoordinates.Y] == null && leftRook.pieceType == Constants.PieceType.ROOK && leftRook.moveCount == 0)
-		{
-			var possibleMove = new Vector2(-2, 0);
-			if (IsValidPlacing(possibleMove, board))
-			{
-				moves.Add(new Move(this, Constants.MoveType.CASTLING, boardCoordinates + possibleMove, leftRook));
-			}
-		}
-
-		if (rightRook != null && board.boardMatrix[5, (int) boardCoordinates.Y] == null && board.boardMatrix[6, (int) boardCoordinates.Y] == null && rightRook.pieceType == Constants.PieceType.ROOK && rightRook.moveCount == 0)
-		{
-			var possibleMove = new Vector2(2, 0);
-			if (IsValidPlacing(possibleMove, board))
-			{
-				moves.Add(new Move(this, Constants.MoveType.CASTLING, boardCoordinates + possibleMove, rightRook));
-			}
-		}
-
-		return moves;
-	}
-
-	/// Gets all legal rook moves.
-	private Array<Move> GetRookMoves(Board board)
-	{
-		var directions = new Array<Vector2>();
-		directions.Add(new Vector2(0, 1));
-		directions.Add(new Vector2(0, -1));
-		directions.Add(new Vector2(1, 0));
-		directions.Add(new Vector2(-1, 0));
-
-		return GetSlidingMoves(directions, board);
-	}
-	
-	/// Gets all legal bishop moves.
-	private Array<Move> GetBishopMoves(Board board)
-	{
-		var directions = new Array<Vector2>();
-		directions.Add(new Vector2(1, 1));
-		directions.Add(new Vector2(1, -1));
-		directions.Add(new Vector2(-1, -1));
-		directions.Add(new Vector2(-1, 1));
-
-		return GetSlidingMoves(directions, board);
-	}
-
-	/// Gets all legal queen moves.
-	private Array<Move> GetQueenMoves(Board board)
-	{
-		// maybe use the bishop and rook move methods instead
-		var directions = new Array<Vector2>();
-		directions.Add(new Vector2(0, 1));
-		directions.Add(new Vector2(0, -1));
-		directions.Add(new Vector2(1, 0));
-		directions.Add(new Vector2(-1, 0));
-		directions.Add(new Vector2(1, 1));
-		directions.Add(new Vector2(1, -1));
-		directions.Add(new Vector2(-1, -1));
-		directions.Add(new Vector2(-1, 1));
-
-		return GetSlidingMoves(directions, board);
-	}
-
-	/// Gets all legal moves in a cardinal or diagonal direction.
-	private Array<Move> GetSlidingMoves(Array<Vector2> directions, Board board)
-	{
-		var moves = new Array<Move>();
-
-		foreach (var direction in directions)
-		{
-			var i = 1;
-			while (true)
-			{
-				var move = direction * i;
-				move += boardCoordinates;
-
-				if (!Utils.IsInsideBoard(move))
-				{
-					break;
-				}
-
-				var piece = board.boardMatrix[(int) move.X, (int) move.Y];
-				if (piece != null)
-				{
-					if (piece.color != this.color)
-					{
-						moves.Add(new Move(this, Constants.MoveType.SINGLE, move));
-					}
-					else
+					if (TileHasEnemy(position) || (TileHasEnemy(position) && type == Constants.pawn))
 					{
 						break;
 					}
+
+					if (!board.WouldBeInCheck(x, y, this, position))
+					{
+						positions.Add(position);
+					}
 				}
-				
-				moves.Add(new Move(this, Constants.MoveType.SINGLE, move));
-				i++;
-			}
-		}
 
-		return moves;
-	}
-
-	/// Checks if a pawn move were to make it go off the board.
-	private bool IsValidPawn(Vector2 move, Board board)
-	{
-		move += boardCoordinates;
-		if (!Utils.IsInsideBoard(move) || board.boardMatrix[(int) move.X, (int) move.Y] != null)
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-	/// Checks if a piece is able to be placed at a position.
-	private bool IsValidPlacing(Vector2 move, Board board)
-	{
-		move += boardCoordinates;
-		if (!Utils.IsInsideBoard(move))
-		{
-			return false;
-		}
-		
-		var piece = board.boardMatrix[(int) move.X, (int) move.Y];
-		if (piece != null)
-		{
-			if (piece.color == color)
-			{
-				return false;
-			}
-			
-			return true;
-		}
-
-		return true;
-	}
-
-	/// Removes legal moves if the king is in check, thus limiting all possible moves when the king is in check unless a piece can block it.
-	private Array<Move> FilterKingSafeMoves(Array<Move> moves, Board board, Piece enPassantPiece)
-	{
-		var movesToRemove = new Array<int>();
-
-		for (var i = 0; i < moves.Count; i++)
-		{
-			var move = moves[i];
-			var startingPosition = move.piece.boardCoordinates;
-
-			var playerTurn = Utils.playerTurn;
-			var otherPlayerTurn = Utils.otherPlayerTurn;
-
-			var capturedPiece = TestMovePiece(move, board);
-
-			foreach (var nextMove in GetAllPseudoMoves(otherPlayerTurn, board, enPassantPiece))
-			{
-				var king = GetKing(playerTurn, board);
-				if (king != null && nextMove.destination == king.boardCoordinates)
+				if (board.GetPieceFromVector2(position) != null)
 				{
-					movesToRemove.Add(i);
+					// if there's a piece in the way, stop
 					break;
 				}
 			}
-
-			TestUnmovePiece(new Move(move.piece, Constants.MoveType.SINGLE, startingPosition), board, capturedPiece);
 		}
 
-		if (movesToRemove.Count == 0)
+		// can a pawn move? can it capture a piece with en passant?
+		if (type == Constants.pawn)
 		{
-			return moves;
-		}
-		
-		movesToRemove.Reverse();
-
-		foreach (var index in movesToRemove)
-		{
-			moves.RemoveAt(index);
-		}
-
-		return moves;
-	}
-
-	/// Moves a piece to a square, capturing a piece if there is a piece to be captured.
-	private Piece TestMovePiece(Move move, Board board)
-	{
-		board.boardMatrix[(int) move.piece.boardCoordinates.X, (int) move.piece.boardCoordinates.Y] = null;
-		var capturedPiece = board.boardMatrix[(int) move.destination.X, (int) move.destination.Y];
-
-		board.boardMatrix[(int) move.destination.X, (int) move.destination.Y] = move.piece;
-		move.piece.boardCoordinates = move.destination;
-
-		return capturedPiece;
-	}
-
-	/// Undoes a move, replacing a captured piece if a piece was captured.
-	private void TestUnmovePiece(Move move, Board board, Piece capturedPiece)
-	{
-		board.boardMatrix[(int) move.piece.boardCoordinates.X, (int) move.piece.boardCoordinates.Y] = capturedPiece;
-		board.boardMatrix[(int) move.destination.X, (int) move.destination.Y] = move.piece;
-
-		move.piece.boardCoordinates = move.destination;
-	}
-
-	/// Gets the king piece on the board.
-	private Piece GetKing(Constants.Player player, Board board)
-	{
-		var king = new Piece();
-		foreach (var piece in board.boardMatrix)
-		{
-			if (piece != null && piece.color == player && piece.pieceType == Constants.PieceType.KING)
+			for (var i = 0; i < 2; i++)
 			{
-				king = piece;
+				var position = new Vector2(x - 1 + i * 2, y + multi);
+				
+				var canEnPassant = false;
+				var enPassantPosition = new Vector2(x - 1 + i * 2, y);
+				var enPassantPiece = board.GetPieceFromVector2(enPassantPosition);
+
+				if (enPassantPiece != null)
+				{
+					// has the pawn fulfilled all preconditions for en passant?
+					canEnPassant = enPassantPiece.type == Constants.pawn && enPassantPiece.jumped && enPassantPiece.player != player;
+				}
+
+				if ((TileHasEnemy(position) || canEnPassant) && !board.WouldBeInCheck(x, y, this, position))
+				{
+					// would capturing or moving put the king in check? if not, add to move list
+					positions.Add(position);
+				}
 			}
 		}
 
-		return king;
-	}
-
-	/// Gets all possible moves, some of which might be illegal.
-	private Array<Move> GetAllPseudoMoves(Constants.Player player, Board board, Piece enPassantPiece)
-	{
-		var allMoves = new Array<Move>();
-		foreach (var piece in board.boardMatrix)
+		// can the king castle, move or capture?
+		if (type == Constants.king && !moved)
 		{
-			if (piece != null && piece.color == player)
+			for (var i = 0; i < 2; i++)
 			{
-				allMoves += piece.GetPseudoMoves(board, enPassantPiece);
+				var xOffset = 1 - (2 * i);
+				var xToCheck = x + xOffset;
+
+				while (xToCheck != 0 && xToCheck != 7)
+				{
+					if (GetPiece(new Vector2(xToCheck, y)) != null)
+					{
+						break;
+					}
+
+					xToCheck += xOffset;
+				}
+
+				if (xToCheck != 0 && xToCheck != 7)
+				{
+					continue;
+				}
+
+				var piece = GetPiece(new Vector2(xOffset, y));
+				if (piece == null)
+				{
+					continue;
+				}
+
+				if (piece.type == Constants.rook && piece.player == player && !piece.moved)
+				{
+					var position = new Vector2(x, y);
+					var rookPosition = new Vector2(xToCheck, y);
+					var newPosition = new Vector2(x + 2 * i, y);
+					var newRookPosition = new Vector2(newPosition.X - i, y);
+
+					if (!board.WouldBeInCheckFromCastling(position, rookPosition, newPosition, newRookPosition))
+					{
+						positions.Add(rookPosition); // castling is possible
+					}
+				}
 			}
 		}
 
-		return allMoves;
+		return positions;
+	}
+
+	public Array<Vector2> GetValidMovesFromVector2(Vector2 vector)
+	{
+		return GetValidMoves((int) vector.X, (int) vector.Y);
+	}
+
+	private int DistanceTravelled()
+	{
+		switch (type)
+		{
+			case 0: // pawn movement
+				return moved ? 1 : 2; // 1 if the pawn has already moved once, 2 otherwise
+			
+			case 2 or 5: // knight or king movement
+				return 1;
+			
+			default:
+				return 8; // every other piece can move the entire length of the board if possible
+		}
+	}
+
+	private bool IsValidMove(Vector2 position)
+	{
+		if (IsInBounds(position))
+		{
+			// true if there is no piece in the way of a move, or if it is not out of bounds
+			var piece = board.GetPieceFromVector2(position);
+			return piece == null ? true : TileHasEnemy(position);
+		}
+
+		return false;
+	}
+
+	private bool IsInBounds(Vector2 position)
+	{
+		// is this position with the board grid (8 * 8)?
+		return position.X < 8 && position.X >= 0 && position.Y < 8 && position.Y >= 0;
+	}
+
+	private bool TileHasEnemy(Vector2 position)
+	{
+		if (!IsInBounds(position))
+		{
+			// there can't be an enemy if it's not on the game board
+			return false;
+		}
+
+		var piece = board.GetPieceFromVector2(position);
+		if (piece != null)
+		{
+			// a piece isn't an enemy if it's of your same color
+			return piece.player != player;
+		}
+
+		// an empty tile has no enemies for either player
+		return false;
+	}
+
+	private Piece GetPiece(Vector2 position)
+	{
+		// gets a piece on a square so long as the position is within the bounds of the game board
+		return !IsInBounds(position) ? null : board.GetPieceFromVector2(position);
+	}
+
+	public void UpdateSprite()
+	{
+		sprite.FrameCoords = new Vector2I(type, player);
 	}
 }
