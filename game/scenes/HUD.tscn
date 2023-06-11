@@ -1,0 +1,46 @@
+[gd_scene load_steps=5 format=3 uid="uid://bxjq1a30y5snv"]
+
+[ext_resource type="Texture2D" uid="uid://p6gv7huf3j2o" path="res://assets/ui/close.png" id="1"]
+[ext_resource type="Texture2D" uid="uid://dusiwtuxh80aj" path="res://assets/ui/fullscreen.png" id="2"]
+[ext_resource type="Texture2D" uid="uid://bna26dkfic0wy" path="res://assets/ui/settings.png" id="3"]
+[ext_resource type="Script" path="res://scripts/HUD.cs" id="6"]
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("6")
+
+[node name="SettingsButton" type="Button" parent="."]
+offset_right = 48.0
+offset_bottom = 48.0
+icon = ExtResource("3")
+flat = true
+expand_icon = true
+
+[node name="CloseButton" type="Button" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -48.0
+offset_bottom = 48.0
+grow_horizontal = 0
+icon = ExtResource("1")
+flat = true
+expand_icon = true
+
+[node name="FullscreenButton" type="Button" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -48.0
+offset_top = -52.0
+grow_horizontal = 0
+grow_vertical = 0
+focus_mode = 0
+icon = ExtResource("2")
+flat = true
+expand_icon = true
+
+[connection signal="button_up" from="SettingsButton" to="." method="OnSettingsButtonUp"]
+[connection signal="button_up" from="CloseButton" to="." method="OnCloseButtonUp"]
+[connection signal="button_up" from="FullscreenButton" to="." method="OnFullscreenButtonUp"]

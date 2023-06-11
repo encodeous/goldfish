@@ -1,0 +1,113 @@
+[gd_scene load_steps=5 format=3 uid="uid://p1gx7xxvup7v"]
+
+[ext_resource type="Script" path="res://scripts/StartScene.cs" id="2"]
+[ext_resource type="Texture2D" uid="uid://dusiwtuxh80aj" path="res://assets/ui/fullscreen.png" id="3"]
+[ext_resource type="Theme" uid="uid://di3p1loc1m6fv" path="res://themes/theme.tres" id="4"]
+[ext_resource type="Texture2D" uid="uid://657p3nieriq6" path="res://assets/ui/github-mark.png" id="5"]
+
+[node name="StartScene" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.0784314, 0.0784314, 0.0784314, 1)
+
+[node name="TitleLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -41.0
+offset_top = 8.0
+offset_right = 39.0
+offset_bottom = 34.0
+grow_horizontal = 2
+text = "Chessium!"
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+theme = ExtResource("4")
+
+[node name="ColorLabel" type="Label" parent="Panel"]
+layout_mode = 0
+offset_left = -70.0
+offset_top = -140.0
+offset_right = 85.0
+offset_bottom = -103.0
+text = "Player one plays as..."
+
+[node name="WhiteColorButton" type="Button" parent="Panel"]
+layout_mode = 0
+offset_left = 85.0
+offset_top = -103.0
+offset_right = 148.0
+offset_bottom = -70.0
+toggle_mode = true
+text = "White"
+
+[node name="RandomColorButton" type="Button" parent="Panel"]
+layout_mode = 0
+offset_left = -30.0
+offset_top = -102.0
+offset_right = 46.0
+offset_bottom = -69.0
+toggle_mode = true
+text = "Random"
+
+[node name="BlackColorButton" type="Button" parent="Panel"]
+layout_mode = 0
+offset_left = -126.0
+offset_top = -101.0
+offset_right = -63.0
+offset_bottom = -68.0
+toggle_mode = true
+text = "Black"
+
+[node name="StartButton" type="Button" parent="Panel"]
+layout_mode = 0
+offset_left = -20.0
+offset_top = -51.0
+offset_right = 32.0
+offset_bottom = -18.0
+text = "Start"
+
+[node name="FullscreenButton" type="Button" parent="."]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+keep_pressed_outside = true
+icon = ExtResource("3")
+flat = true
+expand_icon = true
+
+[node name="GithubButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 780.0
+offset_top = 1.0
+offset_right = 958.0
+offset_bottom = 68.0
+theme = ExtResource("4")
+text = "   View on GitHub"
+icon = ExtResource("5")
+expand_icon = true
+
+[connection signal="button_up" from="Panel/WhiteColorButton" to="." method="OnWhiteColorButtonUp"]
+[connection signal="button_up" from="Panel/RandomColorButton" to="." method="OnRandomColorButtonUp"]
+[connection signal="button_up" from="Panel/BlackColorButton" to="." method="OnBlackColorButtonUp"]
+[connection signal="button_up" from="Panel/StartButton" to="." method="OnStartButtonUp"]
+[connection signal="button_up" from="FullscreenButton" to="." method="OnFullscreenButtonUp"]
+[connection signal="button_up" from="GithubButton" to="." method="OnGithubButtonUp"]
