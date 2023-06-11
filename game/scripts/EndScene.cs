@@ -6,13 +6,16 @@ namespace chessium.scripts;
 
 public partial class EndScene : Control
 {
+	/// The reason why the game ended.
 	public string endgameReason;
+	/// The stringified version of the player.
 	public string player, otherPlayer;
 
+	/// Used to generate the random messages upon game end.
 	private Array<string> checkPhrases = new () { "Nice!", "What a game!", "Wow!" };
 	private Array<string> drawPhrases = new() { "That's a draw!", "What a game!", "Almost there!" };
 	
-	// Called when the node enters the scene tree for the first time.
+	/// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		GetNode("Popup/CloseButton").Connect("button_up", Callable.From(OnCloseButtonUp));
@@ -33,12 +36,13 @@ public partial class EndScene : Control
 		}
 	}
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
+	/// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
 		// to be implemented
 	}
 
+	/// Signal receiver for when the close button is clicked.
 	private void OnCloseButtonUp()
 	{
 		QueueFree();

@@ -5,25 +5,32 @@ namespace chessium.scripts;
 
 public partial class Piece : Node2D
 {
+	/// The size of the piece sprite in pixels.
 	private const int SPRITE_SIZE = 256;
 	
+	/// The type of the piece.
 	public Constants.PieceType pieceType = Constants.PieceType.PAWN;
+	/// The color of the piece.
 	[Export] public Constants.Player color = Constants.Player.BLACK;
 	
-	[Export] public Vector2 boardCoordinates, position;
+	/// The location of the piece on the board [8*8].
+	[Export] public Vector2 boardCoordinates;
+	/// How many times the piece has moved.
 	private int moveCount;
 
-	// Called when the node enters the scene tree for the first time.
+	/// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		SetPieceSprite();
 	}
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
+	/// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
+		// to be implemented
 	}
 
+	/// Sets the sprite of the piece based on which type it is.
 	private void SetPieceSprite()
 	{
 		var colorMod = color == Constants.Player.WHITE ? SPRITE_SIZE : 0;
@@ -59,28 +66,33 @@ public partial class Piece : Node2D
 		GetNode<Sprite2D>("Sprite").RegionRect = regionRect;
 	}
 
+	/// Sets the piece's sprite and current type to a new type after promotion.
 	public void Promote(Constants.PieceType newType)
 	{
 		pieceType = newType;
 		SetPieceSprite();
 	}
 
+	/// Sets the piece's position to where it was dragged.
 	public void DragTo(Vector2 pos)
 	{
-		position = pos;
+		Position = pos;
 	}
 
+	/// Increases the piece's move count every time it has moved.
 	public void IncreaseMoveCount()
 	{
 		moveCount++;
 	}
 
+	/// Gets all legal moves by filtering all pseudo moves to account for the king being in check.
 	public Array<Move> GetLegalMoves(Board board, Piece enPassantPiece)
 	{
 		var legalMoves = FilterKingSafeMoves(GetPseudoMoves(board, enPassantPiece), board, enPassantPiece);
 		return legalMoves;
 	}
 
+	/// Gets the pseudo moves of a piece depending on its type.
 	private Array<Move> GetPseudoMoves(Board board, Piece enPassantPiece)
 	{
 		switch (pieceType)
@@ -108,6 +120,7 @@ public partial class Piece : Node2D
 		}
 	}
 
+	/// Gets all legal pawn moves, including the first double move and any possible en passant captures.
 	private Array<Move> GetPawnMoves(Board board, Piece enPassantPiece)
 	{
 		var moves = new Array<Move>();
@@ -131,6 +144,7 @@ public partial class Piece : Node2D
 		return moves;
 	}
 
+	/// Gets all possible captures a pawn can make, including en passant.
 	private Array<Move> GetPawnCaptures(Board board, Piece enPassantPiece)
 	{
 		var moves = new Array<Move>();
@@ -167,6 +181,7 @@ public partial class Piece : Node2D
 		return moves;
 	}
 
+	/// Gets all legal knight moves.
 	private Array<Move> GetKnightMoves(Board board)
 	{
 		var possibleMoves = new Array<Vector2>();
@@ -191,6 +206,7 @@ public partial class Piece : Node2D
 		return moves;
 	}
 
+	/// Gets all legal king moves, including when it can castle.
 	private Array<Move> GetKingMoves(Board board)
 	{
 		var possibleMoves = new Array<Vector2>();
@@ -216,6 +232,7 @@ public partial class Piece : Node2D
 		return moves;
 	}
 
+	/// Gets all possible castling moves (queenside and kingside), assuming the king and either rook have not moved yet and there are no obstructions.
 	private Array<Move> GetCastlingMoves(Board board)
 	{
 		var moves = new Array<Move>();
@@ -249,6 +266,7 @@ public partial class Piece : Node2D
 		return moves;
 	}
 
+	/// Gets all legal rook moves.
 	private Array<Move> GetRookMoves(Board board)
 	{
 		var directions = new Array<Vector2>();
@@ -260,6 +278,7 @@ public partial class Piece : Node2D
 		return GetSlidingMoves(directions, board);
 	}
 	
+	/// Gets all legal bishop moves.
 	private Array<Move> GetBishopMoves(Board board)
 	{
 		var directions = new Array<Vector2>();
@@ -271,8 +290,10 @@ public partial class Piece : Node2D
 		return GetSlidingMoves(directions, board);
 	}
 
+	/// Gets all legal queen moves.
 	private Array<Move> GetQueenMoves(Board board)
 	{
+		// maybe use the bishop and rook move methods instead
 		var directions = new Array<Vector2>();
 		directions.Add(new Vector2(0, 1));
 		directions.Add(new Vector2(0, -1));
@@ -286,6 +307,7 @@ public partial class Piece : Node2D
 		return GetSlidingMoves(directions, board);
 	}
 
+	/// Gets all legal moves in a cardinal or diagonal direction.
 	private Array<Move> GetSlidingMoves(Array<Vector2> directions, Board board)
 	{
 		var moves = new Array<Move>();
@@ -324,6 +346,7 @@ public partial class Piece : Node2D
 		return moves;
 	}
 
+	/// Checks if a pawn move were to make it go off the board.
 	private bool IsValidPawn(Vector2 move, Board board)
 	{
 		move += boardCoordinates;
@@ -335,6 +358,7 @@ public partial class Piece : Node2D
 		return true;
 	}
 
+	/// Checks if a piece is able to be placed at a position.
 	private bool IsValidPlacing(Vector2 move, Board board)
 	{
 		move += boardCoordinates;
@@ -346,7 +370,7 @@ public partial class Piece : Node2D
 		var piece = board.boardMatrix[(int) move.X, (int) move.Y];
 		if (piece != null)
 		{
-			if (piece.color == this.color)
+			if (piece.color == color)
 			{
 				return false;
 			}
@@ -357,6 +381,7 @@ public partial class Piece : Node2D
 		return true;
 	}
 
+	/// Removes legal moves if the king is in check, thus limiting all possible moves when the king is in check unless a piece can block it.
 	private Array<Move> FilterKingSafeMoves(Array<Move> moves, Board board, Piece enPassantPiece)
 	{
 		var movesToRemove = new Array<int>();
@@ -399,6 +424,7 @@ public partial class Piece : Node2D
 		return moves;
 	}
 
+	/// Moves a piece to a square, capturing a piece if there is a piece to be captured.
 	private Piece TestMovePiece(Move move, Board board)
 	{
 		board.boardMatrix[(int) move.piece.boardCoordinates.X, (int) move.piece.boardCoordinates.Y] = null;
@@ -410,6 +436,7 @@ public partial class Piece : Node2D
 		return capturedPiece;
 	}
 
+	/// Undoes a move, replacing a captured piece if a piece was captured.
 	private void TestUnmovePiece(Move move, Board board, Piece capturedPiece)
 	{
 		board.boardMatrix[(int) move.piece.boardCoordinates.X, (int) move.piece.boardCoordinates.Y] = capturedPiece;
@@ -418,6 +445,7 @@ public partial class Piece : Node2D
 		move.piece.boardCoordinates = move.destination;
 	}
 
+	/// Gets the king piece on the board.
 	private Piece GetKing(Constants.Player player, Board board)
 	{
 		var king = new Piece();
@@ -432,6 +460,7 @@ public partial class Piece : Node2D
 		return king;
 	}
 
+	/// Gets all possible moves, some of which might be illegal.
 	private Array<Move> GetAllPseudoMoves(Constants.Player player, Board board, Piece enPassantPiece)
 	{
 		var allMoves = new Array<Move>();

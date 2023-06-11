@@ -6,9 +6,12 @@ namespace chessium.scripts;
 
 public partial class Game : Node2D
 {
+	/// The instance of the game board.
 	private Board board;
+	/// A modified FEN position with default pieces, used to initialize the board to a default position.
 	private readonly string startingFen = "pppppppprnbqkbnr/PPPPPPPPRNBQKBNR";
 
+	/// An array of vectors that hold the default positions of all black pieces.
 	private readonly Array<Vector2> blackPositions = new ()
 	{
 		new Vector2(0, 6),
@@ -30,9 +33,10 @@ public partial class Game : Node2D
 		new Vector2(7, 7)
 	};
 	
+	/// An array of vectors that hold the default positions of all white pieces.
 	private readonly Array<Vector2> whitePositions = new ()
 	{
-		new Vector2(0, 1),
+		new Vector2(7, 1),
 		new Vector2(1, 1),
 		new Vector2(2, 1),
 		new Vector2(3, 1),
@@ -51,7 +55,7 @@ public partial class Game : Node2D
 		new Vector2(7, 0)
 	};
 	
-	// Called when the node enters the scene tree for the first time.
+	/// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		board = GetNode<Board>("Board");
@@ -61,15 +65,15 @@ public partial class Game : Node2D
 		board.SnapPiecesToPosition(pieces);
 	}
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
+	/// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
 		// to be implemented
 	}
 
+	/// Parses a FEN string to set the default positions and types of pieces on the game board.
 	private void SetBoard()
 	{
-		// to be implemented with SetPlayerWhite() and SetPlayerBlack() using FEN strings
 		var pieces = startingFen.Split("/");
 		var black = pieces[0];
 		var white = pieces[1];
