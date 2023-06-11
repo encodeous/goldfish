@@ -1,15 +1,40 @@
 ﻿
+using System.Diagnostics;
+using System.Security.Cryptography;
+using engine_test;
+using goldfish.Core.Data;
+using goldfish.Core.Data.Optimization;
+using goldfish.Core.Game;
 using goldfish.Core.Game.FEN;
 using goldfish.Engine;
+using Spectre.Console;
 
-// var game = FenConvert.Parse("rn1qkbr1/2pppppp/bp3n2/4P3/8/2N5/PPPPNPPP/R1BQK2R w KQq - 1 4");
-var game = FenConvert.Parse("N1bqkb2/pp1pp1Q1/1P4p1/2P1n1p1/8/4B3/PP3PPP/R3KB1R b KQ - 1 19");
+var game = FenConvert.Parse("rnb1kbnr/pppp1ppp/4p3/8/4P2q/2N3P1/PPPP1P1P/R1BQKBNR b KQkq - 0 1");
 
-// var eval = GoldFishEngine.NextMoveSeq(game, 5, out var move);
+// var game = FenConvert.Parse(Console.ReadLine());
+
+// Console.WriteLine(game.GetGameState());
 //
-// foreach (var cMove in move)
-// {
-//     Console.WriteLine($"{cMove.NewPos}");
-//
-//     Console.WriteLine($"{eval} - {FenConvert.ToFen(cMove.NewState)}");
-// }
+// return;
+
+Span<(ChessMove, double)> moves = new (ChessMove, double)[6];
+ulong positions = 0;
+Console.Write(Tst.Get(game).Hash);
+var start = Stopwatch.GetTimestamp();
+var tEval = GoldFishEngine.NextOptimalMoves(game, 6, ref moves, ref positions);
+var end = Stopwatch.GetElapsedTime(start);
+
+Console.WriteLine($"Calculated - {tEval} {positions} positions in {end}");
+
+foreach (var (move, eval) in moves)
+{
+    Console.WriteLine($"Step -- E: {eval} --");
+    
+    Console.WriteLine($"{move.Type} to {move.NewPos}");
+
+    AnsiConsole.Write(BoardPrinter.PrintBoard(in move.NewState, move));
+    
+    Console.WriteLine($"{FenConvert.ToFen(move.NewState)}");
+}
+
+Console.Read();

@@ -4,21 +4,24 @@ namespace goldfish.Core.Game.Rules.Pieces;
 
 public struct Queen : IPieceLogic
 {
-    public IEnumerable<ChessMove> GetMoves(ChessState state, int r, int c)
+    public int GetMoves(in ChessState state, int r, int c, Span<ChessMove> moves, bool autoPromotion)
     {
-        foreach (var move in new Rook().GetMoves(state, r, c))
-        {
-            yield return move;
-        }
-        foreach (var move in new Bishop().GetMoves(state, r, c))
-        {
-            yield return move;
-        }
+        int cnt = new Rook().GetMoves(state, r, c, moves, autoPromotion);
+        cnt += new Bishop().GetMoves(state, r, c, moves[cnt..], autoPromotion);
+        return cnt;
     }
 
-    public void GetAttacks(ChessState state, int r, int c, List<(int, int)> attacks)
+    public int GetAttacks(in ChessState state, int r, int c, Span<(int, int)> attacks)
     {
-        new Rook().GetAttacks(state, r, c, attacks);
-        new Bishop().GetAttacks(state, r, c, attacks);
+        int cnt = new Rook().GetAttacks(state, r, c, attacks);
+        cnt += new Bishop().GetAttacks(state, r, c, attacks[cnt..]);
+        return cnt;
+    }
+
+    public int CountAttacks(in ChessState state, int r, int c)
+    {
+        int cnt = new Rook().CountAttacks(state, r, c);
+        cnt += new Bishop().CountAttacks(state, r, c);
+        return cnt;
     }
 }

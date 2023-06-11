@@ -18,7 +18,7 @@ public static class ChessPrinter
             {
                 var bg = (i + j) % 2 == 0 ? dark : light;
                 var fg = state.GetPiece(i, j).GetSide() == Side.Black ? black : white;
-                if (prevMove.HasValue)
+                if (prevMove is not null)
                 {
                     if (prevMove.Value.NewPos == (i, j) || prevMove.Value.OldPos == (i, j))
                     {
@@ -41,7 +41,7 @@ public static class ChessPrinter
             }
         }
     }
-    public static void PrintSelected(ChessState state, Label[,] grid, ChessMove[] moves)
+    public static void PrintSelected(ChessState state, Label[,] grid, ArraySegment<ChessMove> moves)
     {
         var dark = Color.DarkGray;
         var light = Color.Gray;

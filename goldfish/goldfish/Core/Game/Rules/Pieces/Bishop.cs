@@ -4,101 +4,31 @@ namespace goldfish.Core.Game.Rules.Pieces;
 
 public struct Bishop : IPieceLogic
 {
-    public IEnumerable<ChessMove> GetMoves(ChessState state, int r, int c)
+    public int GetMoves(in ChessState state, int r, int c, Span<ChessMove> moves, bool autoPromotion)
     {
-        for (int i = 1; i < 8; i++)
-        {
-            if (!PieceUtils.MovePiece(state, r, c, r - i, c - i, out var move1))
-            {
-                if(move1.HasValue) 
-                    yield return move1.Value;
-                break;
-            }
-            yield return move1.Value;
-        }
-
-        for (int i = 1; i < 8; i++)
-        {
-            if (!PieceUtils.MovePiece(state, r, c, r - i, c + i, out var move2))
-            {
-                if (move2.HasValue)
-                    yield return move2.Value;
-                break;
-            }
-
-            yield return move2.Value;
-        }
-
-        for (int i = 1; i < 8; i++)
-        {
-            if (!PieceUtils.MovePiece(state, r, c, r + i, c - i, out var move3))
-            {
-                if (move3.HasValue)
-                    yield return move3.Value;
-                break;
-            }
-
-            yield return move3.Value;
-        }
-        for (int i = 1; i < 8; i++)
-        {
-            if (!PieceUtils.MovePiece(state, r, c, r + i, c + i, out var move4))
-            {
-                if(move4.HasValue) 
-                    yield return move4.Value;
-                break;
-            }
-            yield return move4.Value;
-        }
+        var cnt = RuleUtils.GetMoves(state, r, c, -1, -1, moves, 7);
+        cnt += RuleUtils.GetMoves(state, r, c, -1, 1, moves[cnt..], 7);
+        cnt += RuleUtils.GetMoves(state, r, c, 1, -1, moves[cnt..], 7);
+        cnt += RuleUtils.GetMoves(state, r, c, 1, 1, moves[cnt..], 7);
+        return cnt;
     }
 
-    public void GetAttacks(ChessState state, int r, int c, List<(int, int)> attacks)
+    public int GetAttacks(in ChessState state, int r, int c, Span<(int, int)> attacks)
     {
-        for (int i = 1; i < 8; i++)
-        {
-            if (!PieceUtils.IsEmptySquare(state, r - i, c - i))
-            {
-                if ((r - i, c - i).IsWithinBoard())
-                    attacks.Add((r - i, c - i));
-                break;
-            }
-            attacks.Add((r - i, c - i));
-        }
+        int cnt = RuleUtils.GetAttacks(state, r, c, -1, -1, attacks, 7);
+        cnt += RuleUtils.GetAttacks(state, r, c, -1, 1, attacks[cnt..], 7);
+        cnt += RuleUtils.GetAttacks(state, r, c, 1, -1, attacks[cnt..], 7);
+        cnt += RuleUtils.GetAttacks(state, r, c, 1, 1, attacks[cnt..], 7);
+        return cnt;
+    }
 
-        for (int i = 1; i < 8; i++)
-        {
-            if (!PieceUtils.IsEmptySquare(state, r - i, c + i))
-            {
-                if ((r - i, c + i).IsWithinBoard())
-                    attacks.Add((r - i, c + i));
-                break;
-            }
-
-            attacks.Add((r - i, c + i));
-        }
-
-        for (int i = 1; i < 8; i++)
-        {
-            if (!PieceUtils.IsEmptySquare(state, r + i, c - i))
-            {
-                if ((r + i, c - i).IsWithinBoard())
-                    attacks.Add((r + i, c - i));
-                break;
-            }
-
-            attacks.Add((r + i, c - i));
-        }
-
-        for (int i = 1; i < 8; i++)
-        {
-            if (!PieceUtils.IsEmptySquare(state, r + i, c + i))
-            {
-                if ((r + i, c + i).IsWithinBoard())
-                    attacks.Add((r + i, c + i));
-                break;
-            }
-
-            attacks.Add((r + i, c + i));
-        }
+    public int CountAttacks(in ChessState state, int r, int c)
+    {
+        var cnt = 0;
+        cnt += RuleUtils.CountAttacks(state, r, c, -1, -1, 7);
+        cnt += RuleUtils.CountAttacks(state, r, c, -1, 1, 7);
+        cnt += RuleUtils.CountAttacks(state, r, c, 1, -1, 7);
+        cnt += RuleUtils.CountAttacks(state, r, c, 1, 1, 7);
+        return cnt;
     }
 }

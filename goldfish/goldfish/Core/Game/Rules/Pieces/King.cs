@@ -4,8 +4,7 @@ namespace goldfish.Core.Game.Rules.Pieces;
 
 public struct King : IPieceLogic
 {
-    private static readonly (int, int)[] _moves = new[]
-    {
+    private static readonly (int, int)[] _moves = {
         (0, 1),
         (1, 1),
         (1, 0),
@@ -15,8 +14,9 @@ public struct King : IPieceLogic
         (-1, -1),
         (1, -1),
     };
-    public IEnumerable<ChessMove> GetMoves(ChessState state, int r, int c)
+    public int GetMoves(in ChessState state, int r, int c, Span<ChessMove> moves, bool autoPromotion)
     {
+        var cnt = 0;
         var piece = state.GetPiece(r, c);
         var side = piece.GetSide();
         var attackMtx = state.GetAttackMatrix(side.GetOpposing());
@@ -79,31 +79,49 @@ public struct King : IPieceLogic
                     // continue with castle
                     castleState.Move((nr, nc), (nr, nc + dir));
                     castleState.Move(rPos, (nr, nc));
-                    yield return new ChessMove()
+                    var mov1 = new ChessMove()
                     {
                         NewPos = (nr, nc + dir),
                         NewState = castleState,
                         Taken = newCap,
                         OldPos = (r, c)
                     };
+                    if (RuleUtils.VerifyCheckPermits(state, mov1))
+                    {
+                        moves[cnt++] = mov1;
+                    }
                 }
             }
-            yield return new ChessMove()
+            var mov2 = new ChessMove()
             {
                 NewPos = (nr, nc),
                 NewState = ns,
                 Taken = newCap,
                 OldPos = (r, c)
             };
+            if (RuleUtils.VerifyCheckPermits(state, mov2))
+            {
+                moves[cnt++] = mov2;
+            }
         }
+
+        return cnt;
     }
 
-    public void GetAttacks(ChessState state, int r, int c, List<(int, int)> attacks)
+    public int GetAttacks(in ChessState state, int r, int c, Span<(int, int)> attacks)
     {
+        int cnt = 0;
         foreach (var mv in _moves)
         {
             if((r + mv.Item1, c + mv.Item2).IsWithinBoard())
-                attacks.Add((r + mv.Item1, c + mv.Item2));
+                attacks[cnt++] = (r + mv.Item1, c + mv.Item2);
         }
+
+        return cnt;
+    }
+
+    public int CountAttacks(in ChessState state, int r, int c)
+    {
+        return RuleUtils.CountAttacks(r, c, _moves);
     }
 }

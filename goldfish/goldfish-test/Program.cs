@@ -10,7 +10,7 @@ using Attribute = Terminal.Gui.Attribute;
 internal class Program
 {
     private static ChessGame game = new ChessGame();
-    private static ChessMove[]? _selMoves;
+    private static ArraySegment<ChessMove> _selMoves;
     private static MenuBarItem goldFishToggle;
     public static void Main(string[] args)
     {
@@ -64,11 +64,12 @@ internal class Program
                     var p = game.CurrentState.GetPiece(x - 1, y - 1);
                     if (p.GetPieceType() != PieceType.Space && p.GetSide() == game.CurrentState.ToMove)
                     {
-                        var moves = game.CurrentState.GetValidMovesForSquare(x - 1, y - 1, false).ToArray();
-                        _selMoves = moves;
+                        var tempArr = new ChessMove[30];
+                        var moves = game.CurrentState.GetValidMovesForSquare(x - 1, y - 1, tempArr, false);
+                        _selMoves = tempArr[..moves];
                         ChessPrinter.PrintSelected(game.CurrentState, grid, _selMoves);
                     }
-                    else if (_selMoves is not null && _selMoves.Any(m => m.NewPos == (x - 1, y - 1)))
+                    else if (_selMoves.Count != 0 && _selMoves.Any(m => m.NewPos == (x - 1, y - 1)))
                     {
                         // do the move
                         var move = _selMoves.First(m => m.NewPos == (x - 1, y - 1));
@@ -89,7 +90,7 @@ internal class Program
                                 3 => PromotionType.Queen,
                                 _ => null
                             };
-                            if (!promType.HasValue) continue;
+                            if (promType is null) continue;
                             game.CurrentState.Promote(move.NewPos, promType.Value);
                             break;
                         }
@@ -118,10 +119,12 @@ internal class Program
                                 {
                                     game.Commit();
                                     double alpha = double.NegativeInfinity, beta = double.PositiveInfinity;
-                                    var eval = GoldFishEngine.NextOptimalMove(game.CurrentState, 5, out var bMove);
-                                    Debug.WriteLine($"Move calc w/ eval of {eval}");
-                                    game.LastMove = bMove;
-                                    game.CurrentState = bMove.NewState;
+                                    Span<(ChessMove, double)> moves = new (ChessMove, double)[6];
+                                    ulong count = 0;
+                                    var eval = GoldFishEngine.NextOptimalMoves(game.CurrentState, 6, ref moves, ref count);
+                                    Debug.WriteLine($"Move calc w/ eval of {eval} - calls {count}");
+                                    game.LastMove = moves[0].Item1;
+                                    game.CurrentState = moves[0].Item1.NewState;
                                     var gState2 = game.CurrentState.GetGameState();
                                     Application.MainLoop.Invoke(() =>
                                     {
@@ -130,7 +133,7 @@ internal class Program
                                             if (gState2.Value == Side.None)
                                             {
                                                 MessageBox.Query("Stalemate", $"The game has ended in a draw.", "Restart Game");
-                                            }
+                                            } 
                                             else
                                             {
                                                 MessageBox.Query("Checkmate", $"{gState2.Value} has won by checkmate", "Restart Game");
@@ -204,6 +207,7 @@ internal class Program
                             var state = FenConvert.Parse(fenField.Text.ToString());
                             game.Reset();
                             game.CurrentState = state;
+                            stateLabel.Text = $"{game.CurrentState.ToMove}'s Turn";
                             ChessPrinter.PrintBoard(game.CurrentState, game.LastMove, grid);
                             Application.RequestStop();
                         }

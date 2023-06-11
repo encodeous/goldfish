@@ -41,6 +41,12 @@ public static class PieceExtensions
         return IsWhite(piece) ? Side.White : Side.Black;
     }
 
+    public static bool IsSide(this byte piece, Side side)
+    {
+        if (piece.GetPieceType() == PieceType.Space) return side == Side.None;
+        return IsWhite(piece) ? side == Side.White : side == Side.Black;
+    }
+
     /// <summary>
     /// 
     /// </summary>
@@ -128,18 +134,58 @@ public static class PieceExtensions
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }
+
+    private static readonly Pawn _pawn = new ();
+    private static readonly Rook _rook = new ();
+    private static readonly Knight _knight = new ();
+    private static readonly Bishop _bishop = new ();
+    private static readonly Queen _queen = new ();
+    private static readonly King _king = new ();
+
     public static IPieceLogic? GetLogic(this byte piece)
     {
         return (piece.GetPieceType() switch
         {
-            PieceType.Pawn => new Pawn(),
-            PieceType.Rook => new Rook(),
-            PieceType.Knight => new Knight(),
-            PieceType.Bishop => new Bishop(),
-            PieceType.Queen => new Queen(),
-            PieceType.King => new King(),
+            PieceType.Pawn => _pawn,
+            PieceType.Rook => _rook,
+            PieceType.Knight => _knight,
+            PieceType.Bishop => _bishop,
+            PieceType.Queen => _queen,
+            PieceType.King => _king,
             PieceType.Space => default,
             _ => throw new ArgumentOutOfRangeException()
         });
     }
+    public static void GetLogicAttacks(this byte piece, in ChessState state, int r, int c, Span<(int, int)> attacks)
+    {
+        if (piece.GetPieceType() == PieceType.Pawn)
+            _pawn.GetAttacks(state, r, c, attacks);
+        else if (piece.GetPieceType() == PieceType.Rook)
+            _rook.GetAttacks(state, r, c, attacks);
+        else if (piece.GetPieceType() == PieceType.Knight)
+            _knight.GetAttacks(state, r, c, attacks);
+        else if (piece.GetPieceType() == PieceType.Bishop)
+            _bishop.GetAttacks(state, r, c, attacks);
+        else if (piece.GetPieceType() == PieceType.Queen)
+            _queen.GetAttacks(state, r, c, attacks);
+        else if (piece.GetPieceType() == PieceType.King)
+            _king.GetAttacks(state, r, c, attacks);
+        else throw new ArgumentOutOfRangeException();
+    }
+    public static int GetLogicMoves(this byte piece, in ChessState state, int r, int c, Span<ChessMove> moves, bool autoPromotion)
+    {
+        if (piece.GetPieceType() == PieceType.Pawn)
+            return _pawn.GetMoves(state, r, c, moves, autoPromotion);
+        if (piece.GetPieceType() == PieceType.Rook)
+            return _rook.GetMoves(state, r, c, moves, autoPromotion);
+        if (piece.GetPieceType() == PieceType.Knight)
+            return _knight.GetMoves(state, r, c, moves, autoPromotion);
+        if (piece.GetPieceType() == PieceType.Bishop)
+            return _bishop.GetMoves(state, r, c, moves, autoPromotion);
+        if (piece.GetPieceType() == PieceType.Queen)
+            return _queen.GetMoves(state, r, c, moves, autoPromotion);
+        if (piece.GetPieceType() == PieceType.King)
+            return _king.GetMoves(state, r, c, moves, autoPromotion);
+        return 0;
+    } 
 }
