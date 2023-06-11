@@ -41,6 +41,12 @@ public static class PieceExtensions
         return IsWhite(piece) ? Side.White : Side.Black;
     }
 
+    public static bool IsSide(this byte piece, Side side)
+    {
+        if (piece.GetPieceType() == PieceType.Space) return side == Side.None;
+        return IsWhite(piece) ? side == Side.White : side == Side.Black;
+    }
+
     /// <summary>
     /// 
     /// </summary>
@@ -149,5 +155,21 @@ public static class PieceExtensions
             PieceType.Space => default,
             _ => throw new ArgumentOutOfRangeException()
         });
+    }
+    public static void GetLogicAttacks(this byte piece, in ChessState state, int r, int c, Span<(int, int)> attacks)
+    {
+        if (piece.GetPieceType() == PieceType.Pawn)
+            _pawn.GetAttacks(state, r, c, attacks);
+        else if (piece.GetPieceType() == PieceType.Rook)
+            _rook.GetAttacks(state, r, c, attacks);
+        else if (piece.GetPieceType() == PieceType.Knight)
+            _knight.GetAttacks(state, r, c, attacks);
+        else if (piece.GetPieceType() == PieceType.Bishop)
+            _bishop.GetAttacks(state, r, c, attacks);
+        else if (piece.GetPieceType() == PieceType.Queen)
+            _queen.GetAttacks(state, r, c, attacks);
+        else if (piece.GetPieceType() == PieceType.King)
+            _king.GetAttacks(state, r, c, attacks);
+        else throw new ArgumentOutOfRangeException();
     } 
 }

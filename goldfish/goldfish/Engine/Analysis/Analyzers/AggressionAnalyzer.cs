@@ -23,8 +23,6 @@ public class AggressionAnalyzer : IGameAnalyzer
 
             return score;
         }
-        
-
         return ScoreSide(in state, Side.White) - ScoreSide(in state, Side.Black);
     }
 }

@@ -21,28 +21,14 @@ public static class StateManipulator
     {
         if (cache is not null && cache.AttackCache[(int)side] is not null) return cache.AttackCache[(int)side].Value;
         var atk = new Grid8x8();
+        Span<(int, int)> attackBuf = stackalloc (int, int)[30]; // assume any given piece will have less than 30 possible attacks, this is very generous
         for (var i = 0; i < 8; i++)
         for (var j = 0; j < 8; j++)
         {
             var piece = state.GetPiece(i, j);
-            if (piece.GetSide() != side || piece.GetLogic() is null) continue;
-            (int, int)[] thing;
-            if (cache is not null)
-            {
-                if (cache.CachedAttacks[i, j] is null)
-                {
-                    cache.CachedAttacks[i, j] = new (int, int)[piece.GetLogic().CountAttacks(state, i, j)];
-                    piece.GetLogic().GetAttacks(state, i, j, cache.CachedAttacks[i, j]);
-                }
-
-                thing = cache.CachedAttacks[i, j];
-            }
-            else
-            {
-                thing = new (int, int)[piece.GetLogic().CountAttacks(state, i, j)];
-                piece.GetLogic().GetAttacks(state, i, j, thing);
-            }
-            foreach (var pos in thing)
+            if (!piece.IsSide(side)) continue;
+            piece.GetLogicAttacks(state, i, j, attackBuf);
+            foreach (var pos in attackBuf)
             {
                 atk[pos.Item1, pos.Item2] = true;
             }
