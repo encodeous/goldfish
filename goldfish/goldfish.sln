@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "goldfish", "goldfish\goldfi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "goldfish-test", "goldfish-test\goldfish-test.csproj", "{FC036655-6334-41CD-93DA-463C508726E2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "engine-test", "engine-test\engine-test.csproj", "{85AEE896-4FB5-4107-9617-A4CAD5E3084F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{FC036655-6334-41CD-93DA-463C508726E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FC036655-6334-41CD-93DA-463C508726E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FC036655-6334-41CD-93DA-463C508726E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{85AEE896-4FB5-4107-9617-A4CAD5E3084F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{85AEE896-4FB5-4107-9617-A4CAD5E3084F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{85AEE896-4FB5-4107-9617-A4CAD5E3084F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{85AEE896-4FB5-4107-9617-A4CAD5E3084F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

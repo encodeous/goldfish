@@ -4,10 +4,33 @@ namespace goldfish.Core.Game;
 
 public class ChessGame
 {
-    private ChessState _currentState;
+    public ChessState CurrentState;
+    public ChessMove? LastMove;
+    public Stack<ChessState> States;
+    public bool IsEngineActive = true;
 
     public ChessGame()
     {
-        _currentState = ChessState.DefaultState();
+        Reset();
+    }
+
+    public void Reset()
+    {
+        CurrentState = ChessState.DefaultState();
+        LastMove = null;
+        States = new Stack<ChessState>();
+    }
+
+    public void Commit()
+    {
+        States.Push(CurrentState);
+    }
+
+    public void Rollback()
+    {
+        if (!States.Any()) return;
+        var nState = States.Pop();
+        CurrentState = nState;
+        LastMove = null;
     }
 }
