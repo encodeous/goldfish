@@ -3,20 +3,47 @@ using Godot.Collections;
 
 namespace chessium.scripts;
 
+/// <summary>
+/// Represents the chess board.
+/// </summary>
 public partial class Board : Node2D
 {
+	/// <summary>
+	/// Represents an invalid tile (one that is not on the board).
+	/// </summary>
 	private readonly Vector2 invalidTile = new (-1, -1);
+	/// <summary>
+	/// Represents the tile that the mouse has selected and is currently selecting.
+	/// </summary>
 	private Vector2 mouseTile, previousMouseTile;
 
+	/// <summary>
+	/// The piece selected by the user's mouse.
+	/// </summary>
 	private Piece selectedPiece;
+	/// <summary>
+	/// The position of the piece selected by the user's mouse.
+	/// </summary>
 	private Vector2 selectedPiecePosition;
+	/// <summary>
+	/// Holds a list of all valid move for a selected piece.
+	/// </summary>
 	private Array<Vector2> validMoves;
+	/// <summary>
+	/// Maps a piece to an index that corresponds with a piece's position.
+	/// </summary>
 	private Dictionary<int, Piece> pieces;
+	/// <summary>
+	/// A list of positions of the King piece.
+	/// </summary>
 	private Array<Vector2> kingPositions;
 
+	/// <summary>
+	/// Represents the Root scene.
+	/// </summary>
 	private Root root;
 	
-	// Called when the node enters the scene tree for the first time.
+	/// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		mouseTile = invalidTile;
@@ -27,7 +54,7 @@ public partial class Board : Node2D
 		root = GetParent<Root>();
 	}
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
+	/// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
 		var mouse = GetGlobalMousePosition();
@@ -37,25 +64,33 @@ public partial class Board : Node2D
 		}
 		else
 		{
+			// sets the current mouse tile to where the user is hovering their mouse (or has clicked)
 			mouseTile = new Vector2(Mathf.Floor(mouse.X / Constants.tileSize), Mathf.Floor(mouse.Y / Constants.tileSize));
 		}
 
 		if (mouseTile != previousMouseTile)
 		{
+			// redraw borders if the mouse position has changed
 			previousMouseTile = mouseTile;
 			QueueRedraw();
 		}
 	}
 
+	/// <summary>
+	/// Handles user input.
+	/// </summary>
+	/// <param name="event">Any user input.</param>
 	public override void _Input(InputEvent @event)
 	{
 		if (root.gameState == Constants.awaiting)
 		{
+			// are we waiting for a user to pick an option (for example, pawn promotion)?
 			return;
 		}
 		
 		if(@event is not InputEventMouseButton)
 		{
+			// only focus on events concerning the user's mouse
 			return;
 		}
 
@@ -66,15 +101,20 @@ public partial class Board : Node2D
 
 		if (root.gameState == Constants.piece)
 		{
+			// has a user clicked a piece? if so, handle it
 			InputPieceState((InputEventMouseButton) @event);
 		}
 
 		if (root.gameState == Constants.move)
 		{
+			// is the user making a move with a piece? if so, handle it
 			InputMoveState((InputEventMouseButton) @event);
 		}
 	}
 
+	/// <summary>
+	/// Called when the Node is being drawn to the Scene.
+	/// </summary>
 	public override void _Draw()
 	{
 		switch (root.gameState)
@@ -90,7 +130,8 @@ public partial class Board : Node2D
 				{
 					if (piece.player == root.player)
 					{
-						DrawTileBorder(mouseTile, new Color(1, 1, 0));
+						// draw a border around the piece being hovered over
+						DrawTileWithBorder(mouseTile, new Color(1, 1, 0));
 					}
 				}
 				break;
@@ -98,48 +139,67 @@ public partial class Board : Node2D
 			case 1: // making a move
 				if (selectedPiecePosition != invalidTile)
 				{
-					DrawTileBorder(selectedPiecePosition, new Color(0, 1, 0));
+					DrawTileWithBorder(selectedPiecePosition, new Color(0, 1, 0));
 				}
 
 				foreach (var move in validMoves)
 				{
+					// draw a border around the possible move being hovered over
 					if (mouseTile == move)
 					{
-						DrawTileBorder(move, new Color(1, 1, 0));
+						DrawTileWithBorder(move, new Color(1, 1, 0));
 					}
 					else if (GetPieceFromVector2(move) != null)
 					{
 						if (GetPieceFromVector2(move).player == root.player)
 						{
-							DrawTileBorder(move, new Color(0, 1, 0));
+							DrawTileWithBorder(move, new Color(0, 1, 0));
 						}
 						else
 						{
-							DrawTileBorder(move, new Color(1, 0, 0));
+							DrawTileWithBorder(move, new Color(1, 0, 0));
 						}
 					}
 					else
 					{
-						DrawTileBorder(move, new Color(0, 0, 1));
+						DrawTileWithBorder(move, new Color(0, 0, 1));
 					}
 				}
 				break;
 		}
 	}
 
+	/// <summary>
+	/// Gets the piece from a Vector2 position.
+	/// </summary>
+	/// <param name="position">The position to fetch from.</param>
+	/// <returns>The piece at the position, if any.</returns>
 	public Piece GetPieceFromVector2(Vector2 position)
 	{
 		return GetPiece((int) position.X, (int) position.Y);
 	}
 
+	/// <summary>
+	/// Gets the piece from an (x, y) coordinate pair.
+	/// </summary>
+	/// <param name="x">The row to fetch from.</param>
+	/// <param name="y">The column to fetch from.</param>
+	/// <returns>The piece at the position, if any.</returns>
 	private Piece GetPiece(int x, int y)
 	{
-		return GetGrid(x, y, pieces);
+		return GetPieceFromGrid(x, y, pieces);
 	}
 
-	private Piece GetGrid(int x, int y, Dictionary<int, Piece> dictionary)
+	/// <summary>
+	/// Gets the piece from the pieces stored in the game board.
+	/// </summary>
+	/// <param name="x">The row to fetch from.</param>
+	/// <param name="y">The column to fetch from.</param>
+	/// <param name="dictionary">The list of pieces currently present on the board.</param>
+	/// <returns>The piece at the position, if any.</returns>
+	private Piece GetPieceFromGrid(int x, int y, Dictionary<int, Piece> dictionary)
 	{
-		if (x < 8 && x >= 0 && y < 8 && y >= 0)
+		if (x is < 8 and >= 0 && y is < 8 and >= 0)
 		{
 			if (dictionary.ContainsKey(CoordinatesToKey(x, y)))
 			{
@@ -154,11 +214,19 @@ public partial class Board : Node2D
 		return null;
 	}
 
-	private void DrawTileBorder(Vector2 position, Color color)
+	/// <summary>
+	/// Draws a border around a tile on the board.
+	/// </summary>
+	/// <param name="position">The position of the tile.</param>
+	/// <param name="color">The color of the border.</param>
+	private void DrawTileWithBorder(Vector2 position, Color color)
 	{
 		DrawRect(new Rect2(new Vector2(position.X * Constants.tileSize, position.Y * Constants.tileSize), new Vector2(Constants.tileSize, Constants.tileSize)), color, false, 5);
 	}
 
+	/// <summary>
+	/// Resets each piece's "jumped" attribute.
+	/// </summary>
 	public void ClearJumps()
 	{
 		foreach (var key in pieces.Keys)
@@ -170,6 +238,10 @@ public partial class Board : Node2D
 		}
 	}
 
+	/// <summary>
+	/// Handles left clicks on a piece (selection).
+	/// </summary>
+	/// <param name="event">The click event.</param>
 	private void InputPieceState(InputEventMouseButton @event)
 	{
 		if (mouseTile == invalidTile || @event.ButtonIndex != MouseButton.Left)
@@ -187,6 +259,7 @@ public partial class Board : Node2D
 		{
 			if (piece.GetValidMovesFromVector2(mouseTile).Count > 0)
 			{
+				// we're good for making a move, set relevant vars to the needed values to do so
 				selectedPiece = piece;
 				selectedPiecePosition = mouseTile;
 				validMoves = piece.GetValidMovesFromVector2(mouseTile);
@@ -197,6 +270,9 @@ public partial class Board : Node2D
 		}
 	}
 
+	/// <summary>
+	/// Deselects a piece (the user clicked on a different piece or right clicked on the same piece).
+	/// </summary>
 	private void Deselect()
 	{
 		selectedPiece = null;
@@ -207,6 +283,10 @@ public partial class Board : Node2D
 		QueueRedraw();
 	}
 
+	/// <summary>
+	/// Handles right clicks and mouse dragging (user deselected or is moving a piece).
+	/// </summary>
+	/// <param name="event">The click or drag event.</param>
 	private void InputMoveState(InputEventMouseButton @event)
 	{
 		if ((@event.ButtonIndex == MouseButton.Right || mouseTile == invalidTile) && selectedPiece != null)
@@ -220,6 +300,7 @@ public partial class Board : Node2D
 			return;
 		}
 
+		// did the user drag the piece to a valid move location?
 		if (validMoves.IndexOf(mouseTile) != -1)
 		{
 			var mouseKey = CoordinatesToKey((int) mouseTile.X, (int) mouseTile.Y);
@@ -227,21 +308,25 @@ public partial class Board : Node2D
 
 			if (pieces.ContainsKey(mouseKey) && pieces[mouseKey].player != root.player)
 			{
+				// capture a piece, if there is one to be captured safely
 				root.Capture(pieces[mouseKey]);
 				RemoveChild(pieces[mouseKey]);
 				
 				pieces[mouseKey].QueueFree();
 				pieces.Remove(mouseKey);
+				
 				captured = true;
 			}
 
 			if (selectedPiece != null && selectedPiece.type == Constants.king)
 			{
+				// update the position of the king of the current player
 				kingPositions[root.player] = mouseTile;
 			}
 
 			if (selectedPiece != null && selectedPiece.type == Constants.king && pieces.ContainsKey(mouseKey))
 			{
+				// are we castling?
 				if (pieces[mouseKey].type == Constants.rook)
 				{
 					var direction = -Mathf.Sign(selectedPiecePosition.X - mouseTile.X);
@@ -270,12 +355,14 @@ public partial class Board : Node2D
 			}
 			else
 			{
+				// move the selected to piece to its new position
 				pieces.Remove(CoordinatesToKey((int) selectedPiecePosition.X, (int) selectedPiecePosition.Y));
 				pieces[mouseKey] = selectedPiece;
 
 				selectedPiece!.Position = new Vector2(mouseTile.X * Constants.tileSize, mouseTile.Y * Constants.tileSize);
 			}
 
+			// can a pawn perform an en passant capture?
 			if (selectedPiece.type == Constants.pawn && Mathf.Abs( (int) (selectedPiecePosition.X - mouseTile.X)) == 1 && !captured)
 			{
 				var xOffset = -(selectedPiecePosition.X - mouseTile.X);
@@ -291,10 +378,11 @@ public partial class Board : Node2D
 
 			selectedPiece.moved = true;
 
+			// handle pawns trying to promote
 			if (selectedPiece.type == Constants.pawn)
 			{
 				var y = (int) mouseTile.Y;
-				var canPromote = y == 7 || y == 0;
+				var canPromote = y is 7 or 0;
 
 				if (canPromote)
 				{
@@ -307,12 +395,14 @@ public partial class Board : Node2D
 				}
 			}
 
+			// reset all states after move has been completed
 			selectedPiece = null;
 			selectedPiecePosition = invalidTile;
 			validMoves = new Array<Vector2>();
 
 			root.SwitchPlayer();
 
+			// make sure the game should still be continuing, end it if not
 			if (!CheckCheckmate(root.player))
 			{
 				root.gameState = Constants.piece;
@@ -336,6 +426,10 @@ public partial class Board : Node2D
 		}
 	}
 
+	/// <summary>
+	/// Handle the promotion of a pawn.
+	/// </summary>
+	/// <param name="position">The position of the promoting pawn.</param>
 	private void PromotePawn(Vector2 position)
 	{
 		root.gameState = Constants.awaiting;
@@ -344,15 +438,20 @@ public partial class Board : Node2D
 		dialog.Position = new Vector2(Constants.boardSize / 2.0f - (PromotionDialog.promotionWidth - Dialog.size) / 2.0f, Constants.boardSize / 2.0f - (PromotionDialog.promotionHeight - Dialog.size) / 2.0f);
 		root.AddChild(dialog);
 
+		// capture user's choice of piece type
 		var newPiece = -1;
 		dialog.OnSelected += (type) => { newPiece = type; };
 		root.RemoveChild(dialog);
 		
+		// update the pawn to its new sprite & type
 		var key = CoordinatesToKey((int) position.X, (int) position.Y);
 		pieces[key].type = newPiece;
 		pieces[key].UpdateSprite();
 	}
 
+	/// <summary>
+	/// Prepares the board for a new game (resets piece positions & sprites).
+	/// </summary>
 	public void NewGame()
 	{
 		pieces = new Dictionary<int, Piece>();
@@ -402,6 +501,14 @@ public partial class Board : Node2D
 		}
 	}
 
+	/// <summary>
+	/// Checks if a move were to put a king in check.
+	/// </summary>
+	/// <param name="x">The row of the piece being moved.</param>
+	/// <param name="y">The column of the piece being moved.</param>
+	/// <param name="piece">The piece being moved.</param>
+	/// <param name="position">The position of the piece being moved to.</param>
+	/// <returns>True if the king were to be in check, false otherwise.</returns>
 	public bool WouldBeInCheck(int x, int y, Piece piece, Vector2 position)
 	{
 		var player = piece.player;
@@ -412,6 +519,7 @@ public partial class Board : Node2D
 			kingPosition = position;
 		}
 
+		// create a temporary position to check
 		var boardState = pieces.Duplicate();
 		boardState.Remove(CoordinatesToKey(x, y));
 		boardState[CoordinatesToKey((int) position.X, (int) position.Y)] = piece;
@@ -419,11 +527,20 @@ public partial class Board : Node2D
 		return IsKingInCheck(player, boardState, kingPosition);
 	}
 
+	/// <summary>
+	/// Checks if castling were to put a king in check.
+	/// </summary>
+	/// <param name="currentPosition">The king's current position.</param>
+	/// <param name="castlePosition">The rook's current position.</param>
+	/// <param name="newPosition">The king's new position after castling.</param>
+	/// <param name="newCastlePosition">The rook's new position after castling.</param>
+	/// <returns>True if the king were to be in check, false otherwise.</returns>
 	public bool WouldBeInCheckFromCastling(Vector2 currentPosition, Vector2 castlePosition, Vector2 newPosition, Vector2 newCastlePosition)
 	{
 		var king = GetPieceFromVector2(currentPosition);
 		var rook = GetPieceFromVector2(castlePosition);
 
+		// create a temporary position to check
 		var boardState = pieces.Duplicate();
 		boardState.Remove(CoordinatesToKey((int) currentPosition.X, (int) currentPosition.Y));
 		boardState.Remove(CoordinatesToKey((int) castlePosition.X, (int) castlePosition.Y));
@@ -434,41 +551,48 @@ public partial class Board : Node2D
 		return IsKingInCheck(king.player, boardState, newPosition);
 	}
 
+	/// <summary>
+	/// Checks if the king is currently in check.
+	/// </summary>
+	/// <param name="player">The player who is currently in check.</param>
+	/// <param name="boardState">The current state of the board.</param>
+	/// <param name="kingPosition">The current position of the player's king.</param>
+	/// <returns>True if the king is in check, flase otherwise.</returns>
 	private bool IsKingInCheck(int player, Dictionary<int, Piece> boardState, Vector2 kingPosition)
 	{
-		// Check if pawns can capture the king
+		// check if pawns can capture the king
 		var y = -1 + (player * 2);
 		for (var i = 0; i < 2; i++)
 		{
 			var x = -1 + (i * 2);
-			var piece = GetGrid((int) (kingPosition.X + x), (int) (kingPosition.Y + y), boardState);
+			var piece = GetPieceFromGrid((int) (kingPosition.X + x), (int) (kingPosition.Y + y), boardState);
 			if (piece != null && piece.type == Constants.pawn && piece.player != player)
 			{
 				return true;
 			}
 		}
 		
-		// Check if knights can capture the king
+		// check if knights can capture the king
 		foreach (var direction in Constants.knightDirections)
 		{
-			var piece = GetGrid((int) (kingPosition.X + direction.X), (int) (kingPosition.Y + direction.Y), boardState);
+			var piece = GetPieceFromGrid((int) (kingPosition.X + direction.X), (int) (kingPosition.Y + direction.Y), boardState);
 			if (piece != null && piece.type == Constants.knight && piece.player != player)
 			{
 				return true;
 			}
 		}
 		
-		// Check to prevent a king from moving too close to another king
+		// check to prevent a king from moving too close to another king
 		foreach (var direction in Constants.allDirections)
 		{
-			var piece = GetGrid((int) (kingPosition.X + direction.X), (int) (kingPosition.Y + direction.Y), boardState);
+			var piece = GetPieceFromGrid((int) (kingPosition.X + direction.X), (int) (kingPosition.Y + direction.Y), boardState);
 			if (piece != null && piece.type == Constants.king && piece.player != player)
 			{
 				return true;
 			}
 		}
 		
-		// Check if a queen, bishop or rook can capture the king
+		// check if a queen, bishop or rook can capture the king
 		var directionList = new Array<Array<Vector2>> { Constants.allDirections, Constants.rookDirections, Constants.bishopDirections };
 		var pieceList = new Array<int> { Constants.queen, Constants.rook, Constants.bishop };
 
@@ -482,7 +606,7 @@ public partial class Board : Node2D
 				var multi = 1;
 				while (multi < 8)
 				{
-					var king = GetGrid((int) (kingPosition.X + direction.X * multi), (int) (kingPosition.Y + direction.Y * multi), boardState);
+					var king = GetPieceFromGrid((int) (kingPosition.X + direction.X * multi), (int) (kingPosition.Y + direction.Y * multi), boardState);
 					if (king != null)
 					{
 						if (king.type == piece && king.player != player)
@@ -504,6 +628,11 @@ public partial class Board : Node2D
 		return false;
 	}
 
+	/// <summary>
+	/// Checks if the game has ended by checkmate.
+	/// </summary>
+	/// <param name="player">The player who might've gotten checkmated.</param>
+	/// <returns>True if it's checkmate, false otherwise.</returns>
 	private bool CheckCheckmate(int player)
 	{
 		foreach (var pair in pieces)
@@ -521,6 +650,12 @@ public partial class Board : Node2D
 		return true;
 	}
 
+	/// <summary>
+	/// Converts (x, y) coordinates to unique keys for accessing the current board state.
+	/// </summary>
+	/// <param name="x">The row of a piece.</param>
+	/// <param name="y">The column of a piece.</param>
+	/// <returns>An int that represents a unique value pertaining to a piece on the board.</returns>
 	private int CoordinatesToKey(int x, int y)
 	{
 		return (x << 3) + y;

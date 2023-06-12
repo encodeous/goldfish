@@ -2,14 +2,26 @@ using Godot;
 
 namespace chessium.scripts;
 
+/// <summary>
+/// Represents the main scene of the game (the chess board + other UI elements).
+/// </summary>
 public partial class Root : Node2D
 {
+	/// <summary>
+	/// The chess board.
+	/// </summary>
 	private Board board;
+	/// <summary>
+	/// The other UI elements.
+	/// </summary>
 	private UI ui;
 
+	/// <summary>
+	/// The current player, game state and winner, if any.
+	/// </summary>
 	public int player, gameState = Constants.piece, winner;
 	
-	// Called when the node enters the scene tree for the first time.
+	/// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		board = GetNode<Board>("Board");
@@ -18,12 +30,15 @@ public partial class Root : Node2D
 		NewGame();
 	}
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
+	/// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
 		// to be implemented
 	}
 
+	/// <summary>
+	/// Starts a new game.
+	/// </summary>
 	private void NewGame()
 	{
 		player = 1;
@@ -44,6 +59,9 @@ public partial class Root : Node2D
 		}
 	}
 
+	/// <summary>
+	/// Switches the current player's turn.
+	/// </summary>
 	public void SwitchPlayer()
 	{
 		player = Mathf.Abs(player - 1);
@@ -52,6 +70,10 @@ public partial class Root : Node2D
 		board.ClearJumps();
 	}
 
+	/// <summary>
+	/// Captures a piece and removes it from the board.
+	/// </summary>
+	/// <param name="piece">The piece to capture.</param>
 	public void Capture(Piece piece)
 	{
 		ui.CapturePiece(piece);

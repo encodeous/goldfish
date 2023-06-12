@@ -2,19 +2,34 @@ using Godot;
 
 namespace chessium.scripts;
 
+/// <summary>
+/// Represents the button used to start a new game.
+/// </summary>
 public partial class NewButton : Dialog
 {
+	/// <summary>
+	/// The width and height of the button.
+	/// </summary>
 	public static readonly int newWidth = 54 * 2, newHeight = 16 * 2;
+	/// <summary>
+	/// Whether or not the mouse is currently hovering over the button.
+	/// </summary>
 	private bool mouseIn, lastMouseIn;
 
+	/// <summary>
+	/// The text to display on the button.
+	/// </summary>
 	private Sprite2D text;
 
+	/// <summary>
+	/// Constructs a new NewButton.
+	/// </summary>
 	public NewButton() : base(newWidth, newHeight)
 	{
-		// to be implemented
+		// empty
 	}
 	
-	// Called when the node enters the scene tree for the first time.
+	/// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		base._Ready(); // remove if not working
@@ -29,6 +44,10 @@ public partial class NewButton : Dialog
 		AddChild(text);
 	}
 
+	/// <summary>
+	/// Handles user input for the button.
+	/// </summary>
+	/// <param name="event">The input event.</param>
 	public override void _Input(InputEvent @event)
 	{
 		if (@event is InputEventMouseButton && !@event.IsPressed() && ((InputEventMouseButton) @event).ButtonIndex == MouseButton.Left && mouseIn)
@@ -37,13 +56,14 @@ public partial class NewButton : Dialog
 		}
 	}
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
+	/// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
 		var mouse = GetLocalMousePosition();
 		mouse.X -= size;
 		mouse.Y -= size;
 
+		// are we hovering over the button?
 		if (mouse.X >= 0 && mouse.X <= newWidth && mouse.Y >= 0 && mouse.Y <= newHeight)
 		{
 			mouseIn = true;
@@ -61,10 +81,14 @@ public partial class NewButton : Dialog
 		lastMouseIn = mouseIn;
 	}
 
+	/// <summary>
+	/// Draws a red rectangle to signify the button being hovered over.
+	/// </summary>
 	public override void _Draw()
 	{
 		if (mouseIn)
 		{
+			// draw the red rectangle when hovered over
 			var offset = size * 0.5f;
 			var vec1 = new Vector2(offset, offset);
 			var vec2 = new Vector2(newWidth + size, newHeight + size);

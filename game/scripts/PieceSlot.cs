@@ -2,14 +2,26 @@ using Godot;
 
 namespace chessium.scripts;
 
+/// <summary>
+/// Represents a slot where taken pieces are placed.
+/// </summary>
 public partial class PieceSlot : Node2D
 {
+	/// <summary>
+	/// Is the player's color black?
+	/// </summary>
 	[Export] private bool black;
+	/// <summary>
+	/// The player who owns the captured piece and its index.
+	/// </summary>
 	private int player, index;
 
+	/// <summary>
+	/// The sprite of the captured piece.
+	/// </summary>
 	private Sprite2D sprite;
 	
-	// Called when the node enters the scene tree for the first time.
+	/// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		if (black)
@@ -23,12 +35,15 @@ public partial class PieceSlot : Node2D
 		RemoveChild(sprite);
 	}
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
+	/// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
 		// to be implemented
 	}
 
+	/// <summary>
+	/// Prepares the piece slots for a new game (removes all previously captured pieces).
+	/// </summary>
 	public void NewGame()
 	{
 		foreach (var child in GetChildren())
@@ -38,6 +53,10 @@ public partial class PieceSlot : Node2D
 		}
 	}
 
+	/// <summary>
+	/// Adds a piece to a piece slot.
+	/// </summary>
+	/// <param name="piece">The captured piece.</param>
 	public void AddPiece(int piece)
 	{
 		var pieceSprite = new Sprite2D();

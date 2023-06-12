@@ -3,26 +3,48 @@ using Godot.Collections;
 
 namespace chessium.scripts;
 
+/// <summary>
+/// Represents the dialog that shows up when a pawn is promoting.
+/// </summary>
 public partial class PromotionDialog : Dialog
 {
+	/// <summary>
+	/// The event that fires when a pawn is promoting.
+	/// </summary>
 	[Signal] public delegate void OnSelectedEventHandler(int type);
 
+	/// <summary>
+	/// The width and height of this dialog.
+	/// </summary>
 	public static readonly float promotionWidth = Constants.tileSize * 4.0f;
 	public static readonly float promotionHeight = Constants.tileSize;
 
+	/// <summary>
+	/// All possible choices for promotion.
+	/// </summary>
 	private Array<int> pieces = new () { Constants.rook, Constants.knight, Constants.bishop, Constants.queen };
 
+	/// <summary>
+	/// The position of the user's mouse.
+	/// </summary>
 	private readonly Vector2 invalidPosition = new (-1, -1);
 	private Vector2 mousePosition, lastMousePosition;
 
+	/// <summary>
+	/// The player who owns the promoting pawn.
+	/// </summary>
 	private int player;
 
+	/// <summary>
+	/// Constructs a new PromotionDialog.
+	/// </summary>
+	/// <param name="player">The player who owns the promoting pawn.</param>
 	public PromotionDialog(int player) : base((int) promotionWidth, (int) promotionHeight)
 	{
 		this.player = player;
 	}
 	
-	// Called when the node enters the scene tree for the first time.
+	/// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		base._Ready(); // remove if not working
@@ -30,6 +52,7 @@ public partial class PromotionDialog : Dialog
 		mousePosition = invalidPosition;
 		lastMousePosition = invalidPosition;
 
+		// adds the possible choices to the dialog
 		var i = 0;
 		foreach (var piece in pieces)
 		{
@@ -47,7 +70,7 @@ public partial class PromotionDialog : Dialog
 		}
 	}
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
+	/// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
 		var mouse = GetLocalMousePosition();
@@ -62,6 +85,7 @@ public partial class PromotionDialog : Dialog
 			mouse = invalidPosition;
 		}
 
+		// record the user's mouse position
 		mousePosition = mouse;
 
 		if (mouse != lastMousePosition)
@@ -72,6 +96,9 @@ public partial class PromotionDialog : Dialog
 		lastMousePosition = mouse;
 	}
 
+	/// <summary>
+	/// Draws a border around the piece to be selected.
+	/// </summary>
 	public override void _Draw()
 	{
 		if (mousePosition != invalidPosition)
@@ -83,6 +110,10 @@ public partial class PromotionDialog : Dialog
 		}
 	}
 
+	/// <summary>
+	/// Handles user input.
+	/// </summary>
+	/// <param name="event">The input event.</param>
 	public override void _Input(InputEvent @event)
 	{
 		if(@event is InputEventMouseButton && mousePosition != invalidPosition)
