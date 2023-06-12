@@ -32,7 +32,7 @@ public partial class Dialog : Node2D
 		SetWidth(center, width);
 		SetHeight(center, height);
 
-		topLeft.Position = new Vector2(0, size);
+		topLeft.Position = new Vector2(0, 0);
 		top.Position = new Vector2(size, 0);
 		topRight.Position = new Vector2(size + width, 0);
 
