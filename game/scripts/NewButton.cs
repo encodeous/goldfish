@@ -10,7 +10,8 @@ public partial class NewButton : Dialog
 	/// <summary>
 	/// The width and height of the button.
 	/// </summary>
-	public static readonly int newWidth = 54 * 2, newHeight = 16 * 2;
+	public const int newWidth = 54 * 2, newHeight = 16 * 2;
+	
 	/// <summary>
 	/// Whether or not the mouse is currently hovering over the button.
 	/// </summary>
@@ -50,7 +51,7 @@ public partial class NewButton : Dialog
 	/// <param name="event">The input event.</param>
 	public override void _Input(InputEvent @event)
 	{
-		if (@event is InputEventMouseButton && !@event.IsPressed() && ((InputEventMouseButton) @event).ButtonIndex == MouseButton.Left && mouseIn)
+		if (@event is InputEventMouseButton button && !button.IsPressed() && button.ButtonIndex == MouseButton.Left && mouseIn)
 		{
 			GetNode<Board>("/root/Root/Board").NewGame();
 		}
@@ -64,7 +65,7 @@ public partial class NewButton : Dialog
 		mouse.Y -= size;
 
 		// are we hovering over the button?
-		if (mouse.X >= 0 && mouse.X <= newWidth && mouse.Y >= 0 && mouse.Y <= newHeight)
+		if (mouse.X is >= 0 and <= newWidth && mouse.Y is >= 0 and <= newHeight)
 		{
 			mouseIn = true;
 		}
@@ -89,7 +90,7 @@ public partial class NewButton : Dialog
 		if (mouseIn)
 		{
 			// draw the red rectangle when hovered over
-			var offset = size * 0.5f;
+			const float offset = size * 0.5f;
 			var vec1 = new Vector2(offset, offset);
 			var vec2 = new Vector2(newWidth + size, newHeight + size);
 			

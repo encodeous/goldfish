@@ -11,10 +11,16 @@ public partial class PieceSlot : Node2D
 	/// Is the player's color black?
 	/// </summary>
 	[Export] private bool black;
+
 	/// <summary>
-	/// The player who owns the captured piece and its index.
+	/// The player who captured the piece.
 	/// </summary>
-	private int player, index;
+	private Constants.Player player;
+	
+	/// <summary>
+	/// The index of the captured piece.
+	/// </summary>
+	private int index;
 
 	/// <summary>
 	/// The sprite of the captured piece.
@@ -26,7 +32,7 @@ public partial class PieceSlot : Node2D
 	{
 		if (black)
 		{
-			player = 1;
+			player = Constants.Player.BLACK;
 		}
 
 		sprite = GetNode<Sprite2D>("Sprite2D");
@@ -57,7 +63,7 @@ public partial class PieceSlot : Node2D
 	/// Adds a piece to a piece slot.
 	/// </summary>
 	/// <param name="piece">The captured piece.</param>
-	public void AddPiece(int piece)
+	public void AddPiece(Constants.Pieces piece)
 	{
 		var pieceSprite = new Sprite2D();
 		pieceSprite.Centered = false;
@@ -66,7 +72,7 @@ public partial class PieceSlot : Node2D
 		pieceSprite.Hframes = 6;
 		pieceSprite.Vframes = 2;
 		pieceSprite.ZIndex = 1000 + index;
-		pieceSprite.FrameCoords = new Vector2I(piece, player);
+		pieceSprite.FrameCoords = new Vector2I((int) piece, (int) player);
 
 		index++;
 		AddChild(pieceSprite);

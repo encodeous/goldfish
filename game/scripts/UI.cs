@@ -73,9 +73,9 @@ public partial class UI : Node2D
 	/// Sets the player indicator to the current player.
 	/// </summary>
 	/// <param name="player">The current player.</param>
-	public void SetPlayer(int player)
+	public void SetPlayer(Constants.Player player)
 	{
-		playerIndicator.FrameCoords = playerIndicator.FrameCoords with { Y = player };
+		playerIndicator.FrameCoords = playerIndicator.FrameCoords with { Y = (int) player };
 	}
 
 	/// <summary>
@@ -86,7 +86,7 @@ public partial class UI : Node2D
 	{
 		if (piece.player == 0)
 		{
-			if (piece.type == Constants.pawn)
+			if (piece.type == Constants.Pieces.PAWN)
 			{
 				whitePawnSlot.AddPiece(piece.type);
 			}
@@ -97,7 +97,7 @@ public partial class UI : Node2D
 		}
 		else
 		{
-			if (piece.type == Constants.pawn)
+			if (piece.type == Constants.Pieces.PAWN)
 			{
 				blackPawnSlot.AddPiece(piece.type);
 			}

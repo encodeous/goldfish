@@ -58,22 +58,17 @@ public partial class Board : Node2D
 	public override void _Process(double delta)
 	{
 		var mouse = GetGlobalMousePosition();
-		if (mouse.X > Constants.boardSize)
-		{
-			mouseTile = invalidTile;
-		}
-		else
-		{
-			// sets the current mouse tile to where the user is hovering their mouse (or has clicked)
-			mouseTile = new Vector2(Mathf.Floor(mouse.X / Constants.tileSize), Mathf.Floor(mouse.Y / Constants.tileSize));
-		}
+		// sets the current mouse tile to where the user is hovering their mouse (or has clicked)
+		mouseTile = mouse.X > Constants.boardSize ? invalidTile : new Vector2(Mathf.Floor(mouse.X / Constants.tileSize), Mathf.Floor(mouse.Y / Constants.tileSize));
 
-		if (mouseTile != previousMouseTile)
+		if (mouseTile == previousMouseTile)
 		{
-			// redraw borders if the mouse position has changed
-			previousMouseTile = mouseTile;
-			QueueRedraw();
+			return;
 		}
+		
+		// redraw borders if the mouse position has changed
+		previousMouseTile = mouseTile;
+		QueueRedraw();
 	}
 
 	/// <summary>
@@ -82,33 +77,33 @@ public partial class Board : Node2D
 	/// <param name="event">Any user input.</param>
 	public override void _Input(InputEvent @event)
 	{
-		if (root.gameState == Constants.awaiting)
+		if (root.gameState == Constants.GameState.WAITING_FOR_USER)
 		{
 			// are we waiting for a user to pick an option (for example, pawn promotion)?
 			return;
 		}
 		
-		if(@event is not InputEventMouseButton)
+		if(@event is not InputEventMouseButton button)
 		{
 			// only focus on events concerning the user's mouse
 			return;
 		}
 
-		if (@event.IsPressed())
+		if (button.IsPressed())
 		{
 			return;
 		}
 
-		if (root.gameState == Constants.piece)
+		if (root.gameState == Constants.GameState.GETTING_PIECE)
 		{
 			// has a user clicked a piece? if so, handle it
-			InputPieceState((InputEventMouseButton) @event);
+			InputPieceState(button);
 		}
 
-		if (root.gameState == Constants.move)
+		if (root.gameState == Constants.GameState.MAKING_A_MOVE)
 		{
 			// is the user making a move with a piece? if so, handle it
-			InputMoveState((InputEventMouseButton) @event);
+			InputMoveState(button);
 		}
 	}
 
@@ -119,7 +114,7 @@ public partial class Board : Node2D
 	{
 		switch (root.gameState)
 		{
-			case 0: // grabbing a piece
+			case Constants.GameState.GETTING_PIECE: // grabbing a piece
 				if (mouseTile == invalidTile)
 				{
 					return;
@@ -136,7 +131,7 @@ public partial class Board : Node2D
 				}
 				break;
 			
-			case 1: // making a move
+			case Constants.GameState.MAKING_A_MOVE: // making a move
 				if (selectedPiecePosition != invalidTile)
 				{
 					DrawTileWithBorder(selectedPiecePosition, new Color(0, 1, 0));
@@ -231,7 +226,7 @@ public partial class Board : Node2D
 	{
 		foreach (var key in pieces.Keys)
 		{
-			if (pieces[key].player == root.player && pieces[key].type == Constants.pawn)
+			if (pieces[key].player == root.player && pieces[key].type == Constants.Pieces.PAWN)
 			{
 				pieces[key].jumped = false;
 			}
@@ -264,7 +259,7 @@ public partial class Board : Node2D
 				selectedPiecePosition = mouseTile;
 				validMoves = piece.GetValidMovesFromVector2(mouseTile);
 
-				root.gameState = Constants.move;
+				root.gameState = Constants.GameState.MAKING_A_MOVE;
 				QueueRedraw();
 			}
 		}
@@ -278,7 +273,7 @@ public partial class Board : Node2D
 		selectedPiece = null;
 		selectedPiecePosition = invalidTile;
 		validMoves = new Array<Vector2>();
-		root.gameState = Constants.piece;
+		root.gameState = Constants.GameState.GETTING_PIECE;
 		
 		QueueRedraw();
 	}
@@ -318,16 +313,16 @@ public partial class Board : Node2D
 				captured = true;
 			}
 
-			if (selectedPiece != null && selectedPiece.type == Constants.king)
+			if (selectedPiece != null && selectedPiece.type == Constants.Pieces.KING)
 			{
 				// update the position of the king of the current player
-				kingPositions[root.player] = mouseTile;
+				kingPositions[(int) root.player] = mouseTile;
 			}
 
-			if (selectedPiece != null && selectedPiece.type == Constants.king && pieces.ContainsKey(mouseKey))
+			if (selectedPiece is { type: Constants.Pieces.KING } && pieces.ContainsKey(mouseKey))
 			{
 				// are we castling?
-				if (pieces[mouseKey].type == Constants.rook)
+				if (pieces[mouseKey].type == Constants.Pieces.ROOK)
 				{
 					var direction = -Mathf.Sign(selectedPiecePosition.X - mouseTile.X);
 					
@@ -350,7 +345,7 @@ public partial class Board : Node2D
 					rook.Position = new Vector2(rookPosition.X * Constants.tileSize, rookPosition.Y * Constants.tileSize);
 					
 					king.Position = new Vector2(kingPosition.X * Constants.tileSize, kingPosition.Y * Constants.tileSize);
-					kingPositions[root.player] = kingPosition;
+					kingPositions[(int) root.player] = kingPosition;
 				}
 			}
 			else
@@ -363,7 +358,7 @@ public partial class Board : Node2D
 			}
 
 			// can a pawn perform an en passant capture?
-			if (selectedPiece.type == Constants.pawn && Mathf.Abs( (int) (selectedPiecePosition.X - mouseTile.X)) == 1 && !captured)
+			if (selectedPiece.type == Constants.Pieces.PAWN && Mathf.Abs( (int) (selectedPiecePosition.X - mouseTile.X)) == 1 && !captured)
 			{
 				var xOffset = -(selectedPiecePosition.X - mouseTile.X);
 				var enPassantOffset = new Vector2(selectedPiecePosition.X + xOffset, selectedPiecePosition.Y);
@@ -379,7 +374,7 @@ public partial class Board : Node2D
 			selectedPiece.moved = true;
 
 			// handle pawns trying to promote
-			if (selectedPiece.type == Constants.pawn)
+			if (selectedPiece.type == Constants.Pieces.PAWN)
 			{
 				var y = (int) mouseTile.Y;
 				var canPromote = y is 7 or 0;
@@ -405,17 +400,17 @@ public partial class Board : Node2D
 			// make sure the game should still be continuing, end it if not
 			if (!CheckCheckmate(root.player))
 			{
-				root.gameState = Constants.piece;
+				root.gameState = Constants.GameState.GETTING_PIECE;
 			}
 			else
 			{
-				root.winner = Mathf.Abs(root.player - 1);
+				root.winner = root.player == Constants.Player.WHITE ? Constants.Player.BLACK : Constants.Player.WHITE;
 
 				var dialog = new WinnerDialog(root.winner);
 				dialog.Position = new Vector2(Constants.boardSize / 2.0f - (WinnerDialog.winnerWidth - Dialog.size) / 2.0f, Constants.boardSize / 2.0f - (WinnerDialog.winnerHeight - Dialog.size) / 2.0f);
 				
 				root.AddChild(dialog);
-				root.gameState = Constants.checkmate;
+				root.gameState = Constants.GameState.CHECKMATE;
 			}
 			
 			QueueRedraw();
@@ -432,15 +427,15 @@ public partial class Board : Node2D
 	/// <param name="position">The position of the promoting pawn.</param>
 	private void PromotePawn(Vector2 position)
 	{
-		root.gameState = Constants.awaiting;
+		root.gameState = Constants.GameState.WAITING_FOR_USER;
 
 		var dialog = new PromotionDialog(root.player);
 		dialog.Position = new Vector2(Constants.boardSize / 2.0f - (PromotionDialog.promotionWidth - Dialog.size) / 2.0f, Constants.boardSize / 2.0f - (PromotionDialog.promotionHeight - Dialog.size) / 2.0f);
 		root.AddChild(dialog);
 
 		// capture user's choice of piece type
-		var newPiece = -1;
-		dialog.OnSelected += (type) => { newPiece = type; };
+		var newPiece = Constants.Pieces.QUEEN;
+		dialog.OnSelected += type => { newPiece = type; };
 		root.RemoveChild(dialog);
 		
 		// update the pawn to its new sprite & type
@@ -471,22 +466,22 @@ public partial class Board : Node2D
 			for (var x = 0; x < 8; x++)
 			{
 				var y = 6 - 5 * i;
-				var piece = new Piece(i, Constants.pawn);
+				var piece = new Piece((Constants.Player) i, Constants.Pieces.PAWN);
 				piece.Position = new Vector2(x * Constants.tileSize, y * Constants.tileSize);
 				pieces[CoordinatesToKey(x, y)] = piece;
 			}
 
-			var types = new Array<int>
+			var types = new Array<Constants.Pieces>
 			{
-				Constants.rook, Constants.knight, Constants.bishop, Constants.king, Constants.queen, Constants.bishop, Constants.knight, Constants.rook
+				Constants.Pieces.ROOK, Constants.Pieces.KNIGHT, Constants.Pieces.BISHOP, Constants.Pieces.KING, Constants.Pieces.QUEEN, Constants.Pieces.BISHOP, Constants.Pieces.KNIGHT, Constants.Pieces.ROOK
 			};
 			for (var x = 0; x < 8; x++)
 			{
 				var y = 7 - 7 * i;
-				var piece = new Piece(i, types[x]);
+				var piece = new Piece((Constants.Player) i, types[x]);
 				piece.Position = new Vector2(x * Constants.tileSize, y * Constants.tileSize);
 
-				if (piece.type == Constants.king)
+				if (piece.type == Constants.Pieces.KING)
 				{
 					kingPositions.Add(new Vector2(x, y));
 				}
@@ -512,9 +507,9 @@ public partial class Board : Node2D
 	public bool WouldBeInCheck(int x, int y, Piece piece, Vector2 position)
 	{
 		var player = piece.player;
-		var kingPosition = kingPositions[player];
+		var kingPosition = kingPositions[(int) player];
 
-		if (piece.type == Constants.king)
+		if (piece.type == Constants.Pieces.KING)
 		{
 			kingPosition = position;
 		}
@@ -558,15 +553,15 @@ public partial class Board : Node2D
 	/// <param name="boardState">The current state of the board.</param>
 	/// <param name="kingPosition">The current position of the player's king.</param>
 	/// <returns>True if the king is in check, flase otherwise.</returns>
-	private bool IsKingInCheck(int player, Dictionary<int, Piece> boardState, Vector2 kingPosition)
+	private bool IsKingInCheck(Constants.Player player, Dictionary<int, Piece> boardState, Vector2 kingPosition)
 	{
 		// check if pawns can capture the king
-		var y = -1 + (player * 2);
+		var y = -1 + (int) player * 2;
 		for (var i = 0; i < 2; i++)
 		{
 			var x = -1 + (i * 2);
 			var piece = GetPieceFromGrid((int) (kingPosition.X + x), (int) (kingPosition.Y + y), boardState);
-			if (piece != null && piece.type == Constants.pawn && piece.player != player)
+			if (piece is { type: Constants.Pieces.PAWN } && piece.player != player)
 			{
 				return true;
 			}
@@ -576,7 +571,7 @@ public partial class Board : Node2D
 		foreach (var direction in Constants.knightDirections)
 		{
 			var piece = GetPieceFromGrid((int) (kingPosition.X + direction.X), (int) (kingPosition.Y + direction.Y), boardState);
-			if (piece != null && piece.type == Constants.knight && piece.player != player)
+			if (piece is { type: Constants.Pieces.KNIGHT } && piece.player != player)
 			{
 				return true;
 			}
@@ -586,7 +581,7 @@ public partial class Board : Node2D
 		foreach (var direction in Constants.allDirections)
 		{
 			var piece = GetPieceFromGrid((int) (kingPosition.X + direction.X), (int) (kingPosition.Y + direction.Y), boardState);
-			if (piece != null && piece.type == Constants.king && piece.player != player)
+			if (piece is { type: Constants.Pieces.KING } && piece.player != player)
 			{
 				return true;
 			}
@@ -594,7 +589,7 @@ public partial class Board : Node2D
 		
 		// check if a queen, bishop or rook can capture the king
 		var directionList = new Array<Array<Vector2>> { Constants.allDirections, Constants.rookDirections, Constants.bishopDirections };
-		var pieceList = new Array<int> { Constants.queen, Constants.rook, Constants.bishop };
+		var pieceList = new Array<Constants.Pieces> { Constants.Pieces.QUEEN, Constants.Pieces.ROOK, Constants.Pieces.BISHOP };
 
 		for (var i = 0; i < directionList.Count; i++)
 		{
@@ -624,7 +619,7 @@ public partial class Board : Node2D
 				}
 			}
 		}
-		
+
 		return false;
 	}
 
@@ -633,7 +628,7 @@ public partial class Board : Node2D
 	/// </summary>
 	/// <param name="player">The player who might've gotten checkmated.</param>
 	/// <returns>True if it's checkmate, false otherwise.</returns>
-	private bool CheckCheckmate(int player)
+	private bool CheckCheckmate(Constants.Player player)
 	{
 		foreach (var pair in pieces)
 		{

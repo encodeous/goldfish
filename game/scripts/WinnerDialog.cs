@@ -10,22 +10,23 @@ public partial class WinnerDialog : Dialog
 	/// <summary>
 	/// The width and height of this dialog.
 	/// </summary>
-	public static readonly int winnerWidth = 54 * 2, winnerHeight = 32 * 2;
+	public const int winnerWidth = 54 * 2, winnerHeight = 32 * 2;
 	
 	/// <summary>
 	/// The sprite of the player who won, as well as the winner message.
 	/// </summary>
 	private Sprite2D playerSprite = new (), winnerSprite = new ();
+	
 	/// <summary>
 	/// The player who won.
 	/// </summary>
-	private int player;
+	private Constants.Player player;
 
 	/// <summary>
 	/// Constructs a new WinnerDialog.
 	/// </summary>
 	/// <param name="winner">The player that won.</param>
-	public WinnerDialog(int winner) : base(winnerWidth, winnerHeight)
+	public WinnerDialog(Constants.Player winner) : base(winnerWidth, winnerHeight)
 	{
 		player = winner;
 	}
@@ -38,7 +39,7 @@ public partial class WinnerDialog : Dialog
 		ConfigureSprite(playerSprite);
 		ConfigureSprite(winnerSprite);
 
-		playerSprite.FrameCoords = playerSprite.FrameCoords with { Y = player };
+		playerSprite.FrameCoords = playerSprite.FrameCoords with { Y = (int) player };
 		winnerSprite.FrameCoords = winnerSprite.FrameCoords with { Y = 2 };
 
 		var y = winnerSprite.Position.Y;
