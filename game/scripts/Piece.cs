@@ -5,20 +5,40 @@ namespace chessium.scripts;
 
 public partial class Piece : Node2D
 {
+	/// <summary>
+	/// The sprite of the piece.
+	/// </summary>
 	private Sprite2D sprite;
+	/// <summary>
+	/// The image of the piece.
+	/// </summary>
 	private Texture2D texture;
+	/// <summary>
+	/// The game board Node.
+	/// </summary>
 	private Board board;
 
+	/// <summary>
+	/// The player who owns the piece and its type.
+	/// </summary>
 	public int player, type;
+	/// <summary>
+	/// Has the piece moved or jumped?
+	/// </summary>
 	public bool moved = false, jumped = false;
 	
+	/// <summary>
+	/// Constructs a new Piece instance.
+	/// </summary>
+	/// <param name="player">The player who owns the piece.</param>
+	/// <param name="type">The type of piece.</param>
 	public Piece(int player, int type)
 	{
 		this.player = player;
 		this.type = type;
 	}
 	
-	// Called when the node enters the scene tree for the first time.
+	/// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		sprite = new Sprite2D();
@@ -34,41 +54,48 @@ public partial class Piece : Node2D
 		AddChild(sprite);
 	}
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
+	/// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
 		// to be implemented
 	}
 
+	/// <summary>
+	/// Called when the Node is about to leave the SceneTree.
+	/// </summary>
 	public override void _ExitTree()
 	{
 		sprite.QueueFree();
 	}
 
+	/// <summary>
+	/// Gets the valid piece directions depending on the type of piece.
+	/// </summary>
+	/// <returns>An array of valid piece directions depending on the type of piece.</returns>
 	private Array<Vector2> GetPieceDirections()
 	{
-		switch (type)
+		return type switch
 		{
-			case 0: // pawn
-				return new Array<Vector2> { new (0, 1) };
-			
-			case 1: // rook
-				return Constants.rookDirections;
-			
-			case 2: // knight
-				return Constants.knightDirections;
-			
-			case 3: // bishop
-				return Constants.bishopDirections;
-			
-			case 4 or 5: // queen or king
-				return Constants.allDirections;
-			
-			default:
-				return new Array<Vector2>();
-		}
+			0 => // pawn
+				new Array<Vector2> { new(0, 1) },
+			1 => // rook
+				Constants.rookDirections,
+			2 => // knight
+				Constants.knightDirections,
+			3 => // bishop
+				Constants.bishopDirections,
+			4 or 5 => // queen or king
+				Constants.allDirections,
+			_ => new Array<Vector2>()
+		};
 	}
 
+	/// <summary>
+	/// Gets all valid moves for this piece, depending on its type.
+	/// </summary>
+	/// <param name="x">The row of the piece.</param>
+	/// <param name="y">The column of the piece.</param>
+	/// <returns>An array of valid moves.</returns>
 	public Array<Vector2> GetValidMoves(int x, int y)
 	{
 		var positions = new Array<Vector2>();
@@ -173,44 +200,65 @@ public partial class Piece : Node2D
 		return positions;
 	}
 
+	/// <summary>
+	/// Gets all valid moves for a piece from a Vector2 position.
+	/// </summary>
+	/// <param name="vector">The position of the piece.</param>
+	/// <returns>An array of valid moves.</returns>
 	public Array<Vector2> GetValidMovesFromVector2(Vector2 vector)
 	{
 		return GetValidMoves((int) vector.X, (int) vector.Y);
 	}
 
+	/// <summary>
+	/// Gets the number of squares a piece can travel in a move.
+	/// </summary>
+	/// <returns>An int depending on the type of piece.</returns>
 	private int DistanceTravelled()
 	{
-		switch (type)
+		return type switch
 		{
-			case 0: // pawn movement
-				return moved ? 1 : 2; // 1 if the pawn has already moved once, 2 otherwise
-			
-			case 2 or 5: // knight or king movement
-				return 1;
-			
-			default:
-				return 8; // every other piece can move the entire length of the board if possible
-		}
+			// pawn movement
+			0 => moved ? 1 : 2, // 1 if the pawn has already moved once, 2 otherwise
+			// knight or king movement
+			2 or 5 => 1,
+			_ => 8
+		};
 	}
 
+	/// <summary>
+	/// Checks if a move is legal.
+	/// </summary>
+	/// <param name="position">The position of the move to make.</param>
+	/// <returns>True if the move is legal, false otherwise.</returns>
 	private bool IsValidMove(Vector2 position)
 	{
 		if (IsInBounds(position))
 		{
 			// true if there is no piece in the way of a move, or if it is not out of bounds
 			var piece = board.GetPieceFromVector2(position);
-			return piece == null ? true : TileHasEnemy(position);
+			return piece == null || TileHasEnemy(position);
 		}
 
 		return false;
 	}
 
+	/// <summary>
+	/// Checks if a position is within the bounds of the chess board.
+	/// </summary>
+	/// <param name="position">The position to check.</param>
+	/// <returns>True if the position is within the chess board, false otherwise.</returns>
 	private bool IsInBounds(Vector2 position)
 	{
 		// is this position with the board grid (8 * 8)?
 		return position.X < 8 && position.X >= 0 && position.Y < 8 && position.Y >= 0;
 	}
 
+	/// <summary>
+	/// Checks if a tile contains an enemy piece.
+	/// </summary>
+	/// <param name="position">The position to check for.</param>
+	/// <returns>True if a tile has an enemy, false otherwise.</returns>
 	private bool TileHasEnemy(Vector2 position)
 	{
 		if (!IsInBounds(position))
@@ -230,12 +278,20 @@ public partial class Piece : Node2D
 		return false;
 	}
 
+	/// <summary>
+	/// Gets a piece from the chess board.
+	/// </summary>
+	/// <param name="position">The position to get the piece from.</param>
+	/// <returns>A piece from the position, if any.</returns>
 	private Piece GetPiece(Vector2 position)
 	{
 		// gets a piece on a square so long as the position is within the bounds of the game board
 		return !IsInBounds(position) ? null : board.GetPieceFromVector2(position);
 	}
 
+	/// <summary>
+	/// Updates the sprite of the piece based on its type and the player that owns it.
+	/// </summary>
 	public void UpdateSprite()
 	{
 		sprite.FrameCoords = new Vector2I(type, player);

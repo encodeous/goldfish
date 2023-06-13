@@ -2,18 +2,36 @@ using Godot;
 
 namespace chessium.scripts;
 
+/// <summary>
+/// Represents additional UI elements (sidebars, etc).
+/// </summary>
 public partial class UI : Node2D
 {
+	/// <summary>
+	/// Indicates the current player's turn.
+	/// </summary>
 	private Sprite2D playerIndicator;
+	/// <summary>
+	/// The instance of the root scene.
+	/// </summary>
 	private Root root;
 
+	/// <summary>
+	/// The base window for the other UI elements.
+	/// </summary>
 	private Dialog dialog = new (640 - Constants.boardSize - Dialog.size * 2, Constants.boardSize - Dialog.size * 2);
+	/// <summary>
+	/// The button to start a new game.
+	/// </summary>
 	private NewButton newButton = new ();
 	
+	/// <summary>
+	/// The piece slots to store captured pieces for both players.
+	/// </summary>
 	private PieceSlot whitePawnSlot, whitePieceSlot;
 	private PieceSlot blackPawnSlot, blackPieceSlot;
 
-	// Called when the node enters the scene tree for the first time.
+	/// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		playerIndicator = GetNode<Sprite2D>("PlayerIndicator/PlayerIndicatorSprite");
@@ -33,12 +51,15 @@ public partial class UI : Node2D
 		AddChild(newButton);
 	}
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
+	/// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
 		// to be implemented
 	}
 
+	/// <summary>
+	/// Starts a new game.
+	/// </summary>
 	public void NewGame()
 	{
 		whitePawnSlot.NewGame();
@@ -48,11 +69,19 @@ public partial class UI : Node2D
 		blackPieceSlot.NewGame();
 	}
 
+	/// <summary>
+	/// Sets the player indicator to the current player.
+	/// </summary>
+	/// <param name="player">The current player.</param>
 	public void SetPlayer(int player)
 	{
 		playerIndicator.FrameCoords = playerIndicator.FrameCoords with { Y = player };
 	}
 
+	/// <summary>
+	/// Adds a captured piece to the relevant piece slot depending on its type and the player who owns it.
+	/// </summary>
+	/// <param name="piece">The captured piece.</param>
 	public void CapturePiece(Piece piece)
 	{
 		if (piece.player == 0)
