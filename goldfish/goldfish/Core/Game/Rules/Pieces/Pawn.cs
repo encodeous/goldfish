@@ -95,7 +95,7 @@ public struct Pawn : IPieceLogic
         return cnt;
     }
 
-    private void AddPromotionVariants(ref int cnt, in ChessMove move, Span<ChessMove> moves)
+    private readonly void AddPromotionVariants(ref int cnt, in ChessMove move, Span<ChessMove> moves)
     {
         moves[cnt++] = PromotionVariant(move, PromotionType.Bishop);
         moves[cnt++] = PromotionVariant(move, PromotionType.Knight);

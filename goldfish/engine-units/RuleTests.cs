@@ -1,7 +1,6 @@
 ﻿using System.Text.Json.Nodes;
 using engine_test;
 using goldfish.Core.Data;
-using goldfish.Core.Data.Optimization;
 using goldfish.Core.Game;
 using goldfish.Core.Game.FEN;
 

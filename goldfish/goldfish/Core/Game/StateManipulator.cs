@@ -17,7 +17,6 @@ public static class StateManipulator
     /// </summary>
     /// <param name="state"></param>
     /// <param name="side"></param>
-    /// <param name="cache"></param>
     /// <returns></returns>
     public static Grid8x8 GetAttackMatrix(this in ChessState state, Side side)
     {
