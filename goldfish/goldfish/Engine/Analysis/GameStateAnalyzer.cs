@@ -15,8 +15,8 @@ public class GameStateAnalyzer
             new MaterialAnalyzer(),
             new WinAnalyzer(),
             // new ControlAnalyzer(),
-            new AggressionAnalyzer(),
-            new PawnAnalyzer()
+            // new AggressionAnalyzer(),
+            // new PawnAnalyzer()
         };
     }
 
@@ -29,7 +29,6 @@ public class GameStateAnalyzer
         ref var cache = ref Tst.Get(state);
         if (!double.IsNaN(cache.StaticEval)) return cache.StaticEval;
         double score = 0;
-        double weighting = 0;
         foreach (var analyzer in _analyzers)
         {
             var cScore = analyzer.GetScore(state);
@@ -38,7 +37,6 @@ public class GameStateAnalyzer
                 return cache.StaticEval = 0;
             }
             score += cScore * analyzer.Weighting;
-            weighting += analyzer.Weighting;
         }
 
         return cache.StaticEval = score;

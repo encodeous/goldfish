@@ -1,43 +1,52 @@
 ﻿using System.Diagnostics;
+using engine_test;
 using goldfish.Core.Data;
 using goldfish.Core.Game;
+using goldfish.Core.Game.FEN;
+using goldfish.Engine;
 
-static int CountNextGames(ChessState state, int depth)
-{
-    if (depth == 0)
-    {
-        return 1;
-    }
-    Span<ChessMove> tMoves = stackalloc ChessMove[30];
-    int cnt = 0;
-    for (var i = 0; i < 8; i++)
-    for (var j = 0; j < 8; j++)
-    {
-        var piece = state.GetPiece(i, j);
-        if (!piece.IsSide(state.ToMove) || piece.GetLogic() is null) continue;
-        int moveCnt = state.GetValidMovesForSquare(i, j, tMoves);
-        if (depth == 1)
-        {
-            cnt += moveCnt;
-        }
-        else
-        {
-            for(int m = 0; m < moveCnt; m++)
-            {
-                cnt += CountNextGames(tMoves[m].NewState, depth - 1);
-            }
-        }
-    }
+Span<(ChessMove, double)> optMoves = new (ChessMove, double)[5];
+ulong pos = 0;
+var optimizedEval = GoldFishEngine.NextOptimalMoves(FenConvert.Parse("r1bqkb1r/1ppppppp/5n2/p2P4/1n2P3/P4N2/1PP2PPP/RNBQKB1R b KQkq - 0 5"), 5, ref optMoves, ref pos);
 
-    return cnt;
-}
+BoardPrinter.Print(optMoves);
 
-for (int i = 0; i < 10; i++)
-{
-    var start = Stopwatch.GetTimestamp();
-    Console.WriteLine(CountNextGames(ChessState.DefaultState(), 5));
-    Console.WriteLine(Stopwatch.GetElapsedTime(start));
-}
+// static int CountNextGames(ChessState state, int depth)
+// {
+//     if (depth == 0)
+//     {
+//         return 1;
+//     }
+//     Span<ChessMove> tMoves = stackalloc ChessMove[30];
+//     int cnt = 0;
+//     for (var i = 0; i < 8; i++)
+//     for (var j = 0; j < 8; j++)
+//     {
+//         var piece = state.GetPiece(i, j);
+//         if (!piece.IsSide(state.ToMove) || piece.GetLogic() is null) continue;
+//         int moveCnt = state.GetValidMovesForSquare(i, j, tMoves);
+//         if (depth == 1)
+//         {
+//             cnt += moveCnt;
+//         }
+//         else
+//         {
+//             for(int m = 0; m < moveCnt; m++)
+//             {
+//                 cnt += CountNextGames(tMoves[m].NewState, depth - 1);
+//             }
+//         }
+//     }
+//
+//     return cnt;
+// }
+//
+// for (int i = 0; i < 10; i++)
+// {
+//     var start = Stopwatch.GetTimestamp();
+//     Console.WriteLine(CountNextGames(ChessState.DefaultState(), 5));
+//     Console.WriteLine(Stopwatch.GetElapsedTime(start));
+// }
 
 Console.ReadLine();
 
