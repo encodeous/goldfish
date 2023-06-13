@@ -9,10 +9,12 @@ public partial class Piece : Node2D
 	/// The sprite of the piece.
 	/// </summary>
 	private Sprite2D sprite;
+	
 	/// <summary>
 	/// The image of the piece.
 	/// </summary>
 	private Texture2D texture;
+	
 	/// <summary>
 	/// The game board Node.
 	/// </summary>
@@ -22,6 +24,7 @@ public partial class Piece : Node2D
 	/// Represents the player who owns the piece.
 	/// </summary>
 	public Constants.Player player;
+	
 	/// <summary>
 	/// Represents the type of the piece.
 	/// </summary>

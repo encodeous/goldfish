@@ -11,6 +11,7 @@ public partial class Root : Node2D
 	/// The chess board.
 	/// </summary>
 	private Board board;
+	
 	/// <summary>
 	/// The other UI elements.
 	/// </summary>

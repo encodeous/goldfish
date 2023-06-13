@@ -12,6 +12,7 @@ public partial class Board : Node2D
 	/// Represents an invalid tile (one that is not on the board).
 	/// </summary>
 	private readonly Vector2 invalidTile = new (-1, -1);
+	
 	/// <summary>
 	/// Represents the tile that the mouse has selected and is currently selecting.
 	/// </summary>
@@ -21,18 +22,22 @@ public partial class Board : Node2D
 	/// The piece selected by the user's mouse.
 	/// </summary>
 	private Piece selectedPiece;
+	
 	/// <summary>
 	/// The position of the piece selected by the user's mouse.
 	/// </summary>
 	private Vector2 selectedPiecePosition;
+	
 	/// <summary>
 	/// Holds a list of all valid move for a selected piece.
 	/// </summary>
 	private Array<Vector2> validMoves;
+	
 	/// <summary>
 	/// Maps a piece to an index that corresponds with a piece's position.
 	/// </summary>
 	private Dictionary<int, Piece> pieces;
+	
 	/// <summary>
 	/// A list of positions of the King piece.
 	/// </summary>
@@ -59,7 +64,7 @@ public partial class Board : Node2D
 	{
 		var mouse = GetGlobalMousePosition();
 		// sets the current mouse tile to where the user is hovering their mouse (or has clicked)
-		mouseTile = mouse.X > Constants.boardSize ? invalidTile : new Vector2(Mathf.Floor(mouse.X / Constants.tileSize), Mathf.Floor(mouse.Y / Constants.tileSize));
+		mouseTile = mouse.X > Constants.boardSize ? invalidTile : MapGlobalCoordsToBoard(mouse);
 
 		if (mouseTile == previousMouseTile)
 		{
@@ -89,7 +94,7 @@ public partial class Board : Node2D
 			return;
 		}
 
-		if (button.IsPressed())
+		if (button.Pressed)
 		{
 			return;
 		}
@@ -97,13 +102,13 @@ public partial class Board : Node2D
 		if (root.gameState == Constants.GameState.GETTING_PIECE)
 		{
 			// has a user clicked a piece? if so, handle it
-			InputPieceState(button);
+			HandlePieceClick(button);
 		}
 
 		if (root.gameState == Constants.GameState.MAKING_A_MOVE)
 		{
 			// is the user making a move with a piece? if so, handle it
-			InputMoveState(button);
+			HandlePieceMove(button);
 		}
 	}
 
@@ -162,6 +167,11 @@ public partial class Board : Node2D
 				}
 				break;
 		}
+	}
+
+	private Vector2 MapGlobalCoordsToBoard(Vector2 position)
+	{
+		return new Vector2(Mathf.Floor(position.X / Constants.tileSize), Mathf.Floor(position.Y / Constants.tileSize));
 	}
 
 	/// <summary>
@@ -237,7 +247,7 @@ public partial class Board : Node2D
 	/// Handles left clicks on a piece (selection).
 	/// </summary>
 	/// <param name="event">The click event.</param>
-	private void InputPieceState(InputEventMouseButton @event)
+	private void HandlePieceClick(InputEventMouseButton @event)
 	{
 		if (mouseTile == invalidTile || @event.ButtonIndex != MouseButton.Left)
 		{
@@ -282,7 +292,7 @@ public partial class Board : Node2D
 	/// Handles right clicks and mouse dragging (user deselected or is moving a piece).
 	/// </summary>
 	/// <param name="event">The click or drag event.</param>
-	private void InputMoveState(InputEventMouseButton @event)
+	private void HandlePieceMove(InputEventMouseButton @event)
 	{
 		if ((@event.ButtonIndex == MouseButton.Right || mouseTile == invalidTile) && selectedPiece != null)
 		{
