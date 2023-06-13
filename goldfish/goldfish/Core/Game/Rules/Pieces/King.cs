@@ -63,16 +63,17 @@ public struct King : IPieceLogic
                 var rPos = castleType.Value.GetCastleRookPos();
                 var dir = Math.Sign(rPos.Item2 - c);
                 var valid = true;
+                var rPiece = state.GetPiece(rPos.Item1, rPos.Item2);
+                if(rPiece.GetPieceType() != PieceType.Rook || !rPiece.IsSide(side)) valid = false;
                 for (int i = Math.Min(rPos.Item2 - dir, c + dir); i <= Math.Max(rPos.Item2 - dir, c + dir); i++)
                 {
-                    if (attackMtx[r, i] || state.GetPiece(r, i).GetPieceType() != PieceType.Space)
-                    {
-                        valid = false;
-                        break;
-                    }
+                    if (state.GetPiece(r, i).GetPieceType() == PieceType.Space) continue;
+                    valid = false;
+                    break;
                 }
 
                 if (attackMtx[r, c]) valid = false;
+                if (attackMtx[nr, nc]) valid = false;
 
                 if (valid)
                 {

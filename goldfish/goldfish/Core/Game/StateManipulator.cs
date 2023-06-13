@@ -37,9 +37,10 @@ public static class StateManipulator
         {
             var piece = state.GetPiece(i, j);
             if (!piece.IsSide(side)) continue;
-            piece.GetLogicAttacks(state, i, j, attackBuf);
-            foreach (var pos in attackBuf)
+            int attacks = piece.GetLogicAttacks(state, i, j, attackBuf);
+            for (int a = 0; a < attacks; a++)
             {
+                var pos = attackBuf[a];
                 atk[pos.Item1, pos.Item2] = true;
             }
         }

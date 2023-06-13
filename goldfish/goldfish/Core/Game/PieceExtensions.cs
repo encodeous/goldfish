@@ -156,20 +156,20 @@ public static class PieceExtensions
             _ => throw new ArgumentOutOfRangeException()
         });
     }
-    public static void GetLogicAttacks(this byte piece, in ChessState state, int r, int c, Span<(int, int)> attacks)
+    public static int GetLogicAttacks(this byte piece, in ChessState state, int r, int c, Span<(int, int)> attacks)
     {
         if (piece.GetPieceType() == PieceType.Pawn)
-            _pawn.GetAttacks(state, r, c, attacks);
+            return _pawn.GetAttacks(state, r, c, attacks);
         else if (piece.GetPieceType() == PieceType.Rook)
-            _rook.GetAttacks(state, r, c, attacks);
+            return _rook.GetAttacks(state, r, c, attacks);
         else if (piece.GetPieceType() == PieceType.Knight)
-            _knight.GetAttacks(state, r, c, attacks);
+            return _knight.GetAttacks(state, r, c, attacks);
         else if (piece.GetPieceType() == PieceType.Bishop)
-            _bishop.GetAttacks(state, r, c, attacks);
+            return _bishop.GetAttacks(state, r, c, attacks);
         else if (piece.GetPieceType() == PieceType.Queen)
-            _queen.GetAttacks(state, r, c, attacks);
+            return _queen.GetAttacks(state, r, c, attacks);
         else if (piece.GetPieceType() == PieceType.King)
-            _king.GetAttacks(state, r, c, attacks);
+            return _king.GetAttacks(state, r, c, attacks);
         else throw new ArgumentOutOfRangeException();
     }
     public static int GetLogicMoves(this byte piece, in ChessState state, int r, int c, Span<ChessMove> moves, bool autoPromotion)

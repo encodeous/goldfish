@@ -119,9 +119,9 @@ internal class Program
                                 {
                                     game.Commit();
                                     double alpha = double.NegativeInfinity, beta = double.PositiveInfinity;
-                                    Span<(ChessMove, double)> moves = new (ChessMove, double)[6];
+                                    Span<(ChessMove, double)> moves = new (ChessMove, double)[5];
                                     ulong count = 0;
-                                    var eval = GoldFishEngine.NextOptimalMoves(game.CurrentState, 6, ref moves, ref count);
+                                    var eval = GoldFishEngine.NextOptimalMoves(game.CurrentState, 5, ref moves, ref count);
                                     Debug.WriteLine($"Move calc w/ eval of {eval} - calls {count}");
                                     game.LastMove = moves[0].Item1;
                                     game.CurrentState = moves[0].Item1.NewState;
