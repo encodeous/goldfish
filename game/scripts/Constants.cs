@@ -11,57 +11,81 @@ public partial class Constants : Node
 	/// <summary>
 	/// The size of an individual tile (that contains a piece).
 	/// </summary>
-	public static readonly int tileSize = 60;
+	public const int tileSize = 60;
+
 	/// <summary>
 	/// The size of the entire chess board.
 	/// </summary>
-	public static readonly int boardSize = 480;
-	
-	// TODO: switch to enum
-	
-	/// <summary>
-	/// Are we clicking on a piece?
-	/// </summary>
-	public static readonly int piece = 0;
-	/// <summary>
-	/// Are we moving a piece?
-	/// </summary>
-	public static readonly int move = 1;
-	/// <summary>
-	/// Are we checkmated?
-	/// </summary>
-	public static readonly int checkmate = 2;
-	/// <summary>
-	/// Are we waiting for the user to make a choice?
-	/// </summary>
-	public static readonly int awaiting = 3;
+	public const int boardSize = 480;
 
-	// TODO: switch to enum
-	
 	/// <summary>
-	/// Represents a pawn.
+	/// An enum representing the current state of the game.
 	/// </summary>
-	public static readonly int pawn = 0;
+	public enum GameState
+	{
+		/// <summary>
+		/// Are we clicking on a piece?
+		/// </summary>
+		GETTING_PIECE,
+		/// <summary>
+		/// Are we moving a piece?
+		/// </summary>
+		MAKING_A_MOVE,
+		/// <summary>
+		/// Are we checkmated?
+		/// </summary>
+		CHECKMATE,
+		/// <summary>
+		/// Are we waiting for the user to make a choice?
+		/// </summary>
+		WAITING_FOR_USER
+	}
+
 	/// <summary>
-	/// Represents a rook.
+	/// An enum representing all possible chess pieces.
 	/// </summary>
-	public static readonly int rook = 1;
+	public enum Pieces
+	{
+		/// <summary>
+		/// Represents a pawn.
+		/// </summary>
+		PAWN,
+		/// <summary>
+		/// Represents a rook.
+		/// </summary>
+		ROOK,
+		/// <summary>
+		/// Represents a knight.
+		/// </summary>
+		KNIGHT,
+		/// <summary>
+		/// Represents a bishop.
+		/// </summary>
+		BISHOP,
+		/// <summary>
+		/// Represents a queen.
+		/// </summary>
+		QUEEN,
+		/// <summary>
+		/// Represents a king.
+		/// </summary>
+		KING
+	}
+
 	/// <summary>
-	/// Represents a knight.
+	/// Represents the color of the player who is currently playing.
 	/// </summary>
-	public static readonly int knight = 2;
-	/// <summary>
-	/// Represents a bishop.
-	/// </summary>
-	public static readonly int bishop = 3;
-	/// <summary>
-	/// Represents a queen.
-	/// </summary>
-	public static readonly int queen = 4;
-	/// <summary>
-	/// Represents a king.
-	/// </summary>
-	public static readonly int king = 5;
+	public enum Player
+	{
+		/// <summary>
+		/// Represents the white player.
+		/// </summary>
+		WHITE,
+		/// <summary>
+		/// Represents the black player.
+		/// </summary>
+		BLACK
+	}
 
 	/// <summary>
 	/// Represents the directions a rook can go.

@@ -11,18 +11,18 @@ public partial class PromotionDialog : Dialog
 	/// <summary>
 	/// The event that fires when a pawn is promoting.
 	/// </summary>
-	[Signal] public delegate void OnSelectedEventHandler(int type);
+	[Signal] public delegate void OnSelectedEventHandler(Constants.Pieces type);
 
 	/// <summary>
 	/// The width and height of this dialog.
 	/// </summary>
-	public static readonly float promotionWidth = Constants.tileSize * 4.0f;
-	public static readonly float promotionHeight = Constants.tileSize;
+	public const float promotionWidth = Constants.tileSize * 4.0f;
+	public const float promotionHeight = Constants.tileSize;
 
 	/// <summary>
 	/// All possible choices for promotion.
 	/// </summary>
-	private Array<int> pieces = new () { Constants.rook, Constants.knight, Constants.bishop, Constants.queen };
+	private Array<Constants.Pieces> pieces = new () { Constants.Pieces.ROOK, Constants.Pieces.KNIGHT, Constants.Pieces.BISHOP, Constants.Pieces.QUEEN };
 
 	/// <summary>
 	/// The position of the user's mouse.
@@ -33,13 +33,13 @@ public partial class PromotionDialog : Dialog
 	/// <summary>
 	/// The player who owns the promoting pawn.
 	/// </summary>
-	private int player;
+	private Constants.Player player;
 
 	/// <summary>
 	/// Constructs a new PromotionDialog.
 	/// </summary>
 	/// <param name="player">The player who owns the promoting pawn.</param>
-	public PromotionDialog(int player) : base((int) promotionWidth, (int) promotionHeight)
+	public PromotionDialog(Constants.Player player) : base((int) promotionWidth, (int) promotionHeight)
 	{
 		this.player = player;
 	}
@@ -60,7 +60,7 @@ public partial class PromotionDialog : Dialog
 			sprite.Texture = GD.Load<Texture2D>("res://assets/pieces.png");
 			sprite.Hframes = 6;
 			sprite.Vframes = 2;
-			sprite.FrameCoords = new Vector2I(piece, player);
+			sprite.FrameCoords = new Vector2I((int) piece, (int) player);
 			sprite.Position = new Vector2(i * Constants.tileSize + size, size);
 			sprite.ZIndex = 10;
 			sprite.Centered = false;
@@ -118,7 +118,7 @@ public partial class PromotionDialog : Dialog
 	{
 		if(@event is InputEventMouseButton && mousePosition != invalidPosition)
 		{
-			EmitSignal("OnSelected", pieces[(int) mousePosition.X]);
+			EmitSignal("OnSelected", (int) pieces[(int) mousePosition.X]); // this might not work since we are casting an enum value to an int
 		}
 	}
 }

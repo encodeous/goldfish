@@ -17,10 +17,15 @@ public partial class Root : Node2D
 	private UI ui;
 
 	/// <summary>
-	/// The current player, game state and winner, if any.
+	/// The current player and winner, if any.
 	/// </summary>
-	public int player, gameState = Constants.piece, winner;
+	public Constants.Player player, winner;
 	
+	/// <summary>
+	/// The current state of the game.
+	/// </summary>
+	public Constants.GameState gameState = Constants.GameState.GETTING_PIECE;
+
 	/// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
@@ -41,8 +46,8 @@ public partial class Root : Node2D
 	/// </summary>
 	private void NewGame()
 	{
-		player = 1;
-		gameState = Constants.piece;
+		player = Constants.Player.BLACK;
+		gameState = Constants.GameState.GETTING_PIECE;
 
 		SwitchPlayer();
 		
@@ -64,7 +69,7 @@ public partial class Root : Node2D
 	/// </summary>
 	public void SwitchPlayer()
 	{
-		player = Mathf.Abs(player - 1);
+		player = player == Constants.Player.WHITE ? Constants.Player.BLACK : Constants.Player.WHITE;
 		
 		ui.SetPlayer(player);
 		board.ClearJumps();

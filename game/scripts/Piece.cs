@@ -19,9 +19,14 @@ public partial class Piece : Node2D
 	private Board board;
 
 	/// <summary>
-	/// The player who owns the piece and its type.
+	/// Represents the player who owns the piece.
 	/// </summary>
-	public int player, type;
+	public Constants.Player player;
+	/// <summary>
+	/// Represents the type of the piece.
+	/// </summary>
+	public Constants.Pieces type;
+
 	/// <summary>
 	/// Has the piece moved or jumped?
 	/// </summary>
@@ -32,7 +37,7 @@ public partial class Piece : Node2D
 	/// </summary>
 	/// <param name="player">The player who owns the piece.</param>
 	/// <param name="type">The type of piece.</param>
-	public Piece(int player, int type)
+	public Piece(Constants.Player player, Constants.Pieces type)
 	{
 		this.player = player;
 		this.type = type;
@@ -76,15 +81,15 @@ public partial class Piece : Node2D
 	{
 		return type switch
 		{
-			0 => // pawn
+			Constants.Pieces.PAWN =>
 				new Array<Vector2> { new(0, 1) },
-			1 => // rook
+			Constants.Pieces.ROOK =>
 				Constants.rookDirections,
-			2 => // knight
+			Constants.Pieces.KNIGHT =>
 				Constants.knightDirections,
-			3 => // bishop
+			Constants.Pieces.BISHOP =>
 				Constants.bishopDirections,
-			4 or 5 => // queen or king
+			Constants.Pieces.QUEEN or Constants.Pieces.KING => // queen or king
 				Constants.allDirections,
 			_ => new Array<Vector2>()
 		};
@@ -99,7 +104,7 @@ public partial class Piece : Node2D
 	public Array<Vector2> GetValidMoves(int x, int y)
 	{
 		var positions = new Array<Vector2>();
-		var multi = -1 + player * 2;
+		var multi = -1 + (int) player * 2;
 
 		// where can all regular pieces move (queen, bishop, knight, rook)?
 		foreach (var direction in GetPieceDirections())
@@ -109,7 +114,7 @@ public partial class Piece : Node2D
 				var position = new Vector2(x + direction.X * (i + 1), y + direction.Y * (i + 1) * multi);
 				if (IsValidMove(position))
 				{
-					if (TileHasEnemy(position) || (TileHasEnemy(position) && type == Constants.pawn))
+					if (TileHasEnemy(position) || (TileHasEnemy(position) && type == Constants.Pieces.PAWN))
 					{
 						break;
 					}
@@ -129,7 +134,7 @@ public partial class Piece : Node2D
 		}
 
 		// can a pawn move? can it capture a piece with en passant?
-		if (type == Constants.pawn)
+		if (type == Constants.Pieces.PAWN)
 		{
 			for (var i = 0; i < 2; i++)
 			{
@@ -142,7 +147,7 @@ public partial class Piece : Node2D
 				if (enPassantPiece != null)
 				{
 					// has the pawn fulfilled all preconditions for en passant?
-					canEnPassant = enPassantPiece.type == Constants.pawn && enPassantPiece.jumped && enPassantPiece.player != player;
+					canEnPassant = enPassantPiece.type == Constants.Pieces.PAWN && enPassantPiece.jumped && enPassantPiece.player != player;
 				}
 
 				if ((TileHasEnemy(position) || canEnPassant) && !board.WouldBeInCheck(x, y, this, position))
@@ -154,7 +159,7 @@ public partial class Piece : Node2D
 		}
 
 		// can the king castle, move or capture?
-		if (type == Constants.king && !moved)
+		if (type == Constants.Pieces.KING && !moved)
 		{
 			for (var i = 0; i < 2; i++)
 			{
@@ -182,7 +187,7 @@ public partial class Piece : Node2D
 					continue;
 				}
 
-				if (piece.type == Constants.rook && piece.player == player && !piece.moved)
+				if (piece.type == Constants.Pieces.ROOK && piece.player == player && !piece.moved)
 				{
 					var position = new Vector2(x, y);
 					var rookPosition = new Vector2(xToCheck, y);
@@ -218,11 +223,9 @@ public partial class Piece : Node2D
 	{
 		return type switch
 		{
-			// pawn movement
-			0 => moved ? 1 : 2, // 1 if the pawn has already moved once, 2 otherwise
-			// knight or king movement
-			2 or 5 => 1,
-			_ => 8
+			Constants.Pieces.PAWN => moved ? 1 : 2, // 1 if the pawn has already moved once, 2 otherwise
+			Constants.Pieces.KNIGHT or Constants.Pieces.KING => 1,
+			_ => 8 // any other piece can technically travel to any side of the board if unimpeded
 		};
 	}
 
@@ -251,7 +254,7 @@ public partial class Piece : Node2D
 	private bool IsInBounds(Vector2 position)
 	{
 		// is this position with the board grid (8 * 8)?
-		return position.X < 8 && position.X >= 0 && position.Y < 8 && position.Y >= 0;
+		return position.X is < 8 and >= 0 && position.Y is < 8 and >= 0;
 	}
 
 	/// <summary>
@@ -294,6 +297,6 @@ public partial class Piece : Node2D
 	/// </summary>
 	public void UpdateSprite()
 	{
-		sprite.FrameCoords = new Vector2I(type, player);
+		sprite.FrameCoords = new Vector2I((int) type, (int) player);
 	}
 }

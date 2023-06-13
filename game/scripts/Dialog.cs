@@ -23,7 +23,8 @@ public partial class Dialog : Node2D
 	/// <summary>
 	/// The size of a dialog part in pixels.
 	/// </summary>
-	public static readonly int size = 16;
+	public const int size = 16;
+
 	/// <summary>
 	/// The width and height of the dialog.
 	/// </summary>
