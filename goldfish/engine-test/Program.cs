@@ -16,20 +16,28 @@ static int CountNextGames(ChessState state, int depth)
         var piece = state.GetPiece(i, j);
         if (!piece.IsSide(state.ToMove) || piece.GetLogic() is null) continue;
         int moveCnt = state.GetValidMovesForSquare(i, j, tMoves);
-        for(int m = 0; m < moveCnt; m++)
+        if (depth == 1)
         {
-            cnt += CountNextGames(tMoves[m].NewState, depth - 1);
+            cnt += moveCnt;
+        }
+        else
+        {
+            for(int m = 0; m < moveCnt; m++)
+            {
+                cnt += CountNextGames(tMoves[m].NewState, depth - 1);
+            }
         }
     }
 
     return cnt;
 }
 
-var start = Stopwatch.GetTimestamp();
-
-Console.WriteLine(CountNextGames(ChessState.DefaultState(), 6));
-
-Console.WriteLine(Stopwatch.GetElapsedTime(start));
+for (int i = 0; i < 10; i++)
+{
+    var start = Stopwatch.GetTimestamp();
+    Console.WriteLine(CountNextGames(ChessState.DefaultState(), 5));
+    Console.WriteLine(Stopwatch.GetElapsedTime(start));
+}
 
 Console.ReadLine();
 

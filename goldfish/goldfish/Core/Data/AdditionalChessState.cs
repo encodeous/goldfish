@@ -6,16 +6,16 @@ public struct AdditionalChessState
 {
     private byte _enPassant;
     private byte _castleState;
-    internal ulong PartialHash;
+    public ulong Hash;
 
     public byte EnPassant
     {
         get => _enPassant;
         set
         {
-            PartialHash ^= Tst.EnPassant[_enPassant];
+            Hash ^= Tst.EnPassant[_enPassant];
             _enPassant = value;
-            PartialHash ^= Tst.EnPassant[_enPassant];
+            Hash ^= Tst.EnPassant[_enPassant];
         }
     }
 
@@ -24,9 +24,9 @@ public struct AdditionalChessState
         get => _castleState;
         set
         {
-            PartialHash ^= Tst.CastleState[_castleState];
+            Hash ^= Tst.CastleState[_castleState];
             _castleState = value;
-            PartialHash ^= Tst.CastleState[_castleState];
+            Hash ^= Tst.CastleState[_castleState];
         }
     }
 
@@ -37,9 +37,9 @@ public struct AdditionalChessState
     /// <param name="side"></param>
     public void MarkEnPassant(int col, Side side)
     {
-        PartialHash ^= Tst.EnPassant[_enPassant];
+        Hash ^= Tst.EnPassant[_enPassant];
         _enPassant = (byte)(col << 2 | (int)side << 1 | 1);
-        PartialHash ^= Tst.EnPassant[_enPassant];
+        Hash ^= Tst.EnPassant[_enPassant];
     }
 
     /// <summary>
@@ -60,9 +60,9 @@ public struct AdditionalChessState
     /// <param name="type"></param>
     public void MarkCastle(CastleType type)
     {
-        PartialHash ^= Tst.CastleState[_castleState];
+        Hash ^= Tst.CastleState[_castleState];
         _castleState |= (byte)type;
-        PartialHash ^= Tst.CastleState[_castleState];
+        Hash ^= Tst.CastleState[_castleState];
     }
 
     /// <summary>

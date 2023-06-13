@@ -1,4 +1,7 @@
-﻿namespace goldfish.Core.Data.Optimization;
+﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
+namespace goldfish.Core.Data.Optimization;
 
 /// <summary>
 /// Transposition table
@@ -42,8 +45,8 @@ public static class Tst
 
     public static ref TranspositionEntry Get(in ChessState state)
     {
-        var hash = state.Hash;
-        ref var entry = ref Table[hash % TableSize];
+        var hash = state.Additional.Hash;
+        ref var entry = ref Unsafe.Add(ref MemoryMarshal.GetReference<TranspositionEntry>(Table), (int)(hash % TableSize));
         if (entry.Hash != hash)
         {
             entry.Clear();

@@ -3,7 +3,7 @@
 public struct TranspositionEntry
 {
     public ulong Hash;
-    public Side Checked;
+    public Side? Checked;
     public Grid8x8? WhiteCache;
     public Grid8x8? BlackCache;
     public double EngineEval;
@@ -14,7 +14,7 @@ public struct TranspositionEntry
     public TranspositionEntry()
     {
         Hash = 0;
-        Checked = Side.None;
+        Checked = null;
         WhiteCache = null;
         BlackCache = null;
         StaticEval = double.NaN;
@@ -22,7 +22,7 @@ public struct TranspositionEntry
     }
     public void Clear()
     {
-        Checked = Side.None;
+        Checked = null;
         EngineEval = double.NaN;
         StaticEval = double.NaN;
         WhiteCache = null;

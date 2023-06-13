@@ -26,7 +26,7 @@ public class RuleTests
                 =>
             {
                 BoardPrinter.PrintBoard(FenConvert.Parse(x["fen"].ToString()), null);
-                return FenConvert.Parse(x["fen"].ToString()).Hash;
+                return FenConvert.Parse(x["fen"].ToString()).Additional.Hash;
             }));
             Assert.Equal(endStates, GetAllMoves(startState));
         }
@@ -46,7 +46,7 @@ public class RuleTests
             for(int m = 0; m < moveCnt; m++)
             {
                 BoardPrinter.PrintBoard(tMoves[m].NewState, null);
-                states.Add(tMoves[m].NewState.Hash);
+                states.Add(tMoves[m].NewState.Additional.Hash);
             }
         }
 

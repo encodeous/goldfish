@@ -21,10 +21,19 @@ public unsafe struct ChessState
     /// </summary>
     public AdditionalChessState Additional;
 
-    public Side ToMove;
-    
-    public ulong Hash => Additional.PartialHash ^ (ToMove == Side.White ? Tst.WhiteToMove : 0);
-    
+    public Side _toMove;
+
+    public Side ToMove
+    {
+        get => _toMove;
+        set
+        {
+            Additional.Hash ^= (_toMove == Side.White ? Tst.WhiteToMove : 0);
+            _toMove = value;
+            Additional.Hash ^= (value == Side.White ? Tst.WhiteToMove : 0);
+        }
+    }
+
     /// <summary>
     /// Gets the 4-bit piece from the compressed data
     /// </summary>
@@ -47,7 +56,7 @@ public unsafe struct ChessState
     public void SetPiece(int r, int c, byte piece)
     {
         var dat = _pieces[r * 4 + c / 2];
-        Additional.PartialHash ^= Tst.ZobristCache[r * 4 + c / 2, dat];
+        Additional.Hash ^= Tst.ZobristCache[r * 4 + c / 2, dat];
         byte nDat;
         if (piece.IsPieceType(PieceType.King))
         {
@@ -70,7 +79,7 @@ public unsafe struct ChessState
             // lower bits
             nDat = _pieces[r * 4 + c / 2] = (byte)(dat & (0b11110000) | piece);
         }
-        Additional.PartialHash ^= Tst.ZobristCache[r * 4 + c / 2, nDat];
+        Additional.Hash ^= Tst.ZobristCache[r * 4 + c / 2, nDat];
     }
     private void _SetPieceNoHash(int r, int c, byte piece)
     {
@@ -144,7 +153,7 @@ public unsafe struct ChessState
 
         hash ^= Tst.EnPassant[cur.Additional.EnPassant];
         hash ^= Tst.CastleState[cur.Additional.CastleState];
-        cur.Additional.PartialHash = hash;
+        cur.Additional.Hash = hash;
         _state = cur;
         return cur;
     }
@@ -178,7 +187,7 @@ public unsafe struct ChessState
 
         hash ^= Tst.EnPassant[cur.Additional.EnPassant];
         hash ^= Tst.CastleState[cur.Additional.CastleState];
-        cur.Additional.PartialHash = hash;
+        cur.Additional.Hash = hash;
         _state = cur;
         return cur;
     }

@@ -84,7 +84,7 @@ public static class StateManipulator
     public static bool IsChecked(this in ChessState state, Side side)
     {
         ref var cache = ref Tst.Get(state);
-        if (cache.Checked != Side.None) return side == cache.Checked;
+        if (cache.Checked is not null) return side == cache.Checked;
         var king = state.GetKing(side);
         var mtx = GetAttackMatrix(state, side.GetOpposing());
         var res = mtx[king.Item1, king.Item2];
