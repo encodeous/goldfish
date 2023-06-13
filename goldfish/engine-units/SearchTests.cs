@@ -13,6 +13,7 @@ public class SearchTests
     [InlineData(3, 8902)]
     [InlineData(4, 197281)]
     [InlineData(5, 4865609)]
+    [InlineData(6, 119060324)]
     public void CountMoves(int ply, int moves)
     {
         int mov = CountNextGames(ChessState.DefaultState(), ply);

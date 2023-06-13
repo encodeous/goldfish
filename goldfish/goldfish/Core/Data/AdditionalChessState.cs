@@ -1,9 +1,34 @@
-﻿namespace goldfish.Core.Data;
+﻿using goldfish.Core.Data.Optimization;
+
+namespace goldfish.Core.Data;
 
 public struct AdditionalChessState
 {
-    public byte EnPassant;
-    public byte CastleState;
+    private byte _enPassant;
+    private byte _castleState;
+    internal ulong PartialHash;
+
+    public byte EnPassant
+    {
+        get => _enPassant;
+        set
+        {
+            PartialHash ^= Tst.EnPassant[_enPassant];
+            _enPassant = value;
+            PartialHash ^= Tst.EnPassant[_enPassant];
+        }
+    }
+
+    public byte CastleState
+    {
+        get => _castleState;
+        set
+        {
+            PartialHash ^= Tst.CastleState[_castleState];
+            _castleState = value;
+            PartialHash ^= Tst.CastleState[_castleState];
+        }
+    }
 
     /// <summary>
     /// Marks a pawn as possible to capture via En Passant
@@ -12,7 +37,9 @@ public struct AdditionalChessState
     /// <param name="side"></param>
     public void MarkEnPassant(int col, Side side)
     {
-        EnPassant = (byte)(col << 2 | (int)side << 1 | 1);
+        PartialHash ^= Tst.EnPassant[_enPassant];
+        _enPassant = (byte)(col << 2 | (int)side << 1 | 1);
+        PartialHash ^= Tst.EnPassant[_enPassant];
     }
 
     /// <summary>
@@ -21,10 +48,10 @@ public struct AdditionalChessState
     /// <returns>true if possible</returns>
     public bool CheckEnPassant(int col, Side side)
     {
-        if ((EnPassant & 1) != 1) return false;
-        var cSide = (Side)(EnPassant >> 1 & 1);
+        if ((_enPassant & 1) != 1) return false;
+        var cSide = (Side)(_enPassant >> 1 & 1);
         if (cSide != side) return false;
-        return EnPassant >> 2 == col;
+        return _enPassant >> 2 == col;
     }
 
     /// <summary>
@@ -33,7 +60,9 @@ public struct AdditionalChessState
     /// <param name="type"></param>
     public void MarkCastle(CastleType type)
     {
-        CastleState |= (byte)type;
+        PartialHash ^= Tst.CastleState[_castleState];
+        _castleState |= (byte)type;
+        PartialHash ^= Tst.CastleState[_castleState];
     }
 
     /// <summary>
@@ -43,6 +72,6 @@ public struct AdditionalChessState
     /// <returns>true if blocked</returns>
     public bool CheckCastle(CastleType type)
     {
-        return (CastleState & (int)type) == (int)type;
+        return (_castleState & (int)type) == (int)type;
     }
 }
