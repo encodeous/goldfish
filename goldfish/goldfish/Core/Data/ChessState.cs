@@ -15,6 +15,7 @@ public unsafe struct ChessState
     /// </summary>
     private fixed byte _pieces[8 * 4];
 
+    private ushort KingPos;
     /// <summary>
     /// Additional chess state to store information such as En Passant and Castling
     /// </summary>
@@ -48,6 +49,17 @@ public unsafe struct ChessState
         var dat = _pieces[r * 4 + c / 2];
         Additional.PartialHash ^= Tst.ZobristCache[r * 4 + c / 2, dat];
         byte nDat;
+        if (piece.IsPieceType(PieceType.King))
+        {
+            if (piece.IsSide(Side.Black))
+            {
+                KingPos = (ushort)(KingPos & ~0b111111 | r | (c << 3));
+            }
+            else
+            {
+                KingPos = (ushort)(KingPos & 0b111111 | (r << 6) | (c << 9));
+            }
+        }
         if (c % 2 == 0)
         {
             // upper bits
@@ -63,6 +75,17 @@ public unsafe struct ChessState
     private void _SetPieceNoHash(int r, int c, byte piece)
     {
         var dat = _pieces[r * 4 + c / 2];
+        if (piece.IsPieceType(PieceType.King))
+        {
+            if (piece.IsSide(Side.Black))
+            {
+                KingPos = (ushort)(KingPos & ~0b111111 | r | (c << 3));
+            }
+            else
+            {
+                KingPos = (ushort)(KingPos & 0b111111 | (r << 6) | (c << 9));
+            }
+        }
         if (c % 2 == 0)
         {
             // upper bits
@@ -164,16 +187,13 @@ public unsafe struct ChessState
     /// Locates the coordinates of the specified king
     /// </summary>
     /// <param name="side"></param>
-    /// <returns>(-1, -1) if not found</returns>
-    public readonly (short, short) GetKing(Side side)
+    public readonly (sbyte, sbyte) GetKing(Side side)
     {
-        for (short i = 0; i < 8; i++)
-        for (short j = 0; j < 8; j++)
+        if (side == Side.Black)
         {
-            var p = GetPiece(i, j);
-            if (p.IsPieceType(PieceType.King) && p.IsSide(side))
-                return (i, j);
+            return ((sbyte, sbyte))(KingPos & 0b111, (KingPos >> 3) & 0b111);
         }
-        return (-1, -1);
+
+        return ((sbyte, sbyte))((KingPos >> 6) & 0b111, (KingPos >> 9) & 0b111);
     }
 }
