@@ -35,28 +35,31 @@ public static class PieceExtensions
     /// </summary>
     /// <param name="piece"></param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Side GetSide(this byte piece)
     {
-        if (piece.GetPieceType() == PieceType.Space) return Side.None;
+        if (piece == (int)PieceType.Space) return Side.None;
         return IsWhite(piece) ? Side.White : Side.Black;
     }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsSide(this byte piece, Side side)
     {
-        if (piece.GetPieceType() == PieceType.Space) return side == Side.None;
+        if (piece == (int)PieceType.Space) return side == Side.None;
         return IsWhite(piece) ? side == Side.White : side == Side.Black;
     }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="piece"></param>
-    /// <returns></returns>
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PieceType GetPieceType(this byte piece)
     {
         if (piece == (int)PieceType.Space) return PieceType.Space;
         return (PieceType)(piece % 6);
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsPieceType(this byte piece, PieceType type)
+    {
+        if (piece == (int)PieceType.Space) return type == PieceType.Space;
+        return (piece % 6) == (int)type;
     }
 
     /// <summary>
@@ -135,12 +138,12 @@ public static class PieceExtensions
         };
     }
 
-    private static readonly Pawn _pawn = new ();
-    private static readonly Rook _rook = new ();
-    private static readonly Knight _knight = new ();
-    private static readonly Bishop _bishop = new ();
-    private static readonly Queen _queen = new ();
-    private static readonly King _king = new ();
+    private static readonly Pawn _pawn;
+    private static readonly Rook _rook;
+    private static readonly Knight _knight;
+    private static readonly Bishop _bishop;
+    private static readonly Queen _queen;
+    private static readonly King _king;
 
     public static IPieceLogic? GetLogic(this byte piece)
     {

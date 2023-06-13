@@ -14,14 +14,7 @@ public static class FenConvert
             throw new ArgumentException("Invalid FEN record.", nameof(fenString));
         }
 
-        var state = new ChessState();
-        for (var i = 0; i < 32; i++)
-        {
-            unsafe
-            {
-                state.Pieces[i] = (byte)PieceType.Space | (byte)PieceType.Space << 4;
-            }
-        }
+        var state = ChessState.EmptyState();
         // ranks
         for (var i = 0; i < 8; i++)
         {

@@ -1,14 +1,6 @@
-﻿
-using System.Diagnostics;
-using System.Security.Cryptography;
-using System.Text.Json.Nodes;
-using engine_test;
+﻿using System.Diagnostics;
 using goldfish.Core.Data;
-using goldfish.Core.Data.Optimization;
 using goldfish.Core.Game;
-using goldfish.Core.Game.FEN;
-using goldfish.Engine;
-using Spectre.Console;
 
 static int CountNextGames(ChessState state, int depth)
 {
@@ -33,60 +25,13 @@ static int CountNextGames(ChessState state, int depth)
     return cnt;
 }
 
-while (true)
-{
-    Console.WriteLine(CountNextGames(FenConvert.Parse(Console.ReadLine()), 1));
-}
+var start = Stopwatch.GetTimestamp();
 
-void VerifyMoves(string test)
-{
-    var tData = JsonNode.Parse(File.ReadAllText($"../../../data/{test}.json"));
-    foreach (var caseNode in tData["testCases"].AsArray())
-    {
-        var startState = FenConvert.Parse(caseNode["start"]["fen"].ToString());
-        var endStates = new HashSet<(ulong, ChessState)>(caseNode["expected"].AsArray().Select(x 
-            =>
-        {
-            var state = FenConvert.Parse(x["fen"].ToString());
-            return (state.HashState(), state);
-        }));
-        var thingStates = GetAllMoves(startState);
-        thingStates.ExceptWith(endStates);
-        foreach (var state in thingStates)
-        {
-            BoardPrinter.PrintBoard(state.Item2, null);
-            Console.WriteLine(FenConvert.ToFen(state.Item2));
-        }
+Console.WriteLine(CountNextGames(ChessState.DefaultState(), 6));
 
-        break;
-    }
-}
-
-static HashSet<(ulong, ChessState)> GetAllMoves(in ChessState state)
-{
-    int cnt = 0;
-    Span<ChessMove> tMoves = stackalloc ChessMove[30];
-    var states = new HashSet<(ulong, ChessState)>();
-    for (var i = 0; i < 8; i++)
-    for (var j = 0; j < 8; j++)
-    {
-        var piece = state.GetPiece(i, j);
-        if (!piece.IsSide(state.ToMove) || piece.GetLogic() is null) continue;
-        int moveCnt = state.GetValidMovesForSquare(i, j, tMoves);
-        for(int m = 0; m < moveCnt; m++)
-        {
-            BoardPrinter.PrintBoard(tMoves[m].NewState, null);
-            states.Add((tMoves[m].NewState.HashState(), tMoves[m].NewState));
-        }
-    }
-
-    return states;
-}
-
-VerifyMoves("castling");
+Console.WriteLine(Stopwatch.GetElapsedTime(start));
 
 Console.ReadLine();
-
 
 // var game = ChessState.DefaultState();
 //

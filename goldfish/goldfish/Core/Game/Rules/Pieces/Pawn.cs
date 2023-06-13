@@ -4,7 +4,7 @@ namespace goldfish.Core.Game.Rules.Pieces;
 
 public struct Pawn : IPieceLogic
 {
-    public int GetMoves(in ChessState state, int r, int c, Span<ChessMove> moves, bool autoPromotion)
+    public readonly int GetMoves(in ChessState state, int r, int c, Span<ChessMove> moves, bool autoPromotion)
     {
         var cnt = 0;
         var piece = state.GetPiece(r, c);
@@ -160,7 +160,7 @@ public struct Pawn : IPieceLogic
         return false;
     }
 
-    public int GetAttacks(in ChessState state, int r, int c, Span<(int, int)> attacks)
+    public readonly int GetAttacks(in ChessState state, int r, int c, Span<(int, int)> attacks)
     {
         var piece = state.GetPiece(r, c);
         var side = piece.GetSide();
