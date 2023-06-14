@@ -47,6 +47,11 @@ public partial class Board : Node2D
 	/// Represents the Root scene.
 	/// </summary>
 	private Root root;
+
+	/// <summary>
+	/// Is the user holding left click down?
+	/// </summary>
+	private bool heldDown;
 	
 	/// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
@@ -65,7 +70,7 @@ public partial class Board : Node2D
 		var mouse = GetGlobalMousePosition();
 		// sets the current mouse tile to where the user is hovering their mouse (or has clicked)
 		mouseTile = mouse.X > Constants.boardSize ? invalidTile : MapGlobalCoordsToBoard(mouse);
-
+		
 		if (mouseTile == previousMouseTile)
 		{
 			return;
@@ -82,33 +87,35 @@ public partial class Board : Node2D
 	/// <param name="event">Any user input.</param>
 	public override void _Input(InputEvent @event)
 	{
-		if (root.gameState == Constants.GameState.WAITING_FOR_USER)
-		{
-			// are we waiting for a user to pick an option (for example, pawn promotion)?
-			return;
-		}
-		
 		if(@event is not InputEventMouseButton button)
 		{
 			// only focus on events concerning the user's mouse
 			return;
 		}
 
-		if (button.Pressed)
+		// if (button.Pressed)
+		// {
+		// 	return;
+		// }
+		
+		switch (root.gameState)
 		{
-			return;
-		}
-
-		if (root.gameState == Constants.GameState.GETTING_PIECE)
-		{
-			// has a user clicked a piece? if so, handle it
-			HandlePieceClick(button);
-		}
-
-		if (root.gameState == Constants.GameState.MAKING_A_MOVE)
-		{
-			// is the user making a move with a piece? if so, handle it
-			HandlePieceMove(button);
+			case Constants.GameState.WAITING_FOR_USER:
+				// are we waiting for a user to pick an option (for example, pawn promotion)?
+				return;
+			
+			case Constants.GameState.GETTING_PIECE:
+				// has a user clicked a piece? if so, handle it
+				if (!heldDown)
+				{
+					HandlePieceClick(button);
+				}
+				break;
+			
+			case Constants.GameState.MAKING_A_MOVE:
+				// is the user making a move with a piece? if so, handle it
+				HandlePieceMove(button);
+				break;
 		}
 	}
 
@@ -268,6 +275,8 @@ public partial class Board : Node2D
 				selectedPiece = piece;
 				selectedPiecePosition = mouseTile;
 				validMoves = piece.GetValidMovesFromVector2(mouseTile);
+				
+				heldDown = true;
 
 				root.gameState = Constants.GameState.MAKING_A_MOVE;
 				QueueRedraw();
@@ -323,7 +332,7 @@ public partial class Board : Node2D
 				captured = true;
 			}
 
-			if (selectedPiece != null && selectedPiece.type == Constants.Pieces.KING)
+			if (selectedPiece is { type: Constants.Pieces.KING })
 			{
 				// update the position of the king of the current player
 				kingPositions[(int) root.player] = mouseTile;
@@ -422,11 +431,13 @@ public partial class Board : Node2D
 				root.AddChild(dialog);
 				root.gameState = Constants.GameState.CHECKMATE;
 			}
-			
+
+			heldDown = false;
 			QueueRedraw();
 		}
 		else
 		{
+			heldDown = false;
 			Deselect();
 		}
 	}
