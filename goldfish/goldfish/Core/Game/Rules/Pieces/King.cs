@@ -85,7 +85,8 @@ public struct King : IPieceLogic
                         NewPos = (nr, nc + dir),
                         NewState = castleState,
                         Taken = newCap,
-                        OldPos = (r, c)
+                        OldPos = (r, c),
+                        Castle = castleType
                     };
                     if (RuleUtils.VerifyCheckPermits(state, mov1))
                     {
