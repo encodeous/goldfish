@@ -1,3 +1,4 @@
+using System;
 using Godot;
 using Godot.Collections;
 
@@ -30,16 +31,19 @@ public partial class Board : Node2D
 	
 	/// <summary>
 	/// Holds a list of all valid move for a selected piece.
+	/// TODO: refactor with adam's code
 	/// </summary>
 	private Array<Vector2> validMoves;
 	
 	/// <summary>
 	/// Maps a piece to an index that corresponds with a piece's position.
+	/// TODO: refactor with adam's code
 	/// </summary>
 	private Dictionary<int, Piece> pieces;
 	
 	/// <summary>
 	/// A list of positions of the King piece.
+	/// TODO: most likely unnecessary (to be deleted)
 	/// </summary>
 	private Array<Vector2> kingPositions;
 
@@ -58,9 +62,9 @@ public partial class Board : Node2D
 	{
 		mouseTile = invalidTile;
 		previousMouseTile = invalidTile;
-		validMoves = new Array<Vector2>();
-		pieces = new Dictionary<int, Piece>();
-		kingPositions = new Array<Vector2>();
+		validMoves = new Array<Vector2>(); // TODO: refactor with adam's code
+		pieces = new Dictionary<int, Piece>(); // TODO: refactor with adam's code
+		kingPositions = new Array<Vector2>(); // TODO: refactor with adam's code
 		root = GetParent<Root>();
 	}
 
@@ -93,11 +97,6 @@ public partial class Board : Node2D
 			return;
 		}
 
-		// if (button.Pressed)
-		// {
-		// 	return;
-		// }
-		
 		switch (root.gameState)
 		{
 			case Constants.GameState.WAITING_FOR_USER:
@@ -149,7 +148,7 @@ public partial class Board : Node2D
 					DrawTileWithBorder(selectedPiecePosition, new Color(0, 1, 0));
 				}
 
-				foreach (var move in validMoves)
+				foreach (var move in validMoves) // TODO: refactor with adam's code
 				{
 					// draw a border around the possible move being hovered over
 					if (mouseTile == move)
@@ -204,6 +203,7 @@ public partial class Board : Node2D
 
 	/// <summary>
 	/// Gets the piece from the pieces stored in the game board.
+	/// TODO: refactor with adam's code
 	/// </summary>
 	/// <param name="x">The row to fetch from.</param>
 	/// <param name="y">The column to fetch from.</param>
@@ -238,6 +238,7 @@ public partial class Board : Node2D
 
 	/// <summary>
 	/// Resets each piece's "jumped" attribute.
+	/// TODO: most likely unnecessary (to be deleted)
 	/// </summary>
 	public void ClearJumps()
 	{
@@ -267,7 +268,7 @@ public partial class Board : Node2D
 			return;
 		}
 
-		if (piece.player == root.player)
+		if (piece.player == root.player) // TODO: refactor with adam's code
 		{
 			if (piece.GetValidMovesFromVector2(mouseTile).Count > 0)
 			{
@@ -286,6 +287,7 @@ public partial class Board : Node2D
 
 	/// <summary>
 	/// Deselects a piece (the user clicked on a different piece or right clicked on the same piece).
+	/// TODO: refactor with adam's code
 	/// </summary>
 	private void Deselect()
 	{
@@ -315,12 +317,12 @@ public partial class Board : Node2D
 		}
 
 		// did the user drag the piece to a valid move location?
-		if (validMoves.IndexOf(mouseTile) != -1)
+		if (validMoves.IndexOf(mouseTile) != -1) // TODO: refactor with adam's code
 		{
 			var mouseKey = CoordinatesToKey((int) mouseTile.X, (int) mouseTile.Y);
 			var captured = false;
 
-			if (pieces.ContainsKey(mouseKey) && pieces[mouseKey].player != root.player)
+			if (pieces.ContainsKey(mouseKey) && pieces[mouseKey].player != root.player) // TODO: refactor with adam's code
 			{
 				// capture a piece, if there is one to be captured safely
 				root.Capture(pieces[mouseKey]);
@@ -332,13 +334,13 @@ public partial class Board : Node2D
 				captured = true;
 			}
 
-			if (selectedPiece is { type: Constants.Pieces.KING })
+			if (selectedPiece is { type: Constants.Pieces.KING }) // TODO: refactor with adam's code
 			{
 				// update the position of the king of the current player
 				kingPositions[(int) root.player] = mouseTile;
 			}
 
-			if (selectedPiece is { type: Constants.Pieces.KING } && pieces.ContainsKey(mouseKey))
+			if (selectedPiece is { type: Constants.Pieces.KING } && pieces.ContainsKey(mouseKey)) // TODO: refactor with adam's code
 			{
 				// are we castling?
 				if (pieces[mouseKey].type == Constants.Pieces.ROOK)
@@ -377,7 +379,7 @@ public partial class Board : Node2D
 			}
 
 			// can a pawn perform an en passant capture?
-			if (selectedPiece.type == Constants.Pieces.PAWN && Mathf.Abs( (int) (selectedPiecePosition.X - mouseTile.X)) == 1 && !captured)
+			if (selectedPiece.type == Constants.Pieces.PAWN && Mathf.Abs( (int) (selectedPiecePosition.X - mouseTile.X)) == 1 && !captured) // TODO: refactor with adam's code
 			{
 				var xOffset = -(selectedPiecePosition.X - mouseTile.X);
 				var enPassantOffset = new Vector2(selectedPiecePosition.X + xOffset, selectedPiecePosition.Y);
@@ -393,7 +395,7 @@ public partial class Board : Node2D
 			selectedPiece.moved = true;
 
 			// handle pawns trying to promote
-			if (selectedPiece.type == Constants.Pieces.PAWN)
+			if (selectedPiece.type == Constants.Pieces.PAWN) // TODO: refactor with adam's code
 			{
 				var y = (int) mouseTile.Y;
 				var canPromote = y is 7 or 0;
@@ -410,6 +412,7 @@ public partial class Board : Node2D
 			}
 
 			// reset all states after move has been completed
+			// TODO: refactor with adam's code
 			selectedPiece = null;
 			selectedPiecePosition = invalidTile;
 			validMoves = new Array<Vector2>();
@@ -417,13 +420,14 @@ public partial class Board : Node2D
 			root.SwitchPlayer();
 
 			// make sure the game should still be continuing, end it if not
+			// TODO: refactor with adam's code
 			if (!CheckCheckmate(root.player))
 			{
 				root.gameState = Constants.GameState.GETTING_PIECE;
 			}
 			else
 			{
-				root.winner = root.player == Constants.Player.WHITE ? Constants.Player.BLACK : Constants.Player.WHITE;
+				root.winner = root.player == Constants.Player.WHITE ? Constants.Player.BLACK : Constants.Player.WHITE; // TODO: refactor with adam's code
 
 				var dialog = new WinnerDialog(root.winner);
 				dialog.Position = new Vector2(Constants.boardSize / 2.0f - (WinnerDialog.winnerWidth - Dialog.size) / 2.0f, Constants.boardSize / 2.0f - (WinnerDialog.winnerHeight - Dialog.size) / 2.0f);
@@ -444,6 +448,7 @@ public partial class Board : Node2D
 
 	/// <summary>
 	/// Handle the promotion of a pawn.
+	/// TODO: refactor with adam's code
 	/// </summary>
 	/// <param name="position">The position of the promoting pawn.</param>
 	private void PromotePawn(Vector2 position)
@@ -467,6 +472,7 @@ public partial class Board : Node2D
 
 	/// <summary>
 	/// Prepares the board for a new game (resets piece positions & sprites).
+	/// TODO: refactor with adam's code
 	/// </summary>
 	public void NewGame()
 	{
@@ -487,12 +493,12 @@ public partial class Board : Node2D
 			for (var x = 0; x < 8; x++)
 			{
 				var y = 6 - 5 * i;
-				var piece = new Piece((Constants.Player) i, Constants.Pieces.PAWN);
+				var piece = new Piece((Constants.Player) i, Constants.Pieces.PAWN); // TODO: refactor with adam's code
 				piece.Position = new Vector2(x * Constants.tileSize, y * Constants.tileSize);
 				pieces[CoordinatesToKey(x, y)] = piece;
 			}
 
-			var types = new Array<Constants.Pieces>
+			var types = new Array<Constants.Pieces> // TODO: refactor with adam's code
 			{
 				Constants.Pieces.ROOK, Constants.Pieces.KNIGHT, Constants.Pieces.BISHOP, Constants.Pieces.KING, Constants.Pieces.QUEEN, Constants.Pieces.BISHOP, Constants.Pieces.KNIGHT, Constants.Pieces.ROOK
 			};
@@ -502,7 +508,7 @@ public partial class Board : Node2D
 				var piece = new Piece((Constants.Player) i, types[x]);
 				piece.Position = new Vector2(x * Constants.tileSize, y * Constants.tileSize);
 
-				if (piece.type == Constants.Pieces.KING)
+				if (piece.type == Constants.Pieces.KING) // TODO: refactor with adam's code
 				{
 					kingPositions.Add(new Vector2(x, y));
 				}
@@ -519,6 +525,7 @@ public partial class Board : Node2D
 
 	/// <summary>
 	/// Checks if a move were to put a king in check.
+	/// TODO: most likely unnecessary (to be deleted)
 	/// </summary>
 	/// <param name="x">The row of the piece being moved.</param>
 	/// <param name="y">The column of the piece being moved.</param>
@@ -545,6 +552,7 @@ public partial class Board : Node2D
 
 	/// <summary>
 	/// Checks if castling were to put a king in check.
+	/// TODO: most likely unnecessary (to be deleted)
 	/// </summary>
 	/// <param name="currentPosition">The king's current position.</param>
 	/// <param name="castlePosition">The rook's current position.</param>
@@ -569,6 +577,7 @@ public partial class Board : Node2D
 
 	/// <summary>
 	/// Checks if the king is currently in check.
+	/// TODO: most likely unnecessary (to be deleted)
 	/// </summary>
 	/// <param name="player">The player who is currently in check.</param>
 	/// <param name="boardState">The current state of the board.</param>
@@ -646,6 +655,7 @@ public partial class Board : Node2D
 
 	/// <summary>
 	/// Checks if the game has ended by checkmate.
+	/// TODO: refactor with adam's code
 	/// </summary>
 	/// <param name="player">The player who might've gotten checkmated.</param>
 	/// <returns>True if it's checkmate, false otherwise.</returns>
@@ -664,6 +674,17 @@ public partial class Board : Node2D
 		}
 
 		return true;
+	}
+
+	/// <summary>
+	/// Checks if the game has ended by stalemate.
+	/// TODO: create with adam's code
+	/// </summary>
+	/// <returns>True if it's a stalemate, false otherwise.</returns>
+	/// <exception cref="NotImplementedException">Not currently implemented.</exception>
+	private bool CheckStalemate()
+	{
+		throw new NotImplementedException();
 	}
 
 	/// <summary>

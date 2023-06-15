@@ -19,11 +19,13 @@ public partial class WinnerDialog : Dialog
 	
 	/// <summary>
 	/// The player who won.
+	/// TODO: refactor with adam's code
 	/// </summary>
 	private Constants.Player player;
 
 	/// <summary>
 	/// Constructs a new WinnerDialog.
+	/// TODO: refactor with adam's code
 	/// </summary>
 	/// <param name="winner">The player that won.</param>
 	public WinnerDialog(Constants.Player winner) : base(winnerWidth, winnerHeight)
@@ -39,7 +41,7 @@ public partial class WinnerDialog : Dialog
 		ConfigureSprite(playerSprite);
 		ConfigureSprite(winnerSprite);
 
-		playerSprite.FrameCoords = playerSprite.FrameCoords with { Y = (int) player };
+		playerSprite.FrameCoords = playerSprite.FrameCoords with { Y = (int) player }; // TODO: refactor with adam's code
 		winnerSprite.FrameCoords = winnerSprite.FrameCoords with { Y = 2 };
 
 		var y = winnerSprite.Position.Y;

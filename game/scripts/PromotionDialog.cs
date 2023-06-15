@@ -10,6 +10,7 @@ public partial class PromotionDialog : Dialog
 {
 	/// <summary>
 	/// The event that fires when a pawn is promoting.
+	/// TODO: refactor with adam's code
 	/// </summary>
 	[Signal] public delegate void OnSelectedEventHandler(Constants.Pieces type);
 
@@ -21,6 +22,7 @@ public partial class PromotionDialog : Dialog
 
 	/// <summary>
 	/// All possible choices for promotion.
+	/// TODO: refactor with adam's code
 	/// </summary>
 	private Array<Constants.Pieces> pieces = new () { Constants.Pieces.ROOK, Constants.Pieces.KNIGHT, Constants.Pieces.BISHOP, Constants.Pieces.QUEEN };
 
@@ -32,11 +34,13 @@ public partial class PromotionDialog : Dialog
 
 	/// <summary>
 	/// The player who owns the promoting pawn.
+	/// TODO: refactor with adam's code
 	/// </summary>
 	private Constants.Player player;
 
 	/// <summary>
 	/// Constructs a new PromotionDialog.
+	/// TODO: refactor with adam's code
 	/// </summary>
 	/// <param name="player">The player who owns the promoting pawn.</param>
 	public PromotionDialog(Constants.Player player) : base((int) promotionWidth, (int) promotionHeight)
@@ -60,7 +64,7 @@ public partial class PromotionDialog : Dialog
 			sprite.Texture = GD.Load<Texture2D>("res://assets/pieces.png");
 			sprite.Hframes = 6;
 			sprite.Vframes = 2;
-			sprite.FrameCoords = new Vector2I((int) piece, (int) player);
+			sprite.FrameCoords = new Vector2I((int) piece, (int) player); // TODO: refactor with adam's code
 			sprite.Position = new Vector2(i * Constants.tileSize + size, size);
 			sprite.ZIndex = 10;
 			sprite.Centered = false;
@@ -118,7 +122,7 @@ public partial class PromotionDialog : Dialog
 	{
 		if(@event is InputEventMouseButton && mousePosition != invalidPosition)
 		{
-			EmitSignal("OnSelected", (int) pieces[(int) mousePosition.X]); // this might not work since we are casting an enum value to an int
+			EmitSignal("OnSelected", (int) pieces[(int) mousePosition.X]); // TODO: refactor with adam's code
 		}
 	}
 }
