@@ -4,6 +4,7 @@ using goldfish.Core.Data;
 using goldfish.Core.Game;
 using goldfish.Core.Game.FEN;
 using goldfish.Engine;
+using goldfish.Engine.Searcher;
 using Terminal.Gui;
 using Attribute = Terminal.Gui.Attribute;
 
@@ -12,6 +13,9 @@ internal class Program
     private static ChessGame game = new ChessGame();
     private static ArraySegment<ChessMove> _selMoves;
     private static MenuBarItem goldFishToggle;
+
+    private static GoldFishSearcher _searcher =
+        new GoldFishSearcher(TimeSpan.FromSeconds(4), (int)(Environment.ProcessorCount / 1.2));
     public static void Main(string[] args)
     {
         Application.Init();
@@ -118,14 +122,16 @@ internal class Program
                                 Task.Run(() =>
                                 {
                                     game.Commit();
-                                    double alpha = double.NegativeInfinity, beta = double.PositiveInfinity;
-                                    Span<(ChessMove, double)> moves = new (ChessMove, double)[5];
-                                    ulong count = 0;
-                                    var eval = GoldFishEngine.NextOptimalMoves(game.CurrentState, 5, ref moves, ref count);
-                                    Debug.WriteLine($"Move calc w/ eval of {eval} - calls {count}");
-                                    game.LastMove = moves[0].Item1;
-                                    game.CurrentState = moves[0].Item1.NewState;
+                                    Span<(ChessMove, double)> moves = new (ChessMove, double)[6];
+                                    var eval = _searcher.ParallelSearch(game.CurrentState, 6, CancellationToken.None);
+                                    game.LastMove = eval.BestMove;
+                                    game.CurrentState = eval.BestMove.NewState;
                                     var gState2 = game.CurrentState.GetGameState();
+                                    // var res = _searcher.StartSearch(game.CurrentState);
+                                    // Debug.WriteLine($"Move calc w/ eval of {res.EngineEval} - depth {res.Depth}");
+                                    // game.LastMove = res.BestMove;
+                                    // game.CurrentState = res.BestMove.NewState;
+                                    // var gState2 = game.CurrentState.GetGameState();
                                     Application.MainLoop.Invoke(() =>
                                     {
                                         if (gState2 is not null)
@@ -151,6 +157,14 @@ internal class Program
             }
         }
 
+        _searcher.SearchUpdate += result =>
+        {
+            Application.MainLoop.Invoke(() =>
+            {
+                stateLabel.Text = $"Depth: {result.Depth}";
+            });
+        };
+        
         for (int i = 0; i < 9; i++)
         {
             for (int j = 0; j < 9; j++)
@@ -167,6 +181,7 @@ internal class Program
         {
             game.IsEngineActive = !game.IsEngineActive;
             goldFishToggle.Title = game.IsEngineActive ? "_GoldFish Active" : "_GoldFish Inactive";
+            ChessPrinter.PrintBoard(game.CurrentState, game.LastMove, grid);
         });
         
         var menu = new MenuBar(

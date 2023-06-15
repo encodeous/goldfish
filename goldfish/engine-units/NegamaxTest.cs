@@ -5,6 +5,7 @@ using goldfish.Core.Game;
 using goldfish.Core.Game.FEN;
 using goldfish.Engine;
 using goldfish.Engine.Analysis;
+using goldfish.Engine.Searcher;
 
 namespace engine_units;
 
@@ -17,7 +18,7 @@ public class NegamaxTest
     [InlineData("promotions")]
     [InlineData("standard")]
     [InlineData("taxing")]
-    public void VerifyMoves(string test)
+    public void VerifyMovesBasicScenarios(string test)
     {
         var tData = JsonNode.Parse(File.ReadAllText($"../../../data/{test}.json"));
         foreach (var caseNode in tData["testCases"].AsArray())
@@ -27,7 +28,37 @@ public class NegamaxTest
             Span<(ChessMove, double)> basicMoves = new (ChessMove, double)[5];
             Span<(ChessMove, double)> optMoves = new (ChessMove, double)[5];
             var basicEval = BasicNegamax(startState, 3, ref basicMoves);
-            var optimizedEval = GoldFishEngine.NextOptimalMoves(startState, 3, ref optMoves, ref pos);
+            var optimizedEval = GoldFishEngine.NextOptimalMoves(startState, 3, ref optMoves);
+            if (startState.ToMove == Side.Black)
+            {
+                Assert.True(basicEval >= optimizedEval);
+            }
+            else
+            {
+                Assert.True(basicEval <= optimizedEval);
+            }
+            // Assert.Equal(basicMoves[0], optMoves[0]);
+        }
+    }
+    
+    [Theory]
+    [InlineData("castling")]
+    [InlineData("famous")]
+    [InlineData("pawns")]
+    [InlineData("promotions")]
+    [InlineData("standard")]
+    [InlineData("taxing")]
+    public void VerifyMovesAbScenarios(string test)
+    {
+        var tData = JsonNode.Parse(File.ReadAllText($"../../../data/{test}.json"));
+        foreach (var caseNode in tData["testCases"].AsArray())
+        {
+            var startState = FenConvert.Parse(caseNode["start"]["fen"].ToString());
+            ulong pos = 0;
+            Span<(ChessMove, double)> referenceMoves = new (ChessMove, double)[5];
+            Span<(ChessMove, double)> optMoves = new (ChessMove, double)[5];
+            var basicEval = UncachedNegamax(startState, 5, ref referenceMoves, ref pos);
+            var optimizedEval = GoldFishEngine.NextOptimalMoves(startState, 5, ref optMoves);
             if (startState.ToMove == Side.Black)
             {
                 Assert.True(basicEval >= optimizedEval);
@@ -50,7 +81,7 @@ public class NegamaxTest
         Span<(ChessMove, double)> referenceMoves = new (ChessMove, double)[3];
         Span<(ChessMove, double)> optMoves = new (ChessMove, double)[3];
         double referenceEval = BasicNegamax(startState, 3, ref referenceMoves);
-        var optimizedEval = GoldFishEngine.NextOptimalMoves(startState, 3, ref optMoves, ref pos);
+        var optimizedEval = GoldFishEngine.NextOptimalMoves(startState, 3, ref optMoves);
         if (startState.ToMove == Side.Black)
         {
             Assert.True(referenceEval >= optimizedEval);
@@ -64,16 +95,56 @@ public class NegamaxTest
     [Theory]
     // [InlineData("r1bqkb1r/1ppppppp/5n2/p2P4/1n2P3/P4N2/1PP2PPP/RNBQKB1R b KQkq - 0 5", true)]
     [InlineData("r1bqkb1r/1ppppppp/5n2/p2P4/1n2P3/P4N2/1PP2PPP/RNBQKB1R b KQkq - 0 5")]
-    public void VerifyGamesABPruning(string fen)
+    [InlineData("r3k2Q/pp3p1p/3qp3/2pp2N1/3P4/4PP2/PP1K2PP/nNB4R b k - 0 15")]
+    [InlineData("r6r/p3kp1p/4np2/1Bb5/3p4/P4N2/1P3PPP/R3K2R w KQ - 2 18")]
+    [InlineData("1k6/1b6/8/8/7R/8/8/4K2R b K - 0 1")]
+    [InlineData("K1k5/8/P7/8/8/8/8/8 w - - 0 1")]
+    [InlineData("8/5bk1/8/2Pp4/8/1K6/8/8 w - d6 0 1")]
+    [InlineData("8/8/1k6/8/2pP4/8/5BK1/8 b - d3 0 1")]
+    [InlineData("r3k2r/1b4bq/8/8/8/8/7B/R3K2R w KQkq - 0 1")]
+    [InlineData("r3k2r/1b4bq/8/8/8/8/7B/2KR3R b kq - 1 1")]
+    [InlineData("r3k2r/8/3Q4/8/8/5q2/8/R3K2R b KQkq - 0 1")]
+    [InlineData("8/8/2k5/5q2/5n2/8/5K2/8 b - - 0 1")]
+    [InlineData("8/k1P5/8/1K6/8/8/8/8 w - - 0 1")]
+    [InlineData("8/8/1P2K3/8/2n5/1q6/8/5k2 b - - 0 1")]
+    [InlineData("8/8/1k6/2b5/2pP4/8/5K2/8 b - d3 0 1")]
+    public void VerifyGamesAbPruning(string fen)
     {
         var startState = FenConvert.Parse(fen);
         ulong pos = 0;
         Span<(ChessMove, double)> referenceMoves = new (ChessMove, double)[5];
         Span<(ChessMove, double)> optMoves = new (ChessMove, double)[5];
         double referenceEval = UncachedNegamax(startState, 5, ref referenceMoves, ref pos);
-        var optimizedEval = GoldFishEngine.NextOptimalMoves(startState, 5, ref optMoves, ref pos);
+        var optimizedEval = GoldFishEngine.NextOptimalMoves(startState, 5, ref optMoves);
         Assert.Equal(referenceEval, optimizedEval);
         Assert.Equal(referenceMoves[0], optMoves[0]);
+    }
+    
+    [Theory]
+    // [InlineData("r1bqkb1r/1ppppppp/5n2/p2P4/1n2P3/P4N2/1PP2PPP/RNBQKB1R b KQkq - 0 5", true)]
+    [InlineData("r1bqkb1r/1ppppppp/5n2/p2P4/1n2P3/P4N2/1PP2PPP/RNBQKB1R b KQkq - 0 5")]
+    [InlineData("r3k2Q/pp3p1p/3qp3/2pp2N1/3P4/4PP2/PP1K2PP/nNB4R b k - 0 15")]
+    [InlineData("r6r/p3kp1p/4np2/1Bb5/3p4/P4N2/1P3PPP/R3K2R w KQ - 2 18")]
+    [InlineData("1k6/1b6/8/8/7R/8/8/4K2R b K - 0 1")]
+    [InlineData("K1k5/8/P7/8/8/8/8/8 w - - 0 1")]
+    [InlineData("8/5bk1/8/2Pp4/8/1K6/8/8 w - d6 0 1")]
+    [InlineData("8/8/1k6/8/2pP4/8/5BK1/8 b - d3 0 1")]
+    [InlineData("r3k2r/1b4bq/8/8/8/8/7B/R3K2R w KQkq - 0 1")]
+    [InlineData("r3k2r/8/3Q4/8/8/5q2/8/R3K2R b KQkq - 0 1")]
+    [InlineData("8/8/2k5/5q2/5n2/8/5K2/8 b - - 0 1")]
+    [InlineData("8/k1P5/8/1K6/8/8/8/8 w - - 0 1")]
+    [InlineData("8/8/1P2K3/8/2n5/1q6/8/5k2 b - - 0 1")]
+    [InlineData("8/8/1k6/2b5/2pP4/8/5K2/8 b - d3 0 1")]
+    public void VerifyGamesAbPruningParallel(string fen)
+    {
+        var startState = FenConvert.Parse(fen);
+        ulong pos = 0;
+        Span<(ChessMove, double)> referenceMoves = new (ChessMove, double)[5];
+        double referenceEval = GoldFishEngine.NextOptimalMoves(startState, 5, ref referenceMoves);
+        var searcher = new GoldFishSearcher(TimeSpan.FromSeconds(5));
+        var optimizedEval = searcher.ParallelSearch(startState, 5, CancellationToken.None);
+        Assert.Equal(referenceEval, optimizedEval.EngineEval);
+        Assert.Equal(referenceMoves[0].Item1, optimizedEval.BestMove);
     }
     
     public static double BasicNegamax(ChessState state, int depth, ref Span<(ChessMove, double)> bestMoves, double staticEval = double.NaN)
@@ -94,7 +165,7 @@ public class NegamaxTest
             double.PositiveInfinity;
         
         Span<(ChessMove, double)> evalMoves = stackalloc (ChessMove, double)[32 * 30]; // should be plenty... i think
-        Span<ChessMove> tMoves = stackalloc ChessMove[30];
+        Span<ChessMove> tMoves = stackalloc ChessMove[32];
         int cnt = 0;
         for (var i = 0; i < 8; i++)
         for (var j = 0; j < 8; j++)
@@ -176,7 +247,7 @@ public class NegamaxTest
             double.PositiveInfinity;
 
         var evalMoves = new List<(ChessMove, double)>();
-        Span<ChessMove> tMoves = stackalloc ChessMove[30];
+        Span<ChessMove> tMoves = stackalloc ChessMove[32];
         for (var i = 0; i < 8; i++)
         for (var j = 0; j < 8; j++)
         {

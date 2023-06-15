@@ -92,6 +92,7 @@ public static class PieceExtensions
     /// </summary>
     /// <param name="coord"></param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsWithinBoard(this (int, int) coord)
     {
         return 0 <= coord.Item1 && coord.Item1 < 8

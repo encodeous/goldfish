@@ -17,7 +17,7 @@ public class GamesDatabaseTest
         using var reader = new StreamReader("../../../data/games.csv");
         using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
         var records = csv.GetRecords<dynamic>();
-        Span<ChessMove> tMoves = stackalloc ChessMove[30];
+        Span<ChessMove> tMoves = stackalloc ChessMove[32];
         foreach (var rec in records)
         {
             try

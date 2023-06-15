@@ -135,7 +135,7 @@ public static class FenConvert
         return sb.ToString();
     }
 
-    private static byte ParsePiece(char c)
+    public static byte ParsePiece(char c)
     {
         var side = Side.Black;
         if (char.IsUpper(c))
@@ -157,7 +157,7 @@ public static class FenConvert
         return type.ToPiece(side);
     }
     
-    private static char ConvertPiece(byte c)
+    public static char ConvertPiece(byte c)
     {
         var side = c.GetSide();
 

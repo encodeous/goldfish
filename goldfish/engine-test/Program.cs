@@ -4,12 +4,56 @@ using goldfish.Core.Data;
 using goldfish.Core.Game;
 using goldfish.Core.Game.FEN;
 using goldfish.Engine;
+using goldfish.Engine.Searcher;
+using Spectre.Console;
 
-Span<(ChessMove, double)> optMoves = new (ChessMove, double)[5];
-ulong pos = 0;
-var optimizedEval = GoldFishEngine.NextOptimalMoves(FenConvert.Parse("r1bqkb1r/1ppppppp/5n2/p2P4/1n2P3/P4N2/1PP2PPP/RNBQKB1R b KQkq - 0 5"), 5, ref optMoves, ref pos);
+TimeSpan MeasureTime(Action operation)
+{
+    var start = Stopwatch.GetTimestamp();
+    operation.Invoke();
+    return Stopwatch.GetElapsedTime(start);
+}
 
-BoardPrinter.Print(optMoves);
+var searcher = new GoldFishSearcher(TimeSpan.FromSeconds(6), 12);
+
+int depth = 0;
+
+// var state = FenConvert.Parse("r3k2r/8/3Q4/8/8/5q2/8/R3K2R b KQkq - 0 1");
+// var state = FenConvert.Parse("3k2r1/8/8/3PK3/8/8/5R2/8 b - - 0 1");
+// var state = FenConvert.Parse("3r2kr/p4pp1/4pn1p/2R5/7P/1P6/2P2PP1/4KB2 w - - 0 0");
+var state = ChessState.DefaultState();
+try
+{
+    while (state.GetGameState() is null)
+    {
+        GoldFishSearcher.SearchResult res = null;
+        if (state.ToMove == Side.Black)
+        {
+            Console.WriteLine(MeasureTime(() =>
+            {
+                res = searcher.ParallelSearch(state, 6, CancellationToken.None);
+                Console.WriteLine($"A - {res} {FenConvert.ToFen(res.BestMove.NewState)}");
+            }));
+        }
+        else
+        {
+            Console.WriteLine(MeasureTime(() =>
+            {
+                res = searcher.StartSearch(state);
+                Console.WriteLine($"B - {res} {FenConvert.ToFen(res.BestMove.NewState)}");
+            }));
+        }
+        AnsiConsole.Write(BoardPrinter.PrintBoard(res.BestMove.NewState, res.BestMove));
+        state = res.BestMove.NewState;
+    }
+
+}
+catch(Exception e)
+{
+    Console.WriteLine(e.Message + e.StackTrace);
+}
+
+Console.WriteLine("END");
 
 // static int CountNextGames(ChessState state, int depth)
 // {

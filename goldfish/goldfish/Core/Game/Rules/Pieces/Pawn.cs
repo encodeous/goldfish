@@ -107,7 +107,7 @@ public struct Pawn : IPieceLogic
     {
         var ns = move.NewState;
         ns.Promote(move.NewPos, type);
-        return move with { NewState = ns };
+        return move with { NewState = ns, WasPromotion = true};
     }
     
     private bool CanCapture(int nr, int nc, out ChessMove? move, in ChessState state, Side side, int r, int c, int dir)
