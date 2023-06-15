@@ -29,6 +29,7 @@ public class MaterialAnalyzer : IGameAnalyzer
         {
             var piece = state.GetPiece(i, j);
             score += ScorePiece(piece.GetPieceType()) * (piece.GetSide() == Side.Black ? -1 : 1);
+            
         }
 
         return score;

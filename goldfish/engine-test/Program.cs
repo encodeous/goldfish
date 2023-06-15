@@ -7,13 +7,6 @@ using goldfish.Engine;
 using goldfish.Engine.Searcher;
 using Spectre.Console;
 
-TimeSpan MeasureTime(Action operation)
-{
-    var start = Stopwatch.GetTimestamp();
-    operation.Invoke();
-    return Stopwatch.GetElapsedTime(start);
-}
-
 var searcher = new GoldFishSearcher(TimeSpan.FromSeconds(6), 12);
 
 int depth = 0;
@@ -29,19 +22,13 @@ try
         GoldFishSearcher.SearchResult res = null;
         if (state.ToMove == Side.Black)
         {
-            Console.WriteLine(MeasureTime(() =>
-            {
-                res = searcher.ParallelSearch(state, 6, CancellationToken.None);
-                Console.WriteLine($"A - {res} {FenConvert.ToFen(res.BestMove.NewState)}");
-            }));
+            res = searcher.ParallelSearch(state, 6, CancellationToken.None);
+            Console.WriteLine($"A - {res} {FenConvert.ToFen(res.BestMove.NewState)}");
         }
         else
         {
-            Console.WriteLine(MeasureTime(() =>
-            {
-                res = searcher.StartSearch(state);
-                Console.WriteLine($"B - {res} {FenConvert.ToFen(res.BestMove.NewState)}");
-            }));
+            res = searcher.StartSearch(state);
+            Console.WriteLine($"B - {res} {FenConvert.ToFen(res.BestMove.NewState)}");
         }
         AnsiConsole.Write(BoardPrinter.PrintBoard(res.BestMove.NewState, res.BestMove));
         state = res.BestMove.NewState;
