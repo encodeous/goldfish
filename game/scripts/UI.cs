@@ -1,4 +1,6 @@
 using Godot;
+using goldfish.Core.Data;
+using Side = goldfish.Core.Data.Side;
 
 namespace chessium.scripts;
 
@@ -88,9 +90,9 @@ public partial class UI : Node2D
 	/// <param name="piece">The captured piece.</param>
 	public void CapturePiece(Piece piece)
 	{
-		if (piece.player == 0)
+		if (piece.player == Side.White)
 		{
-			if (piece.type == Constants.Pieces.PAWN)
+			if (piece.type == PieceType.Pawn)
 			{
 				whitePawnSlot.AddPiece(piece.type);
 			}
@@ -101,7 +103,7 @@ public partial class UI : Node2D
 		}
 		else
 		{
-			if (piece.type == Constants.Pieces.PAWN)
+			if (piece.type == PieceType.Pawn)
 			{
 				blackPawnSlot.AddPiece(piece.type);
 			}

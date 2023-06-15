@@ -1,4 +1,5 @@
 using Godot;
+using goldfish.Core.Data;
 
 namespace chessium.scripts;
 
@@ -65,7 +66,7 @@ public partial class PieceSlot : Node2D
 	/// Adds a piece to a piece slot.
 	/// </summary>
 	/// <param name="piece">The captured piece.</param>
-	public void AddPiece(Constants.Pieces piece)
+	public void AddPiece(PieceType piece)
 	{
 		var pieceSprite = new Sprite2D();
 		pieceSprite.Centered = false;

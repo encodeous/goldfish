@@ -1,4 +1,5 @@
 using Godot;
+using Side = goldfish.Core.Data.Side;
 
 namespace chessium.scripts;
 
@@ -21,14 +22,14 @@ public partial class WinnerDialog : Dialog
 	/// The player who won.
 	/// TODO: refactor with adam's code
 	/// </summary>
-	private Constants.Player player;
+	private Side player;
 
 	/// <summary>
 	/// Constructs a new WinnerDialog.
 	/// TODO: refactor with adam's code
 	/// </summary>
 	/// <param name="winner">The player that won.</param>
-	public WinnerDialog(Constants.Player winner) : base(winnerWidth, winnerHeight)
+	public WinnerDialog(Side winner) : base(winnerWidth, winnerHeight)
 	{
 		player = winner;
 	}

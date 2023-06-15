@@ -1,4 +1,7 @@
 using Godot;
+using goldfish.Core.Game;
+using goldfish.Core.Data;
+using Side = goldfish.Core.Data.Side;
 
 namespace chessium.scripts;
 
@@ -21,7 +24,8 @@ public partial class Root : Node2D
 	/// The current player and winner, if any.
 	/// TODO: refactor with adam's code (winner is likely unnecessary)
 	/// </summary>
-	public Constants.Player player, winner;
+	public Side player => board.state.ToMove;
+	public Side? winner => board.state.GetGameState();
 	
 	/// <summary>
 	/// The current state of the game.
@@ -48,11 +52,8 @@ public partial class Root : Node2D
 	/// </summary>
 	private void NewGame()
 	{
-		player = Constants.Player.BLACK; // TODO: refactor with adam's code
 		gameState = Constants.GameState.GETTING_PIECE;
 
-		SwitchPlayer();
-		
 		board.NewGame();
 		ui.NewGame();
 
@@ -64,17 +65,6 @@ public partial class Root : Node2D
 				child.QueueFree();
 			}
 		}
-	}
-
-	/// <summary>
-	/// Switches the current player's turn.
-	/// </summary>
-	public void SwitchPlayer()
-	{
-		player = player == Constants.Player.WHITE ? Constants.Player.BLACK : Constants.Player.WHITE; // TODO: refactor with adam's code
-		
-		ui.SetPlayer(player);
-		board.ClearJumps();
 	}
 
 	/// <summary>

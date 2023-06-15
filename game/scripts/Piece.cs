@@ -1,5 +1,10 @@
+using System;
+using System.Collections.Generic;
 using Godot;
 using Godot.Collections;
+using goldfish.Core.Data;
+using goldfish.Core.Game;
+using Side = goldfish.Core.Data.Side;
 
 namespace chessium.scripts;
 
@@ -24,19 +29,13 @@ public partial class Piece : Node2D
 	/// Represents the player who owns the piece.
 	/// TODO: refactor with adam's code
 	/// </summary>
-	public Constants.Player player;
+	public Side player;
 	
 	/// <summary>
 	/// Represents the type of the piece.
 	/// TODO: refactor with adam's code
 	/// </summary>
-	public Constants.Pieces type;
-
-	/// <summary>
-	/// Has the piece moved or jumped?
-	/// TODO: refactor with adam's code
-	/// </summary>
-	public bool moved = false, jumped = false;
+	public PieceType type;
 	
 	/// <summary>
 	/// Constructs a new Piece instance.
@@ -44,7 +43,7 @@ public partial class Piece : Node2D
 	/// </summary>
 	/// <param name="player">The player who owns the piece.</param>
 	/// <param name="type">The type of piece.</param>
-	public Piece(Constants.Player player, Constants.Pieces type)
+	public Piece(Side player, PieceType type)
 	{
 		this.player = player;
 		this.type = type;
@@ -79,139 +78,20 @@ public partial class Piece : Node2D
 	{
 		sprite.QueueFree();
 	}
-
-	/// <summary>
-	/// Gets the valid piece directions depending on the type of piece.
-	/// TODO: most likely unnecessary (to be deleted)
-	/// </summary>
-	/// <returns>An array of valid piece directions depending on the type of piece.</returns>
-	private Array<Vector2> GetPieceDirections()
-	{
-		return type switch
-		{
-			Constants.Pieces.PAWN =>
-				new Array<Vector2> { new(0, 1) },
-			Constants.Pieces.ROOK =>
-				Constants.rookDirections,
-			Constants.Pieces.KNIGHT =>
-				Constants.knightDirections,
-			Constants.Pieces.BISHOP =>
-				Constants.bishopDirections,
-			Constants.Pieces.QUEEN or Constants.Pieces.KING => // queen or king
-				Constants.allDirections,
-			_ => new Array<Vector2>()
-		};
-	}
+	
 
 	/// <summary>
 	/// Gets all valid moves for this piece, depending on its type.
-	/// TODO: most likely unnecessary (to be deleted)
 	/// </summary>
 	/// <param name="x">The row of the piece.</param>
 	/// <param name="y">The column of the piece.</param>
 	/// <returns>An array of valid moves.</returns>
-	public Array<Vector2> GetValidMoves(int x, int y)
+	public List<ChessMove> GetValidMoves(int x, int y)
 	{
-		var positions = new Array<Vector2>();
-		var multi = -1 + (int) player * 2;
+		Span<ChessMove> positions = stackalloc ChessMove[35];
+		board.state.GetValidMovesForSquare(x, y, positions, false);
 
-		// where can all regular pieces move (queen, bishop, knight, rook)?
-		foreach (var direction in GetPieceDirections())
-		{
-			for (var i = 0; i < DistanceTravelled(); i++)
-			{
-				var position = new Vector2(x + direction.X * (i + 1), y + direction.Y * (i + 1) * multi);
-				if (IsValidMove(position))
-				{
-					if (TileHasEnemy(position) || (TileHasEnemy(position) && type == Constants.Pieces.PAWN))
-					{
-						break;
-					}
-
-					if (!board.WouldBeInCheck(x, y, this, position))
-					{
-						positions.Add(position);
-					}
-				}
-
-				if (board.GetPieceFromVector2(position) != null)
-				{
-					// if there's a piece in the way, stop
-					break;
-				}
-			}
-		}
-
-		// can a pawn move? can it capture a piece with en passant?
-		if (type == Constants.Pieces.PAWN)
-		{
-			for (var i = 0; i < 2; i++)
-			{
-				var position = new Vector2(x - 1 + i * 2, y + multi);
-				
-				var canEnPassant = false;
-				var enPassantPosition = new Vector2(x - 1 + i * 2, y);
-				var enPassantPiece = board.GetPieceFromVector2(enPassantPosition);
-
-				if (enPassantPiece != null)
-				{
-					// has the pawn fulfilled all preconditions for en passant?
-					canEnPassant = enPassantPiece.type == Constants.Pieces.PAWN && enPassantPiece.jumped && enPassantPiece.player != player;
-				}
-
-				if ((TileHasEnemy(position) || canEnPassant) && !board.WouldBeInCheck(x, y, this, position))
-				{
-					// would capturing or moving put the king in check? if not, add to move list
-					positions.Add(position);
-				}
-			}
-		}
-
-		// can the king castle, move or capture?
-		if (type == Constants.Pieces.KING && !moved)
-		{
-			for (var i = 0; i < 2; i++)
-			{
-				var xOffset = 1 - (2 * i);
-				var xToCheck = x + xOffset;
-
-				while (xToCheck != 0 && xToCheck != 7)
-				{
-					if (GetPiece(new Vector2(xToCheck, y)) != null)
-					{
-						break;
-					}
-
-					xToCheck += xOffset;
-				}
-
-				if (xToCheck != 0 && xToCheck != 7)
-				{
-					continue;
-				}
-
-				var piece = GetPiece(new Vector2(xOffset, y));
-				if (piece == null)
-				{
-					continue;
-				}
-
-				if (piece.type == Constants.Pieces.ROOK && piece.player == player && !piece.moved)
-				{
-					var position = new Vector2(x, y);
-					var rookPosition = new Vector2(xToCheck, y);
-					var newPosition = new Vector2(x + 2 * i, y);
-					var newRookPosition = new Vector2(newPosition.X - i, y);
-
-					if (!board.WouldBeInCheckFromCastling(position, rookPosition, newPosition, newRookPosition))
-					{
-						positions.Add(rookPosition); // castling is possible
-					}
-				}
-			}
-		}
-
-		return positions;
+		return new List<ChessMove>(positions.ToArray());
 	}
 
 	/// <summary>
@@ -220,44 +100,11 @@ public partial class Piece : Node2D
 	/// </summary>
 	/// <param name="vector">The position of the piece.</param>
 	/// <returns>An array of valid moves.</returns>
-	public Array<Vector2> GetValidMovesFromVector2(Vector2 vector)
+	public List<ChessMove> GetValidMovesFromVector2(Vector2 vector)
 	{
 		return GetValidMoves((int) vector.X, (int) vector.Y);
 	}
-
-	/// <summary>
-	/// Gets the number of squares a piece can travel in a move.
-	/// TODO: most likely unnecessary (to be deleted)
-	/// </summary>
-	/// <returns>An int depending on the type of piece.</returns>
-	private int DistanceTravelled()
-	{
-		return type switch
-		{
-			Constants.Pieces.PAWN => moved ? 1 : 2, // 1 if the pawn has already moved once, 2 otherwise
-			Constants.Pieces.KNIGHT or Constants.Pieces.KING => 1,
-			_ => 8 // any other piece can technically travel to any side of the board if unimpeded
-		};
-	}
-
-	/// <summary>
-	/// Checks if a move is legal.
-	/// TODO: most likely unnecessary (to be deleted)
-	/// </summary>
-	/// <param name="position">The position of the move to make.</param>
-	/// <returns>True if the move is legal, false otherwise.</returns>
-	private bool IsValidMove(Vector2 position)
-	{
-		if (IsInBounds(position))
-		{
-			// true if there is no piece in the way of a move, or if it is not out of bounds
-			var piece = board.GetPieceFromVector2(position);
-			return piece == null || TileHasEnemy(position);
-		}
-
-		return false;
-	}
-
+	
 	/// <summary>
 	/// Checks if a position is within the bounds of the chess board.
 	/// </summary>
@@ -267,31 +114,6 @@ public partial class Piece : Node2D
 	{
 		// is this position with the board grid (8 * 8)?
 		return position.X is < 8 and >= 0 && position.Y is < 8 and >= 0;
-	}
-
-	/// <summary>
-	/// Checks if a tile contains an enemy piece.
-	/// TODO: most likely unnecessary (to be deleted)
-	/// </summary>
-	/// <param name="position">The position to check for.</param>
-	/// <returns>True if a tile has an enemy, false otherwise.</returns>
-	private bool TileHasEnemy(Vector2 position)
-	{
-		if (!IsInBounds(position))
-		{
-			// there can't be an enemy if it's not on the game board
-			return false;
-		}
-
-		var piece = board.GetPieceFromVector2(position);
-		if (piece != null)
-		{
-			// a piece isn't an enemy if it's of your same color
-			return piece.player != player;
-		}
-
-		// an empty tile has no enemies for either player
-		return false;
 	}
 
 	/// <summary>

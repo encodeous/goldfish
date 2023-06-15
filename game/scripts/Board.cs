@@ -1,6 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using Godot.Collections;
+using goldfish.Core.Data;
+using goldfish.Core.Game;
+using Side = goldfish.Core.Data.Side;
 
 namespace chessium.scripts;
 
@@ -31,21 +36,13 @@ public partial class Board : Node2D
 	
 	/// <summary>
 	/// Holds a list of all valid move for a selected piece.
-	/// TODO: refactor with adam's code
 	/// </summary>
-	private Array<Vector2> validMoves;
+	private List<ChessMove> validMoves;
 	
 	/// <summary>
 	/// Maps a piece to an index that corresponds with a piece's position.
-	/// TODO: refactor with adam's code
 	/// </summary>
-	private Dictionary<int, Piece> pieces;
-	
-	/// <summary>
-	/// A list of positions of the King piece.
-	/// TODO: most likely unnecessary (to be deleted)
-	/// </summary>
-	private Array<Vector2> kingPositions;
+	private System.Collections.Generic.Dictionary<int, Piece> pieces;
 
 	/// <summary>
 	/// Represents the Root scene.
@@ -56,15 +53,21 @@ public partial class Board : Node2D
 	/// Is the user holding left click down?
 	/// </summary>
 	private bool heldDown;
+
+	/// <summary>
+	/// The current state of the board.
+	/// </summary>
+	public ChessState state;
 	
 	/// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		mouseTile = invalidTile;
 		previousMouseTile = invalidTile;
-		validMoves = new Array<Vector2>(); // TODO: refactor with adam's code
-		pieces = new Dictionary<int, Piece>(); // TODO: refactor with adam's code
-		kingPositions = new Array<Vector2>(); // TODO: refactor with adam's code
+
+		state = ChessState.DefaultState();
+		validMoves = new List<ChessMove>(); // TODO: refactor with adam's code
+		pieces = new System.Collections.Generic.Dictionary<int, Piece>(); // TODO: refactor with adam's code
 		root = GetParent<Root>();
 	}
 
@@ -148,9 +151,10 @@ public partial class Board : Node2D
 					DrawTileWithBorder(selectedPiecePosition, new Color(0, 1, 0));
 				}
 
-				foreach (var move in validMoves) // TODO: refactor with adam's code
+				foreach (var mov in validMoves) // TODO: refactor with adam's code
 				{
 					// draw a border around the possible move being hovered over
+					var move = mov.NewPos.ToVector();
 					if (mouseTile == move)
 					{
 						DrawTileWithBorder(move, new Color(1, 1, 0));
@@ -209,7 +213,7 @@ public partial class Board : Node2D
 	/// <param name="y">The column to fetch from.</param>
 	/// <param name="dictionary">The list of pieces currently present on the board.</param>
 	/// <returns>The piece at the position, if any.</returns>
-	private Piece GetPieceFromGrid(int x, int y, Dictionary<int, Piece> dictionary)
+	private Piece GetPieceFromGrid(int x, int y, System.Collections.Generic.Dictionary<int, Piece> dictionary)
 	{
 		if (x is < 8 and >= 0 && y is < 8 and >= 0)
 		{
@@ -237,21 +241,6 @@ public partial class Board : Node2D
 	}
 
 	/// <summary>
-	/// Resets each piece's "jumped" attribute.
-	/// TODO: most likely unnecessary (to be deleted)
-	/// </summary>
-	public void ClearJumps()
-	{
-		foreach (var key in pieces.Keys)
-		{
-			if (pieces[key].player == root.player && pieces[key].type == Constants.Pieces.PAWN)
-			{
-				pieces[key].jumped = false;
-			}
-		}
-	}
-
-	/// <summary>
 	/// Handles left clicks on a piece (selection).
 	/// </summary>
 	/// <param name="event">The click event.</param>
@@ -268,20 +257,17 @@ public partial class Board : Node2D
 			return;
 		}
 
-		if (piece.player == root.player) // TODO: refactor with adam's code
+		if (piece.GetValidMovesFromVector2(mouseTile).Any())
 		{
-			if (piece.GetValidMovesFromVector2(mouseTile).Count > 0)
-			{
-				// we're good for making a move, set relevant vars to the needed values to do so
-				selectedPiece = piece;
-				selectedPiecePosition = mouseTile;
-				validMoves = piece.GetValidMovesFromVector2(mouseTile);
+			// we're good for making a move, set relevant vars to the needed values to do so
+			selectedPiece = piece;
+			selectedPiecePosition = mouseTile;
+			validMoves = piece.GetValidMovesFromVector2(mouseTile);
 				
-				heldDown = true;
+			heldDown = true;
 
-				root.gameState = Constants.GameState.MAKING_A_MOVE;
-				QueueRedraw();
-			}
+			root.gameState = Constants.GameState.MAKING_A_MOVE;
+			QueueRedraw();
 		}
 	}
 
@@ -293,7 +279,7 @@ public partial class Board : Node2D
 	{
 		selectedPiece = null;
 		selectedPiecePosition = invalidTile;
-		validMoves = new Array<Vector2>();
+		validMoves = new List<ChessMove>();
 		root.gameState = Constants.GameState.GETTING_PIECE;
 		
 		QueueRedraw();
@@ -317,119 +303,47 @@ public partial class Board : Node2D
 		}
 
 		// did the user drag the piece to a valid move location?
-		if (validMoves.IndexOf(mouseTile) != -1) // TODO: refactor with adam's code
+		if (validMoves.Any(move => move.NewPos.ToVector() == mouseTile)) // TODO: refactor with adam's code
 		{
-			var mouseKey = CoordinatesToKey((int) mouseTile.X, (int) mouseTile.Y);
-			var captured = false;
+			var chessMove = validMoves.First(move => move.NewPos.ToVector() == mouseTile);
 
-			if (pieces.ContainsKey(mouseKey) && pieces[mouseKey].player != root.player) // TODO: refactor with adam's code
+			if (chessMove.Taken is not null)
 			{
-				// capture a piece, if there is one to be captured safely
-				root.Capture(pieces[mouseKey]);
-				RemoveChild(pieces[mouseKey]);
+				var capPos = CoordinatesToKey(chessMove.Taken.Value.Item1, chessMove.Taken.Value.Item2);
+				root.Capture(pieces[capPos]);
+				RemoveChild(pieces[capPos]);
 				
-				pieces[mouseKey].QueueFree();
-				pieces.Remove(mouseKey);
-				
-				captured = true;
+				pieces[capPos].QueueFree();
+				pieces.Remove(capPos);
 			}
 
-			if (selectedPiece is { type: Constants.Pieces.KING }) // TODO: refactor with adam's code
-			{
-				// update the position of the king of the current player
-				kingPositions[(int) root.player] = mouseTile;
-			}
+			var (nx, ny) = chessMove.NewPos;
+			var (ox, oy) = chessMove.OldPos;
+			
+			pieces.Remove(CoordinatesToKey(ox, oy));
+			pieces[CoordinatesToKey(nx, ny)] = selectedPiece;
 
-			if (selectedPiece is { type: Constants.Pieces.KING } && pieces.ContainsKey(mouseKey)) // TODO: refactor with adam's code
-			{
-				// are we castling?
-				if (pieces[mouseKey].type == Constants.Pieces.ROOK)
-				{
-					var direction = -Mathf.Sign(selectedPiecePosition.X - mouseTile.X);
-					
-					var king = selectedPiece;
-					var rook = pieces[mouseKey];
-
-					var kingPosition = new Vector2(selectedPiecePosition.X + direction * 2, selectedPiecePosition.Y);
-					var kingPositionKey = CoordinatesToKey((int) kingPosition.X, (int) kingPosition.Y);
-
-					var rookPosition = new Vector2(kingPosition.X - direction, kingPosition.Y);
-					var rookPositionKey = CoordinatesToKey((int) rookPosition.X, (int) rookPosition.Y);
-
-					pieces.Remove(mouseKey);
-					pieces.Remove(CoordinatesToKey((int) selectedPiecePosition.X, (int) selectedPiecePosition.Y));
-
-					pieces[kingPositionKey] = king;
-					pieces[rookPositionKey] = rook;
-
-					rook.moved = true;
-					rook.Position = new Vector2(rookPosition.X * Constants.tileSize, rookPosition.Y * Constants.tileSize);
-					
-					king.Position = new Vector2(kingPosition.X * Constants.tileSize, kingPosition.Y * Constants.tileSize);
-					kingPositions[(int) root.player] = kingPosition;
-				}
-			}
-			else
-			{
-				// move the selected to piece to its new position
-				pieces.Remove(CoordinatesToKey((int) selectedPiecePosition.X, (int) selectedPiecePosition.Y));
-				pieces[mouseKey] = selectedPiece;
-
-				selectedPiece!.Position = new Vector2(mouseTile.X * Constants.tileSize, mouseTile.Y * Constants.tileSize);
-			}
-
-			// can a pawn perform an en passant capture?
-			if (selectedPiece.type == Constants.Pieces.PAWN && Mathf.Abs( (int) (selectedPiecePosition.X - mouseTile.X)) == 1 && !captured) // TODO: refactor with adam's code
-			{
-				var xOffset = -(selectedPiecePosition.X - mouseTile.X);
-				var enPassantOffset = new Vector2(selectedPiecePosition.X + xOffset, selectedPiecePosition.Y);
-				var enPassantKey = CoordinatesToKey((int) enPassantOffset.X, (int) enPassantOffset.Y);
-
-				root.Capture(pieces[enPassantKey]);
-				RemoveChild(pieces[enPassantKey]);
-				
-				pieces[enPassantKey].QueueFree();
-				pieces.Remove(enPassantKey);
-			}
-
-			selectedPiece.moved = true;
+			selectedPiece!.Position = new Vector2(nx * Constants.tileSize, ny * Constants.tileSize);
 
 			// handle pawns trying to promote
-			if (selectedPiece.type == Constants.Pieces.PAWN) // TODO: refactor with adam's code
+			if (chessMove.IsPromotion)
 			{
-				var y = (int) mouseTile.Y;
-				var canPromote = y is 7 or 0;
-
-				if (canPromote)
-				{
-					PromotePawn(mouseTile);
-				}
-
-				if (Mathf.Abs((int) (mouseTile.Y - selectedPiecePosition.Y)) == 2)
-				{
-					selectedPiece.jumped = true;
-				}
+				PromotePawn(mouseTile);
 			}
-
 			// reset all states after move has been completed
-			// TODO: refactor with adam's code
 			selectedPiece = null;
 			selectedPiecePosition = invalidTile;
-			validMoves = new Array<Vector2>();
-
-			root.SwitchPlayer();
+			validMoves = new List<ChessMove>();
 
 			// make sure the game should still be continuing, end it if not
 			// TODO: refactor with adam's code
-			if (!CheckCheckmate(root.player))
+			if (root.winner is null)
 			{
 				root.gameState = Constants.GameState.GETTING_PIECE;
 			}
 			else
 			{
-				root.winner = root.player == Constants.Player.WHITE ? Constants.Player.BLACK : Constants.Player.WHITE; // TODO: refactor with adam's code
-
-				var dialog = new WinnerDialog(root.winner);
+				var dialog = new WinnerDialog(root.winner.Value);
 				dialog.Position = new Vector2(Constants.boardSize / 2.0f - (WinnerDialog.winnerWidth - Dialog.size) / 2.0f, Constants.boardSize / 2.0f - (WinnerDialog.winnerHeight - Dialog.size) / 2.0f);
 				
 				root.AddChild(dialog);
@@ -460,14 +374,15 @@ public partial class Board : Node2D
 		root.AddChild(dialog);
 
 		// capture user's choice of piece type
-		var newPiece = Constants.Pieces.QUEEN;
-		dialog.OnSelected += type => { newPiece = type; };
+		var newPiece = PromotionType.Queen;
+		dialog.OnSelected += type => { newPiece = (PromotionType)type; };
 		root.RemoveChild(dialog);
 		
 		// update the pawn to its new sprite & type
 		var key = CoordinatesToKey((int) position.X, (int) position.Y);
-		pieces[key].type = newPiece;
+		pieces[key].type = (PieceType)newPiece;
 		pieces[key].UpdateSprite();
+		state.Promote(((int) position.X, (int) position.Y), newPiece);
 	}
 
 	/// <summary>
@@ -476,8 +391,7 @@ public partial class Board : Node2D
 	/// </summary>
 	public void NewGame()
 	{
-		pieces = new Dictionary<int, Piece>();
-		kingPositions = new Array<Vector2>();
+		pieces = new System.Collections.Generic.Dictionary<int, Piece>();
 
 		foreach (var child in GetChildren())
 		{
@@ -492,28 +406,13 @@ public partial class Board : Node2D
 		{
 			for (var x = 0; x < 8; x++)
 			{
-				var y = 6 - 5 * i;
-				var piece = new Piece((Constants.Player) i, Constants.Pieces.PAWN); // TODO: refactor with adam's code
-				piece.Position = new Vector2(x * Constants.tileSize, y * Constants.tileSize);
-				pieces[CoordinatesToKey(x, y)] = piece;
-			}
-
-			var types = new Array<Constants.Pieces> // TODO: refactor with adam's code
-			{
-				Constants.Pieces.ROOK, Constants.Pieces.KNIGHT, Constants.Pieces.BISHOP, Constants.Pieces.KING, Constants.Pieces.QUEEN, Constants.Pieces.BISHOP, Constants.Pieces.KNIGHT, Constants.Pieces.ROOK
-			};
-			for (var x = 0; x < 8; x++)
-			{
-				var y = 7 - 7 * i;
-				var piece = new Piece((Constants.Player) i, types[x]);
-				piece.Position = new Vector2(x * Constants.tileSize, y * Constants.tileSize);
-
-				if (piece.type == Constants.Pieces.KING) // TODO: refactor with adam's code
+				for (int y = 0; y < 8; y++)
 				{
-					kingPositions.Add(new Vector2(x, y));
+					if(state.GetPiece(x, y).IsPieceType(PieceType.Space)) continue;
+					var piece = new Piece((Side) (1-i), state.GetPiece(x, y).GetPieceType()); // TODO: refactor with adam's code
+					piece.Position = new Vector2(x * Constants.tileSize, y * Constants.tileSize);
+					pieces[CoordinatesToKey(x, y)] = piece;
 				}
-
-				pieces[CoordinatesToKey(x, y)] = piece;
 			}
 		}
 
@@ -521,170 +420,6 @@ public partial class Board : Node2D
 		{
 			AddChild(pair.Value);
 		}
-	}
-
-	/// <summary>
-	/// Checks if a move were to put a king in check.
-	/// TODO: most likely unnecessary (to be deleted)
-	/// </summary>
-	/// <param name="x">The row of the piece being moved.</param>
-	/// <param name="y">The column of the piece being moved.</param>
-	/// <param name="piece">The piece being moved.</param>
-	/// <param name="position">The position of the piece being moved to.</param>
-	/// <returns>True if the king were to be in check, false otherwise.</returns>
-	public bool WouldBeInCheck(int x, int y, Piece piece, Vector2 position)
-	{
-		var player = piece.player;
-		var kingPosition = kingPositions[(int) player];
-
-		if (piece.type == Constants.Pieces.KING)
-		{
-			kingPosition = position;
-		}
-
-		// create a temporary position to check
-		var boardState = pieces.Duplicate();
-		boardState.Remove(CoordinatesToKey(x, y));
-		boardState[CoordinatesToKey((int) position.X, (int) position.Y)] = piece;
-
-		return IsKingInCheck(player, boardState, kingPosition);
-	}
-
-	/// <summary>
-	/// Checks if castling were to put a king in check.
-	/// TODO: most likely unnecessary (to be deleted)
-	/// </summary>
-	/// <param name="currentPosition">The king's current position.</param>
-	/// <param name="castlePosition">The rook's current position.</param>
-	/// <param name="newPosition">The king's new position after castling.</param>
-	/// <param name="newCastlePosition">The rook's new position after castling.</param>
-	/// <returns>True if the king were to be in check, false otherwise.</returns>
-	public bool WouldBeInCheckFromCastling(Vector2 currentPosition, Vector2 castlePosition, Vector2 newPosition, Vector2 newCastlePosition)
-	{
-		var king = GetPieceFromVector2(currentPosition);
-		var rook = GetPieceFromVector2(castlePosition);
-
-		// create a temporary position to check
-		var boardState = pieces.Duplicate();
-		boardState.Remove(CoordinatesToKey((int) currentPosition.X, (int) currentPosition.Y));
-		boardState.Remove(CoordinatesToKey((int) castlePosition.X, (int) castlePosition.Y));
-
-		boardState[CoordinatesToKey((int) newPosition.X, (int) newPosition.Y)] = king;
-		boardState[CoordinatesToKey((int) newCastlePosition.X, (int) newCastlePosition.Y)] = rook;
-
-		return IsKingInCheck(king.player, boardState, newPosition);
-	}
-
-	/// <summary>
-	/// Checks if the king is currently in check.
-	/// TODO: most likely unnecessary (to be deleted)
-	/// </summary>
-	/// <param name="player">The player who is currently in check.</param>
-	/// <param name="boardState">The current state of the board.</param>
-	/// <param name="kingPosition">The current position of the player's king.</param>
-	/// <returns>True if the king is in check, flase otherwise.</returns>
-	private bool IsKingInCheck(Constants.Player player, Dictionary<int, Piece> boardState, Vector2 kingPosition)
-	{
-		// check if pawns can capture the king
-		var y = -1 + (int) player * 2;
-		for (var i = 0; i < 2; i++)
-		{
-			var x = -1 + (i * 2);
-			var piece = GetPieceFromGrid((int) (kingPosition.X + x), (int) (kingPosition.Y + y), boardState);
-			if (piece is { type: Constants.Pieces.PAWN } && piece.player != player)
-			{
-				return true;
-			}
-		}
-		
-		// check if knights can capture the king
-		foreach (var direction in Constants.knightDirections)
-		{
-			var piece = GetPieceFromGrid((int) (kingPosition.X + direction.X), (int) (kingPosition.Y + direction.Y), boardState);
-			if (piece is { type: Constants.Pieces.KNIGHT } && piece.player != player)
-			{
-				return true;
-			}
-		}
-		
-		// check to prevent a king from moving too close to another king
-		foreach (var direction in Constants.allDirections)
-		{
-			var piece = GetPieceFromGrid((int) (kingPosition.X + direction.X), (int) (kingPosition.Y + direction.Y), boardState);
-			if (piece is { type: Constants.Pieces.KING } && piece.player != player)
-			{
-				return true;
-			}
-		}
-		
-		// check if a queen, bishop or rook can capture the king
-		var directionList = new Array<Array<Vector2>> { Constants.allDirections, Constants.rookDirections, Constants.bishopDirections };
-		var pieceList = new Array<Constants.Pieces> { Constants.Pieces.QUEEN, Constants.Pieces.ROOK, Constants.Pieces.BISHOP };
-
-		for (var i = 0; i < directionList.Count; i++)
-		{
-			var directions = directionList[i];
-			var piece = pieceList[i];
-
-			foreach (var direction in directions)
-			{
-				var multi = 1;
-				while (multi < 8)
-				{
-					var king = GetPieceFromGrid((int) (kingPosition.X + direction.X * multi), (int) (kingPosition.Y + direction.Y * multi), boardState);
-					if (king != null)
-					{
-						if (king.type == piece && king.player != player)
-						{
-							return true;
-						}
-
-						if (king.type != piece || king.player == player)
-						{
-							break;
-						}
-					}
-
-					multi++;
-				}
-			}
-		}
-
-		return false;
-	}
-
-	/// <summary>
-	/// Checks if the game has ended by checkmate.
-	/// TODO: refactor with adam's code
-	/// </summary>
-	/// <param name="player">The player who might've gotten checkmated.</param>
-	/// <returns>True if it's checkmate, false otherwise.</returns>
-	private bool CheckCheckmate(Constants.Player player)
-	{
-		foreach (var pair in pieces)
-		{
-			var piece = pair.Value;
-			if (piece.player == player)
-			{
-				if (piece.GetValidMoves((int) piece.Position.X / Constants.tileSize, (int) piece.Position.Y / Constants.tileSize).Count > 0)
-				{
-					return false;
-				}
-			}
-		}
-
-		return true;
-	}
-
-	/// <summary>
-	/// Checks if the game has ended by stalemate.
-	/// TODO: create with adam's code
-	/// </summary>
-	/// <returns>True if it's a stalemate, false otherwise.</returns>
-	/// <exception cref="NotImplementedException">Not currently implemented.</exception>
-	private bool CheckStalemate()
-	{
-		throw new NotImplementedException();
 	}
 
 	/// <summary>

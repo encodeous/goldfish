@@ -1,5 +1,6 @@
 using Godot;
 using Godot.Collections;
+using Side = goldfish.Core.Data.Side;
 
 namespace chessium.scripts;
 
@@ -36,14 +37,14 @@ public partial class PromotionDialog : Dialog
 	/// The player who owns the promoting pawn.
 	/// TODO: refactor with adam's code
 	/// </summary>
-	private Constants.Player player;
+	private Side player;
 
 	/// <summary>
 	/// Constructs a new PromotionDialog.
 	/// TODO: refactor with adam's code
 	/// </summary>
 	/// <param name="player">The player who owns the promoting pawn.</param>
-	public PromotionDialog(Constants.Player player) : base((int) promotionWidth, (int) promotionHeight)
+	public PromotionDialog(Side player) : base((int) promotionWidth, (int) promotionHeight)
 	{
 		this.player = player;
 	}
