@@ -32,6 +32,10 @@ public partial class Constants : Node
 		/// </summary>
 		MAKING_A_MOVE,
 		/// <summary>
+		/// Are we stalemated?
+		/// </summary>
+		STALEMATE, // TODO: implement with adam's code
+		/// <summary>
 		/// Are we checkmated?
 		/// </summary>
 		CHECKMATE,
@@ -43,6 +47,7 @@ public partial class Constants : Node
 
 	/// <summary>
 	/// An enum representing all possible chess pieces.
+	/// TODO: refactor with adam's code (make sure enum ordinals match those in adam's code)
 	/// </summary>
 	public enum Pieces
 	{
@@ -74,6 +79,7 @@ public partial class Constants : Node
 
 	/// <summary>
 	/// Represents the color of the player who is currently playing.
+	/// TODO: most likely unnecessary (to be deleted)
 	/// </summary>
 	public enum Player
 	{
@@ -89,6 +95,7 @@ public partial class Constants : Node
 
 	/// <summary>
 	/// Represents the directions a rook can go.
+	/// TODO: most likely unnecessary (to be deleted)
 	/// </summary>
 	public static readonly Array<Vector2> rookDirections = new ()
 	{
@@ -100,6 +107,7 @@ public partial class Constants : Node
 	
 	/// <summary>
 	/// Represents the directions a knight can go.
+	/// TODO: most likely unnecessary (to be deleted)
 	/// </summary>
 	public static readonly Array<Vector2> knightDirections = new ()
 	{
@@ -115,6 +123,7 @@ public partial class Constants : Node
 	
 	/// <summary>
 	/// Represents the directions a bishop can go.
+	/// TODO: most likely unnecessary (to be deleted)
 	/// </summary>
 	public static readonly Array<Vector2> bishopDirections = new ()
 	{
@@ -126,6 +135,7 @@ public partial class Constants : Node
 	
 	/// <summary>
 	/// Represents the directions a queen can go, and all directions in general.
+	/// TODO: most likely unnecessary (to be deleted)
 	/// </summary>
 	public static readonly Array<Vector2> allDirections = new ()
 	{

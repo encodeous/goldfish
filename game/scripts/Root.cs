@@ -11,6 +11,7 @@ public partial class Root : Node2D
 	/// The chess board.
 	/// </summary>
 	private Board board;
+	
 	/// <summary>
 	/// The other UI elements.
 	/// </summary>
@@ -18,6 +19,7 @@ public partial class Root : Node2D
 
 	/// <summary>
 	/// The current player and winner, if any.
+	/// TODO: refactor with adam's code (winner is likely unnecessary)
 	/// </summary>
 	public Constants.Player player, winner;
 	
@@ -46,7 +48,7 @@ public partial class Root : Node2D
 	/// </summary>
 	private void NewGame()
 	{
-		player = Constants.Player.BLACK;
+		player = Constants.Player.BLACK; // TODO: refactor with adam's code
 		gameState = Constants.GameState.GETTING_PIECE;
 
 		SwitchPlayer();
@@ -69,7 +71,7 @@ public partial class Root : Node2D
 	/// </summary>
 	public void SwitchPlayer()
 	{
-		player = player == Constants.Player.WHITE ? Constants.Player.BLACK : Constants.Player.WHITE;
+		player = player == Constants.Player.WHITE ? Constants.Player.BLACK : Constants.Player.WHITE; // TODO: refactor with adam's code
 		
 		ui.SetPlayer(player);
 		board.ClearJumps();

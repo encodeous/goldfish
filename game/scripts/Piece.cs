@@ -9,10 +9,12 @@ public partial class Piece : Node2D
 	/// The sprite of the piece.
 	/// </summary>
 	private Sprite2D sprite;
+	
 	/// <summary>
 	/// The image of the piece.
 	/// </summary>
 	private Texture2D texture;
+	
 	/// <summary>
 	/// The game board Node.
 	/// </summary>
@@ -20,20 +22,25 @@ public partial class Piece : Node2D
 
 	/// <summary>
 	/// Represents the player who owns the piece.
+	/// TODO: refactor with adam's code
 	/// </summary>
 	public Constants.Player player;
+	
 	/// <summary>
 	/// Represents the type of the piece.
+	/// TODO: refactor with adam's code
 	/// </summary>
 	public Constants.Pieces type;
 
 	/// <summary>
 	/// Has the piece moved or jumped?
+	/// TODO: refactor with adam's code
 	/// </summary>
 	public bool moved = false, jumped = false;
 	
 	/// <summary>
 	/// Constructs a new Piece instance.
+	/// TODO: refactor with adam's code
 	/// </summary>
 	/// <param name="player">The player who owns the piece.</param>
 	/// <param name="type">The type of piece.</param>
@@ -75,6 +82,7 @@ public partial class Piece : Node2D
 
 	/// <summary>
 	/// Gets the valid piece directions depending on the type of piece.
+	/// TODO: most likely unnecessary (to be deleted)
 	/// </summary>
 	/// <returns>An array of valid piece directions depending on the type of piece.</returns>
 	private Array<Vector2> GetPieceDirections()
@@ -97,6 +105,7 @@ public partial class Piece : Node2D
 
 	/// <summary>
 	/// Gets all valid moves for this piece, depending on its type.
+	/// TODO: most likely unnecessary (to be deleted)
 	/// </summary>
 	/// <param name="x">The row of the piece.</param>
 	/// <param name="y">The column of the piece.</param>
@@ -207,6 +216,7 @@ public partial class Piece : Node2D
 
 	/// <summary>
 	/// Gets all valid moves for a piece from a Vector2 position.
+	/// TODO: refactor with adam's code
 	/// </summary>
 	/// <param name="vector">The position of the piece.</param>
 	/// <returns>An array of valid moves.</returns>
@@ -217,6 +227,7 @@ public partial class Piece : Node2D
 
 	/// <summary>
 	/// Gets the number of squares a piece can travel in a move.
+	/// TODO: most likely unnecessary (to be deleted)
 	/// </summary>
 	/// <returns>An int depending on the type of piece.</returns>
 	private int DistanceTravelled()
@@ -231,6 +242,7 @@ public partial class Piece : Node2D
 
 	/// <summary>
 	/// Checks if a move is legal.
+	/// TODO: most likely unnecessary (to be deleted)
 	/// </summary>
 	/// <param name="position">The position of the move to make.</param>
 	/// <returns>True if the move is legal, false otherwise.</returns>
@@ -259,6 +271,7 @@ public partial class Piece : Node2D
 
 	/// <summary>
 	/// Checks if a tile contains an enemy piece.
+	/// TODO: most likely unnecessary (to be deleted)
 	/// </summary>
 	/// <param name="position">The position to check for.</param>
 	/// <returns>True if a tile has an enemy, false otherwise.</returns>

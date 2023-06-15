@@ -3,4 +3,9 @@
     <TargetFramework>net6.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
   </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="goldfish">
+      <HintPath>..\goldfish\goldfish\bin\Debug\net7.0\goldfish.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>

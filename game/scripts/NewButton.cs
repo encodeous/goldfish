@@ -51,7 +51,7 @@ public partial class NewButton : Dialog
 	/// <param name="event">The input event.</param>
 	public override void _Input(InputEvent @event)
 	{
-		if (@event is InputEventMouseButton button && !button.IsPressed() && button.ButtonIndex == MouseButton.Left && mouseIn)
+		if (@event is InputEventMouseButton { Pressed: false, ButtonIndex: MouseButton.Left } && mouseIn)
 		{
 			GetNode<Board>("/root/Root/Board").NewGame();
 		}

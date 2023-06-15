@@ -9,11 +9,13 @@ public partial class PieceSlot : Node2D
 {
 	/// <summary>
 	/// Is the player's color black?
+	/// TODO: refactor with adam's code
 	/// </summary>
 	[Export] private bool black;
 
 	/// <summary>
 	/// The player who captured the piece.
+	/// TODO: refactor with adam's code
 	/// </summary>
 	private Constants.Player player;
 	
@@ -30,7 +32,7 @@ public partial class PieceSlot : Node2D
 	/// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
-		if (black)
+		if (black) // TODO: refactor with adam's code
 		{
 			player = Constants.Player.BLACK;
 		}
@@ -72,7 +74,7 @@ public partial class PieceSlot : Node2D
 		pieceSprite.Hframes = 6;
 		pieceSprite.Vframes = 2;
 		pieceSprite.ZIndex = 1000 + index;
-		pieceSprite.FrameCoords = new Vector2I((int) piece, (int) player);
+		pieceSprite.FrameCoords = new Vector2I((int) piece, (int) player); // TODO: refactor with adam's code
 
 		index++;
 		AddChild(pieceSprite);
