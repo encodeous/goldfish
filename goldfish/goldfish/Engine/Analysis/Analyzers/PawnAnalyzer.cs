@@ -5,7 +5,7 @@ namespace goldfish.Engine.Analysis.Analyzers;
 
 public class PawnAnalyzer : IGameAnalyzer
 {
-    public double Weighting => 1;
+    public double Weighting => 10;
     public double GetScore(in ChessState state)
     {
         double ScoreSide(in ChessState nState, Side side)

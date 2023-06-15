@@ -1,4 +1,5 @@
-﻿using goldfish.Core.Data;
+﻿using System.Runtime.CompilerServices;
+using goldfish.Core.Data;
 using goldfish.Core.Data.Optimization;
 
 namespace goldfish.Core.Game.Rules;
@@ -147,10 +148,9 @@ public static class RuleUtils
         return attacks;
     }
     
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsEmptySquare(in ChessState state, int r, int c)
     {
-        if (!(r, c).IsWithinBoard()) return false;
-        var p = state.GetPiece(r, c);
-        return p.GetPieceType() == PieceType.Space;
+        return (r, c).IsWithinBoard() && state.GetPiece(r, c).IsPieceType(PieceType.Space);
     }
 }

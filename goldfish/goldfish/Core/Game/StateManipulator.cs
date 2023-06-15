@@ -11,17 +11,16 @@ namespace goldfish.Core.Game;
 /// </summary>
 public static class StateManipulator
 {
-    private static readonly ChessMove[] _moveDump = new ChessMove[30];
+    private static readonly ChessMove[] _moveDump = new ChessMove[40];
     /// <summary>
     /// Gets a matrix of squares attacked by a side
     /// </summary>
     /// <param name="state"></param>
     /// <param name="side"></param>
-    /// <param name="cache"></param>
     /// <returns></returns>
     public static Grid8x8 GetAttackMatrix(this in ChessState state, Side side)
     {
-        ref var cache = ref Tst.Get(state);
+        var cache = Tst.Get(state);
         if (side == Side.White)
         {
             if (cache.WhiteCache is not null) return cache.WhiteCache.Value;
@@ -31,7 +30,7 @@ public static class StateManipulator
             if (cache.BlackCache is not null) return cache.BlackCache.Value;
         }
         var atk = new Grid8x8();
-        Span<(int, int)> attackBuf = stackalloc (int, int)[30]; // assume any given piece will have less than 30 possible attacks, this is very generous
+        Span<(int, int)> attackBuf = stackalloc (int, int)[32]; // assume any given piece will have less than 30 possible attacks, this is very generous
         for (var i = 0; i < 8; i++)
         for (var j = 0; j < 8; j++)
         {
@@ -44,14 +43,14 @@ public static class StateManipulator
                 atk[pos.Item1, pos.Item2] = true;
             }
         }
-        cache = ref Tst.Get(state);
+        ref var aCache = ref Tst.Get(state);
         if (side == Side.White)
         {
-            cache.WhiteCache = atk;
+            aCache.WhiteCache = atk;
         }
         else
         {
-            cache.BlackCache = atk;
+            aCache.BlackCache = atk;
         }
         return atk;
     }
@@ -66,7 +65,7 @@ public static class StateManipulator
         for (var j = 0; j < 8; j++)
         {
             var piece = state.GetPiece(i, j);
-            if (!piece.IsSide(state.ToMove)|| piece.GetLogic() is null) continue;
+            if (!piece.IsSide(state.ToMove)) continue;
             if (state.GetValidMovesForSquare(i, j, _moveDump) != 0)
             {
                 return null;

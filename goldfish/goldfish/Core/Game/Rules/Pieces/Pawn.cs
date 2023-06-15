@@ -95,7 +95,7 @@ public struct Pawn : IPieceLogic
         return cnt;
     }
 
-    private void AddPromotionVariants(ref int cnt, in ChessMove move, Span<ChessMove> moves)
+    private readonly void AddPromotionVariants(ref int cnt, in ChessMove move, Span<ChessMove> moves)
     {
         moves[cnt++] = PromotionVariant(move, PromotionType.Bishop);
         moves[cnt++] = PromotionVariant(move, PromotionType.Knight);
@@ -107,7 +107,7 @@ public struct Pawn : IPieceLogic
     {
         var ns = move.NewState;
         ns.Promote(move.NewPos, type);
-        return move with { NewState = ns };
+        return move with { NewState = ns, WasPromotion = true};
     }
     
     private bool CanCapture(int nr, int nc, out ChessMove? move, in ChessState state, Side side, int r, int c, int dir)

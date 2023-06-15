@@ -5,7 +5,7 @@ namespace goldfish.Engine.Analysis.Analyzers;
 
 public class AggressionAnalyzer : IGameAnalyzer
 {
-    public double Weighting => 5;
+    public double Weighting => 20;
     public double GetScore(in ChessState state)
     {
         double ScoreSide(in ChessState nState, Side side)

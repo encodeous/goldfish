@@ -22,6 +22,7 @@ public unsafe struct ChessState
     public AdditionalChessState Additional;
 
     public Side _toMove;
+    public int Pieces;
 
     public Side ToMove
     {
@@ -57,6 +58,7 @@ public unsafe struct ChessState
     {
         var dat = _pieces[r * 4 + c / 2];
         Additional.Hash ^= Tst.ZobristCache[r * 4 + c / 2, dat];
+        if (piece.IsPieceType(PieceType.Space)) Pieces--;
         byte nDat;
         if (piece.IsPieceType(PieceType.King))
         {
@@ -73,17 +75,21 @@ public unsafe struct ChessState
         {
             // upper bits
             nDat = _pieces[r * 4 + c / 2] = (byte)(dat & (0b1111) | (piece << 4));
+            if (((byte)((dat & 0b11110000) >> 4)).IsPieceType(PieceType.Space)) Pieces++;
         }
         else
         {
             // lower bits
             nDat = _pieces[r * 4 + c / 2] = (byte)(dat & (0b11110000) | piece);
+            if (((byte)(dat & 0b1111)).IsPieceType(PieceType.Space)) Pieces++;
         }
         Additional.Hash ^= Tst.ZobristCache[r * 4 + c / 2, nDat];
     }
     private void _SetPieceNoHash(int r, int c, byte piece)
     {
         var dat = _pieces[r * 4 + c / 2];
+        //if (dat.IsPieceType(PieceType.Space)) Pieces++;
+        if (piece.IsPieceType(PieceType.Space)) Pieces--;
         if (piece.IsPieceType(PieceType.King))
         {
             if (piece.IsSide(Side.Black))
@@ -99,11 +105,13 @@ public unsafe struct ChessState
         {
             // upper bits
             _pieces[r * 4 + c / 2] = (byte)(dat & (0b1111) | (piece << 4));
+            if (((byte)((dat & 0b11110000) >> 4)).IsPieceType(PieceType.Space)) Pieces++;
         }
         else
         {
             // lower bits
             _pieces[r * 4 + c / 2] = (byte)(dat & (0b11110000) | piece);
+            if (((byte)(dat & 0b1111)).IsPieceType(PieceType.Space)) Pieces++;
         }
     }
 
@@ -165,14 +173,6 @@ public unsafe struct ChessState
         for (var i = 0; i < 32; i++)
         {
             cur._pieces[i] = (byte)PieceType.Space | (byte)PieceType.Space << 4;
-        }
-
-        for (var i = 0; i < 8; i++)
-        {
-            cur._SetPieceNoHash(0, i, DefaultPieces[i].ToPiece(Side.White));
-            cur._SetPieceNoHash(7, i, DefaultPieces[i].ToPiece(Side.Black));
-            cur._SetPieceNoHash(1, i, PieceType.Pawn.ToPiece(Side.White));
-            cur._SetPieceNoHash(6, i, PieceType.Pawn.ToPiece(Side.Black));
         }
 
         cur.ToMove = Side.White;

@@ -1,7 +1,6 @@
 ﻿using System.Text.Json.Nodes;
 using engine_test;
 using goldfish.Core.Data;
-using goldfish.Core.Data.Optimization;
 using goldfish.Core.Game;
 using goldfish.Core.Game.FEN;
 
@@ -35,7 +34,7 @@ public class RuleTests
     static HashSet<ulong> GetAllMoves(in ChessState state)
     {
         int cnt = 0;
-        Span<ChessMove> tMoves = stackalloc ChessMove[30];
+        Span<ChessMove> tMoves = stackalloc ChessMove[32];
         var states = new HashSet<ulong>();
         for (var i = 0; i < 8; i++)
         for (var j = 0; j < 8; j++)
