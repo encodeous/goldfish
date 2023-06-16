@@ -53,7 +53,6 @@ public partial class Root : Node2D
 	private void NewGame()
 	{
 		gameState = Constants.GameState.GETTING_PIECE;
-
 		board.NewGame();
 		ui.NewGame();
 
@@ -65,6 +64,11 @@ public partial class Root : Node2D
 				child.QueueFree();
 			}
 		}
+	}
+
+	public void SwitchPlayer()
+	{
+		ui.SetPlayer(player);
 	}
 
 	/// <summary>

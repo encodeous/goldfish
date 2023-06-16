@@ -5,7 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="goldfish">
-      <HintPath>..\goldfish\goldfish\bin\Debug\net7.0\goldfish.dll</HintPath>
+      <HintPath>..\goldfish\goldfish\bin\Debug\net6.0\goldfish.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>

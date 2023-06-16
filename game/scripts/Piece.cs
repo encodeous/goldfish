@@ -89,9 +89,9 @@ public partial class Piece : Node2D
 	public List<ChessMove> GetValidMoves(int x, int y)
 	{
 		Span<ChessMove> positions = stackalloc ChessMove[35];
-		board.state.GetValidMovesForSquare(x, y, positions, false);
+		var cnt = board.state.GetValidMovesForSquare(x, y, positions, false);
 
-		return new List<ChessMove>(positions.ToArray());
+		return new List<ChessMove>(positions[..cnt].ToArray());
 	}
 
 	/// <summary>
@@ -132,6 +132,6 @@ public partial class Piece : Node2D
 	/// </summary>
 	public void UpdateSprite()
 	{
-		sprite.FrameCoords = new Vector2I((int) type, (int) player);
+		sprite.FrameCoords = new Vector2I((int) type, 1 - (int) player);
 	}
 }

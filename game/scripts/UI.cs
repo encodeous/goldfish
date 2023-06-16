@@ -75,17 +75,15 @@ public partial class UI : Node2D
 
 	/// <summary>
 	/// Sets the player indicator to the current player.
-	/// TODO: refactor with adam's code
 	/// </summary>
 	/// <param name="player">The current player.</param>
-	public void SetPlayer(Constants.Player player)
+	public void SetPlayer(Side player)
 	{
-		playerIndicator.FrameCoords = playerIndicator.FrameCoords with { Y = (int) player };
+		playerIndicator.FrameCoords = playerIndicator.FrameCoords with { Y = 1 - (int) player };
 	}
 
 	/// <summary>
 	/// Adds a captured piece to the relevant piece slot depending on its type and the player who owns it.
-	/// TODO: refactor with adam's code
 	/// </summary>
 	/// <param name="piece">The captured piece.</param>
 	public void CapturePiece(Piece piece)

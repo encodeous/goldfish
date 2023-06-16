@@ -1,8 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using Godot.Collections;
 using goldfish.Core.Data;
 using goldfish.Core.Game;
 using Side = goldfish.Core.Data.Side;
@@ -42,7 +40,7 @@ public partial class Board : Node2D
 	/// <summary>
 	/// Maps a piece to an index that corresponds with a piece's position.
 	/// </summary>
-	private System.Collections.Generic.Dictionary<int, Piece> pieces;
+	private Dictionary<int, Piece> pieces;
 
 	/// <summary>
 	/// Represents the Root scene.
@@ -58,16 +56,20 @@ public partial class Board : Node2D
 	/// The current state of the board.
 	/// </summary>
 	public ChessState state;
+
+	/// <summary>
+	/// Is the board flipped?
+	/// </summary>
+	private bool isBoardFlipped = true;
 	
 	/// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		mouseTile = invalidTile;
 		previousMouseTile = invalidTile;
-
-		state = ChessState.DefaultState();
-		validMoves = new List<ChessMove>(); // TODO: refactor with adam's code
-		pieces = new System.Collections.Generic.Dictionary<int, Piece>(); // TODO: refactor with adam's code
+		
+		validMoves = new List<ChessMove>();
+		pieces = new Dictionary<int, Piece>();
 		root = GetParent<Root>();
 	}
 
@@ -151,7 +153,7 @@ public partial class Board : Node2D
 					DrawTileWithBorder(selectedPiecePosition, new Color(0, 1, 0));
 				}
 
-				foreach (var mov in validMoves) // TODO: refactor with adam's code
+				foreach (var mov in validMoves)
 				{
 					// draw a border around the possible move being hovered over
 					var move = mov.NewPos.ToVector();
@@ -181,7 +183,7 @@ public partial class Board : Node2D
 
 	private Vector2 MapGlobalCoordsToBoard(Vector2 position)
 	{
-		return new Vector2(Mathf.Floor(position.X / Constants.tileSize), Mathf.Floor(position.Y / Constants.tileSize));
+		return new Vector2(Mathf.Floor(position.Y / Constants.tileSize), Mathf.Floor(position.X / Constants.tileSize));
 	}
 
 	/// <summary>
@@ -207,13 +209,12 @@ public partial class Board : Node2D
 
 	/// <summary>
 	/// Gets the piece from the pieces stored in the game board.
-	/// TODO: refactor with adam's code
 	/// </summary>
 	/// <param name="x">The row to fetch from.</param>
 	/// <param name="y">The column to fetch from.</param>
 	/// <param name="dictionary">The list of pieces currently present on the board.</param>
 	/// <returns>The piece at the position, if any.</returns>
-	private Piece GetPieceFromGrid(int x, int y, System.Collections.Generic.Dictionary<int, Piece> dictionary)
+	private Piece GetPieceFromGrid(int x, int y, Dictionary<int, Piece> dictionary)
 	{
 		if (x is < 8 and >= 0 && y is < 8 and >= 0)
 		{
@@ -237,7 +238,7 @@ public partial class Board : Node2D
 	/// <param name="color">The color of the border.</param>
 	private void DrawTileWithBorder(Vector2 position, Color color)
 	{
-		DrawRect(new Rect2(new Vector2(position.X * Constants.tileSize, position.Y * Constants.tileSize), new Vector2(Constants.tileSize, Constants.tileSize)), color, false, 5);
+		DrawRect(new Rect2(new Vector2(position.Y * Constants.tileSize, position.X * Constants.tileSize), new Vector2(Constants.tileSize, Constants.tileSize)), color, false, 5);
 	}
 
 	/// <summary>
@@ -257,7 +258,7 @@ public partial class Board : Node2D
 			return;
 		}
 
-		if (piece.GetValidMovesFromVector2(mouseTile).Any())
+		if (piece.player == state.ToMove && piece.GetValidMovesFromVector2(mouseTile).Any())
 		{
 			// we're good for making a move, set relevant vars to the needed values to do so
 			selectedPiece = piece;
@@ -273,7 +274,6 @@ public partial class Board : Node2D
 
 	/// <summary>
 	/// Deselects a piece (the user clicked on a different piece or right clicked on the same piece).
-	/// TODO: refactor with adam's code
 	/// </summary>
 	private void Deselect()
 	{
@@ -294,27 +294,38 @@ public partial class Board : Node2D
 		if ((@event.ButtonIndex == MouseButton.Right || mouseTile == invalidTile) && selectedPiece != null)
 		{
 			Deselect();
+			heldDown = false;
 			return;
 		}
 
 		if (mouseTile == invalidTile)
 		{
+			heldDown = false;
 			return;
 		}
 
 		// did the user drag the piece to a valid move location?
-		if (validMoves.Any(move => move.NewPos.ToVector() == mouseTile)) // TODO: refactor with adam's code
+		if (validMoves.Any(move => move.NewPos.ToVector() == mouseTile))
 		{
 			var chessMove = validMoves.First(move => move.NewPos.ToVector() == mouseTile);
 
 			if (chessMove.Taken is not null)
 			{
-				var capPos = CoordinatesToKey(chessMove.Taken.Value.Item1, chessMove.Taken.Value.Item2);
-				root.Capture(pieces[capPos]);
-				RemoveChild(pieces[capPos]);
+				var capturePosition = CoordinatesToKey(chessMove.Taken.Value.Item1, chessMove.Taken.Value.Item2);
+				if (chessMove.IsCastle)
+				{
+					var (rx, ry) = chessMove.Castle!.Value.GetCastleRookPos();
+					var (tx, ty) = chessMove.Taken.Value;
+					
+					var rook = pieces[CoordinatesToKey(rx, ry)];
+					rook.Position = new Vector2(ty * Constants.tileSize, tx * Constants.tileSize);
+				}
+
+				root.Capture(pieces[capturePosition]);
+				RemoveChild(pieces[capturePosition]);
 				
-				pieces[capPos].QueueFree();
-				pieces.Remove(capPos);
+				pieces[capturePosition].QueueFree();
+				pieces.Remove(capturePosition);
 			}
 
 			var (nx, ny) = chessMove.NewPos;
@@ -323,20 +334,20 @@ public partial class Board : Node2D
 			pieces.Remove(CoordinatesToKey(ox, oy));
 			pieces[CoordinatesToKey(nx, ny)] = selectedPiece;
 
-			selectedPiece!.Position = new Vector2(nx * Constants.tileSize, ny * Constants.tileSize);
+			selectedPiece!.Position = new Vector2(ny * Constants.tileSize, nx * Constants.tileSize);
 
 			// handle pawns trying to promote
 			if (chessMove.IsPromotion)
 			{
 				PromotePawn(mouseTile);
 			}
+			
 			// reset all states after move has been completed
 			selectedPiece = null;
 			selectedPiecePosition = invalidTile;
 			validMoves = new List<ChessMove>();
 
 			// make sure the game should still be continuing, end it if not
-			// TODO: refactor with adam's code
 			if (root.winner is null)
 			{
 				root.gameState = Constants.GameState.GETTING_PIECE;
@@ -350,7 +361,10 @@ public partial class Board : Node2D
 				root.gameState = Constants.GameState.CHECKMATE;
 			}
 
+			state = chessMove.NewState;
 			heldDown = false;
+			
+			root.SwitchPlayer();
 			QueueRedraw();
 		}
 		else
@@ -362,7 +376,7 @@ public partial class Board : Node2D
 
 	/// <summary>
 	/// Handle the promotion of a pawn.
-	/// TODO: refactor with adam's code
+	/// TODO: fix event not firing
 	/// </summary>
 	/// <param name="position">The position of the promoting pawn.</param>
 	private void PromotePawn(Vector2 position)
@@ -375,24 +389,24 @@ public partial class Board : Node2D
 
 		// capture user's choice of piece type
 		var newPiece = PromotionType.Queen;
-		dialog.OnSelected += type => { newPiece = (PromotionType)type; };
+		dialog.OnSelected += type => { newPiece = (PromotionType) type; };
 		root.RemoveChild(dialog);
 		
 		// update the pawn to its new sprite & type
 		var key = CoordinatesToKey((int) position.X, (int) position.Y);
-		pieces[key].type = (PieceType)newPiece;
+		pieces[key].type = (PieceType) newPiece;
 		pieces[key].UpdateSprite();
 		state.Promote(((int) position.X, (int) position.Y), newPiece);
 	}
 
 	/// <summary>
 	/// Prepares the board for a new game (resets piece positions & sprites).
-	/// TODO: refactor with adam's code
 	/// </summary>
 	public void NewGame()
 	{
-		pieces = new System.Collections.Generic.Dictionary<int, Piece>();
-
+		state = ChessState.DefaultState();
+		pieces = new Dictionary<int, Piece>();
+		
 		foreach (var child in GetChildren())
 		{
 			if (child is not Sprite2D)
@@ -402,17 +416,15 @@ public partial class Board : Node2D
 			}
 		}
 
-		for (var i = 0; i < 2; i++)
+		for (var x = 0; x < 8; x++)
 		{
-			for (var x = 0; x < 8; x++)
+			for (var y = 0; y < 8; y++)
 			{
-				for (int y = 0; y < 8; y++)
-				{
-					if(state.GetPiece(x, y).IsPieceType(PieceType.Space)) continue;
-					var piece = new Piece((Side) (1-i), state.GetPiece(x, y).GetPieceType()); // TODO: refactor with adam's code
-					piece.Position = new Vector2(x * Constants.tileSize, y * Constants.tileSize);
-					pieces[CoordinatesToKey(x, y)] = piece;
-				}
+				var dat = state.GetPiece(isBoardFlipped ? 7 - x : x, y);
+				if(dat.IsPieceType(PieceType.Space)) continue;
+				var piece = new Piece(dat.GetSide(), dat.GetPieceType());
+				piece.Position = new Vector2(y * Constants.tileSize, x * Constants.tileSize);
+				pieces[CoordinatesToKey(x, y)] = piece;
 			}
 		}
 
