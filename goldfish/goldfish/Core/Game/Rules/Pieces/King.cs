@@ -84,7 +84,7 @@ public struct King : IPieceLogic
                     {
                         NewPos = (nr, nc + dir),
                         NewState = castleState,
-                        Taken = newCap,
+                        Taken = (nr, nc),
                         OldPos = (r, c),
                         Castle = castleType
                     };

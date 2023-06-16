@@ -141,7 +141,7 @@ public class NegamaxTest
         ulong pos = 0;
         Span<(ChessMove, double)> referenceMoves = new (ChessMove, double)[5];
         double referenceEval = GoldFishEngine.NextOptimalMoves(startState, 5, ref referenceMoves);
-        var searcher = new GoldFishSearcher(TimeSpan.FromSeconds(5));
+        var searcher = new GoldFishSearcher(TimeSpan.FromSeconds(5), 5);
         var optimizedEval = searcher.ParallelSearch(startState, 5, CancellationToken.None);
         Assert.Equal(referenceEval, optimizedEval.EngineEval);
         Assert.Equal(referenceMoves[0].Item1, optimizedEval.BestMove);

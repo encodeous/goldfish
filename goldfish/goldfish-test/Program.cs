@@ -14,8 +14,7 @@ internal class Program
     private static ArraySegment<ChessMove> _selMoves;
     private static MenuBarItem goldFishToggle;
 
-    private static GoldFishSearcher _searcher =
-        new GoldFishSearcher(TimeSpan.FromSeconds(4), (int)(Environment.ProcessorCount / 1.2));
+    private static GoldFishSearcher _searcher = new(TimeSpan.FromSeconds(6), 6, (int)(Environment.ProcessorCount / 1.2));
     public static void Main(string[] args)
     {
         Application.Init();
@@ -122,16 +121,16 @@ internal class Program
                                 Task.Run(() =>
                                 {
                                     game.Commit();
-                                    Span<(ChessMove, double)> moves = new (ChessMove, double)[6];
-                                    var eval = _searcher.ParallelSearch(game.CurrentState, 6, CancellationToken.None);
-                                    game.LastMove = eval.BestMove;
-                                    game.CurrentState = eval.BestMove.NewState;
-                                    var gState2 = game.CurrentState.GetGameState();
-                                    // var res = _searcher.StartSearch(game.CurrentState);
-                                    // Debug.WriteLine($"Move calc w/ eval of {res.EngineEval} - depth {res.Depth}");
-                                    // game.LastMove = res.BestMove;
-                                    // game.CurrentState = res.BestMove.NewState;
+                                    // Span<(ChessMove, double)> moves = new (ChessMove, double)[6];
+                                    // var eval = _searcher.ParallelSearch(game.CurrentState, 6, CancellationToken.None);
+                                    // game.LastMove = eval.BestMove;
+                                    // game.CurrentState = eval.BestMove.NewState;
                                     // var gState2 = game.CurrentState.GetGameState();
+                                    var res = _searcher.StartSearch(game.CurrentState);
+                                    Debug.WriteLine($"Move calc w/ eval of {res.EngineEval} - depth {res.Depth}");
+                                    game.LastMove = res.BestMove;
+                                    game.CurrentState = res.BestMove.NewState;
+                                    var gState2 = game.CurrentState.GetGameState();
                                     Application.MainLoop.Invoke(() =>
                                     {
                                         if (gState2 is not null)
