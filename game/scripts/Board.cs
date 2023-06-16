@@ -319,13 +319,16 @@ public partial class Board : Node2D
 					
 					var rook = pieces[CoordinatesToKey(rx, ry)];
 					rook.Position = new Vector2(ty * Constants.tileSize, tx * Constants.tileSize);
+					pieces[CoordinatesToKey(tx, ty)] = rook;
 				}
+				else
+				{
+					root.Capture(pieces[capturePosition]);
+					RemoveChild(pieces[capturePosition]);
 
-				root.Capture(pieces[capturePosition]);
-				RemoveChild(pieces[capturePosition]);
-				
-				pieces[capturePosition].QueueFree();
-				pieces.Remove(capturePosition);
+					pieces[capturePosition].QueueFree();
+					pieces.Remove(capturePosition);
+				}
 			}
 
 			var (nx, ny) = chessMove.NewPos;
