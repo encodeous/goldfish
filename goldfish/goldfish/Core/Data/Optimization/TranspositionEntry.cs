@@ -8,9 +8,8 @@ public struct TranspositionEntry
     public Grid8x8? BlackCache;
     public double EngineEval;
     public double StaticEval;
-    public double QuiesceEval;
+    public int Moves;
     public int EvalDepth;
-    public int QuiesceDepth;
     public bool PV;
 
     
@@ -22,10 +21,9 @@ public struct TranspositionEntry
         WhiteCache = null;
         BlackCache = null;
         StaticEval = double.NaN;
-        QuiesceEval = double.NaN;
+        Moves = 10000;
         EngineEval = double.NaN;
         EvalDepth = 0;
-        QuiesceDepth = 10000;
         PV = false;
     }
     public void Clear()
@@ -33,11 +31,10 @@ public struct TranspositionEntry
         Checked = null;
         EngineEval = double.NaN;
         StaticEval = double.NaN;
-        QuiesceEval = double.NaN;
+        Moves = 10000;
         WhiteCache = null;
         BlackCache = null;
         EvalDepth = 0;
-        QuiesceDepth = 10000;
         PV = false;
     }
 }
