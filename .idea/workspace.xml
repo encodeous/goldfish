@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="adeb1692-9f7b-4d98-a66b-8c4ecb880018" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.goldfish/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.goldfish/.idea/discord.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.goldfish/.idea/encodings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.goldfish/.idea/indexLayout.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.goldfish/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-test/Program.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-test/data/castling.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-test/data/famous.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-test/data/pawns.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-test/data/promotions.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-test/data/standard.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-test/data/taxing.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-test/engine-test.csproj" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-units/GamesDatabaseTest.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-units/NegamaxTest.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-units/RuleTests.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-units/SearchTests.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-units/Usings.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-units/data/castling.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-units/data/famous.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-units/data/games.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-units/data/pawns.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-units/data/promotions.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-units/data/standard.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-units/data/taxing.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/engine-units/engine-units.csproj" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish-test/Console/ChessPrinter.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish-test/Program.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish-test/goldfish-test.csproj" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish.sln" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/.idea/.idea.goldfish/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/.idea/.idea.goldfish/.idea/encodings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/.idea/.idea.goldfish/.idea/indexLayout.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/.idea/.idea.goldfish/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/BoardPrinter.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Data/AdditionalChessState.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Data/CastleType.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Data/ChessMove.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Data/ChessState.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Data/Optimization/Grid8x8.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Data/Optimization/TranspositionEntry.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Data/Optimization/Tst.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Data/Optimization/Xoroshiro128.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Data/PieceType.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Data/PromotionType.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Data/Side.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Game/ChessGame.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Game/FEN/FenConvert.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Game/PieceExtensions.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Game/Rules/Pieces/Bishop.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Game/Rules/Pieces/IPieceLogic.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Game/Rules/Pieces/King.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Game/Rules/Pieces/Knight.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Game/Rules/Pieces/Pawn.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Game/Rules/Pieces/Queen.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Game/Rules/Pieces/Rook.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Game/Rules/RuleUtils.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Core/Game/StateManipulator.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Engine/Analysis/Analyzers/AggressionAnalyzer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Engine/Analysis/Analyzers/ControlAnalyzer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Engine/Analysis/Analyzers/MaterialAnalyzer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Engine/Analysis/Analyzers/PawnAnalyzer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Engine/Analysis/Analyzers/PiecePositionAnalyzer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Engine/Analysis/Analyzers/WinAnalyzer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Engine/Analysis/GameStateAnalyzer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Engine/Analysis/IGameAnalyzer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Engine/Analysis/Utils.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Engine/GoldFishEngine.Quiescence.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Engine/GoldFishEngine.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/Engine/Searcher/GoldFishSearcher.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/goldfish/goldfish.csproj" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="2RNvPkIy1YueZt7dWHO4SLYZVzL" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="false" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "main",
+    "show.migrate.to.gradle.popup": "false",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="adeb1692-9f7b-4d98-a66b-8c4ecb880018" name="Changes" comment="" />
+      <created>1687103334285</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1687103334285</updated>
+      <workItem from="1687103336264" duration="8000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

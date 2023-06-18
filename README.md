@@ -5,6 +5,8 @@
 
 ## Basic Info
 
+GoldFish provides a simple API to query valid chess moves according to (mostly) FIDE rules, and to search / evaluate optimal positions.
+
 - Language: C#/.NET
 - Elo: 1200-1500 ish?
 - Search Depth: 6-ply+ (can reach deeper depths on simple boards)
@@ -12,5 +14,15 @@
 
 # Features
 
-Offers a simple to use API to query valid chess moves & evaluate optimal positions.
+- Loading/Saving FEN (Forsyth-Edwards Notation)
+- Getting the valid moves for a piece
+- Checking for Checkmates & Draws
+- Searching for optimal moves
+- Calculating static/static evaluations for a game state
+- Printing & visualizing the game board
 
+## API Usage
+
+View the API Docs here:
+
+Loading/Saving FEN
