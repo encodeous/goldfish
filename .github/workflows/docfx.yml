@@ -18,6 +18,7 @@ jobs:
       name: Build Documentation
       with:
         args: docfx_project/docfx.json
+    - run: ls -lR
     - uses: maxheld83/ghpages@master
       name: Publish Documentation on GitHub Pages
       env:
