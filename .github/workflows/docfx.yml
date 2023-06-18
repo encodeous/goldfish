@@ -12,12 +12,14 @@ jobs:
     runs-on: ubuntu-latest
     name: Generate and publish the docs
     steps:
-    - uses: actions/checkout@v1
-      name: Checkout code
-    - uses: nunit/docfx-action@v2.4.0
-      name: Build Documentation
+    - name: Chekout
+      uses: actions/checkout@v3
+    - name: Dotnet Setup
+      uses: actions/setup-dotnet@v3
       with:
-        args: docfx_project/docfx.json
+        dotnet-version: 6.x
+    - run: dotnet tool update -g docfx
+    - run: docfx docfx_project/docfx.json
     - run: ls -lR
     - uses: maxheld83/ghpages@master
       name: Publish Documentation on GitHub Pages
