@@ -138,27 +138,26 @@ public static partial class GoldFishEngine
     }
     
     
-    public static (double, int) EngineEval(ChessState state, int depth, CancellationToken ct = default, double alpha = double.NegativeInfinity, double beta = double.PositiveInfinity, double staticEval = double.NaN)
+    public static (double, int) EngineEval(ChessState state, int depth, CancellationToken ct = default, double alpha = double.NegativeInfinity, double beta = double.PositiveInfinity)
 
     {
         if (ct.IsCancellationRequested) return (0, 0);
+        var staticEval = GameStateAnalyzer.Evaluate(state);
+        if (Math.Abs(staticEval) >= WinAnalyzer.CheckmateWeighting)
+        {
+            return (staticEval, 0);
+        }
         // alpha is white, beta is black
         if (depth == 0 || double.IsPositiveInfinity(Math.Abs(staticEval)))
         {
-            var eval = GameStateAnalyzer.Evaluate(state);
-            if (Math.Abs(eval) >= WinAnalyzer.CheckmateWeighting)
-            {
-                return (eval, 1);
-            }
-
-            return (eval, 1000);
+            return (staticEval, 1000);
         }
 
-        // ref var cache = ref Tst.Get(state);
-        // if (!double.IsNaN(cache.EngineEval) && cache.EvalDepth > depth)
-        // {
-        //     return (cache.EngineEval, cache.Moves);
-        // }
+        ref var cache = ref Tst.Get(state);
+        if (!double.IsNaN(cache.EngineEval) && cache.EvalDepth > depth)
+        {
+            return (cache.EngineEval, cache.Moves);
+        }
 
         var toPlay = state.ToMove;
         (ChessMove, double)? lastMove = null;
@@ -215,9 +214,9 @@ public static partial class GoldFishEngine
         for (int i = 0; i < cnt; i++)
         {
             var (move, mEval) = evalMoves[i];
-            var (nEval, mov) = EngineEval(move.NewState, depth - 1, ct, alpha, beta, mEval);
+            var (nEval, mov) = EngineEval(move.NewState, depth - 1, ct, alpha, beta);
             mov++;
-            lastMove = (move, mEval);
+            lastMove = (move, nEval);
 
             var isMoreOptimal = false;
             
@@ -232,10 +231,19 @@ public static partial class GoldFishEngine
                 if (optimalVal > nEval) isMoreOptimal = true;
             }
 
-            bool isWin = (state.ToMove == Side.White && mEval >= WinAnalyzer.CheckmateWeighting)
-                         || (state.ToMove == Side.Black && mEval <= -WinAnalyzer.CheckmateWeighting);
-            
-            if (isMoreOptimal && !isWin || (isWin && moves >= mov))
+            bool isWin = (state.ToMove == Side.White && nEval >= WinAnalyzer.CheckmateWeighting)
+                         || (state.ToMove == Side.Black && nEval <= -WinAnalyzer.CheckmateWeighting);
+
+            if (isWin)
+            {
+                if (moves >= mov)
+                {
+                    optimalVal = nEval;
+                    bestMove = move;
+                    moves = mov;
+                }
+            }
+            else if (isMoreOptimal)
             {
                 optimalVal = nEval;
                 bestMove = move;

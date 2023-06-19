@@ -117,8 +117,7 @@ public class GoldFishSearcher
             }, (job, token) =>
             {
                 if (token.ShouldExitCurrentIteration || ct.IsCancellationRequested) return;
-                var (optimizedEval, moves) = GoldFishEngine.EngineEval(job.Move.NewState, job.Depth, ct,
-                    staticEval: job.Eval);
+                var (optimizedEval, moves) = GoldFishEngine.EngineEval(job.Move.NewState, job.Depth, ct);
                 bag.Add(new SearchResult(optimizedEval, job.Move, job.Depth, moves));
             });
         }catch(OperationCanceledException){}

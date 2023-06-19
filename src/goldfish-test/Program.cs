@@ -14,7 +14,7 @@ internal class Program
     private static ArraySegment<ChessMove> _selMoves;
     private static MenuBarItem goldFishToggle;
 
-    private static GoldFishSearcher _searcher = new(TimeSpan.FromSeconds(6), 6, (int)(Environment.ProcessorCount / 1.2));
+    private static GoldFishSearcher _searcher = new(TimeSpan.FromSeconds(15), 6, (int)(Environment.ProcessorCount / 1.2));
     public static void Main(string[] args)
     {
         Application.Init();
