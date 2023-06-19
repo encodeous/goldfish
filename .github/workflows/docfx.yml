@@ -2,44 +2,43 @@
 
 name: DocFX
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 # Controls when the action will run. 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  generate_docs:
+  generate_and_publish_docs:
     runs-on: ubuntu-latest
     name: Generate and publish the docs
     steps:
-    - uses: actions/checkout@v1
-      name: Checkout code
-    - uses: nunit/docfx-action@v2.4.0
-      name: Build Documentation
+    - name: Chekout
+      uses: actions/checkout@v3
+    - name: Dotnet Setup
+      uses: actions/setup-dotnet@v3
       with:
-        args: docfx_project/docfx.json
+        dotnet-version: 6.x
+    - run: dotnet tool update -g docfx
+    - run: docfx docfx_project/docfx.json
+    - run: ls -lR
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v1
       with:
-          path: ./_site
-  # Deploy job
+        path: ./docfx_project/_site
+
+  # Deployment job
   deploy:
-    # Add a dependency to the build job
-    needs: generate_docs
-
-    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
-    permissions:
-      pages: write      # to deploy to Pages
-      id-token: write   # to verify the deployment originates from an appropriate source
-
-    # Deploy to the github-pages environment
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
-    # Specify runner + deployment step
     runs-on: ubuntu-latest
+    needs: generate_and_publish_docs
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2 # or the latest "vX.X.X" version tag for this action
+        uses: actions/deploy-pages@v1
