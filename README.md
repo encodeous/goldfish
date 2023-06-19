@@ -8,7 +8,7 @@
 GoldFish provides a simple API to query valid chess moves according to (mostly) FIDE rules, and to search / evaluate optimal positions.
 
 - Language: C#/.NET
-- Elo: 1200-1500 ish?
+- Elo: 1500-1600 ish?
 - Search Depth: 6-ply+ (can reach deeper depths on simple boards)
 - Algorithm: Minimax + Alpha Beta Pruning & Transposition Table
 

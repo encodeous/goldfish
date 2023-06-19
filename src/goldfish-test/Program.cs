@@ -14,7 +14,7 @@ internal class Program
     private static ArraySegment<ChessMove> _selMoves;
     private static MenuBarItem goldFishToggle;
 
-    private static GoldFishSearcher _searcher = new(TimeSpan.FromSeconds(15), 6, (int)(Environment.ProcessorCount / 1.2));
+    private static GoldFishSearcher _searcher = new(TimeSpan.FromSeconds(6), 6, (int)(Environment.ProcessorCount / 1.2));
     public static void Main(string[] args)
     {
         Application.Init();
@@ -51,6 +51,45 @@ internal class Program
                 Y = 8 - i + 1
             };
         }
+
+        void RunEngine()
+        {
+            stateLabel.Text = $"Thinking...";
+            Task.Run(() =>
+            {
+                game.Commit();
+                // Span<(ChessMove, double)> moves = new (ChessMove, double)[6];
+                // var eval = _searcher.ParallelSearch(game.CurrentState, 6, CancellationToken.None);
+                // game.LastMove = eval.BestMove;
+                // game.CurrentState = eval.BestMove.NewState;
+                // var gState2 = game.CurrentState.GetGameState();
+                var res = _searcher.StartSearch(game.CurrentState);
+                Debug.WriteLine($"Move calc w/ eval of {res.EngineEval} - depth {res.Depth}");
+                game.LastMove = res.BestMove;
+                game.CurrentState = res.BestMove.NewState;
+                var gState2 = game.CurrentState.GetGameState();
+                Application.MainLoop.Invoke(() =>
+                {
+                    if (gState2 is not null)
+                    {
+                        if (gState2.Value == Side.None)
+                        {
+                            MessageBox.Query("Stalemate", $"The game has ended in a draw.", "Restart Game");
+                        }
+                        else
+                        {
+                            MessageBox.Query("Checkmate", $"{gState2.Value} has won by checkmate", "Restart Game");
+                        }
+
+                        game.Reset();
+                    }
+
+                    stateLabel.Text = $"{game.CurrentState.ToMove}'s Turn";
+                    ChessPrinter.PrintBoard(game.CurrentState, game.LastMove, grid);
+                });
+            });
+        }
+
         for (var i = 1; i <= 8; i++)
         {
             for (var j = 1; j <= 8; j++)
@@ -117,38 +156,7 @@ internal class Program
                             // let engine play
                             if (game.IsEngineActive)
                             {
-                                stateLabel.Text = $"Thinking...";
-                                Task.Run(() =>
-                                {
-                                    game.Commit();
-                                    // Span<(ChessMove, double)> moves = new (ChessMove, double)[6];
-                                    // var eval = _searcher.ParallelSearch(game.CurrentState, 6, CancellationToken.None);
-                                    // game.LastMove = eval.BestMove;
-                                    // game.CurrentState = eval.BestMove.NewState;
-                                    // var gState2 = game.CurrentState.GetGameState();
-                                    var res = _searcher.StartSearch(game.CurrentState);
-                                    Debug.WriteLine($"Move calc w/ eval of {res.EngineEval} - depth {res.Depth}");
-                                    game.LastMove = res.BestMove;
-                                    game.CurrentState = res.BestMove.NewState;
-                                    var gState2 = game.CurrentState.GetGameState();
-                                    Application.MainLoop.Invoke(() =>
-                                    {
-                                        if (gState2 is not null)
-                                        {
-                                            if (gState2.Value == Side.None)
-                                            {
-                                                MessageBox.Query("Stalemate", $"The game has ended in a draw.", "Restart Game");
-                                            } 
-                                            else
-                                            {
-                                                MessageBox.Query("Checkmate", $"{gState2.Value} has won by checkmate", "Restart Game");
-                                            }
-                                            game.Reset();
-                                        }
-                                        stateLabel.Text = $"{game.CurrentState.ToMove}'s Turn";
-                                        ChessPrinter.PrintBoard(game.CurrentState, game.LastMove, grid);
-                                    });
-                                });
+                                RunEngine();
                             }
                         }
                     }
@@ -238,6 +246,7 @@ internal class Program
                     };
                     Application.Run(dialog);
                 }),
+                new ("_Go Fish!", "", RunEngine),
                 new("_Undo", "", () =>
                 {
                     game.Rollback();
