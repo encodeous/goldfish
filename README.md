@@ -22,7 +22,7 @@ GoldFish provides a simple API to query valid chess moves according to (mostly) 
 
 ## API Usage
 
-View the API Docs here:
+View the API Docs [Here](https://encodeous.github.io/goldfish/)
 
 ## Examples
 
